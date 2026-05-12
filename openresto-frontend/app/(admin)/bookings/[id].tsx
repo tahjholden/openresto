@@ -301,7 +301,9 @@ export default function BookingDetailScreen() {
                 onPress={handleCancelEdit}
                 disabled={editLoading}
               >
-                <ThemedText style={[styles.actionBtnText, { color: colors.text }]}>Cancel</ThemedText>
+                <ThemedText style={[styles.actionBtnText, { color: colors.text }]}>
+                  Cancel
+                </ThemedText>
               </Pressable>
               <Pressable
                 style={[styles.actionBtn, { backgroundColor: COLORS.primary }]}

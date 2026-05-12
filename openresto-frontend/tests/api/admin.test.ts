@@ -116,8 +116,22 @@ describe("getAdminDashboardStats", () => {
   it("includes cancelled bookings in recentBookings with isCancelled flag", async () => {
     const overview = { todayBookings: 1, totalSeats: 10 };
     const bookings = [
-      { id: 1, date: "2026-05-12T12:00:00Z", customerEmail: "active@test.com", seats: 2, restaurantName: "R1", isCancelled: false },
-      { id: 2, date: "2026-05-12T14:00:00Z", customerEmail: "cancelled@test.com", seats: 3, restaurantName: "R1", isCancelled: true },
+      {
+        id: 1,
+        date: "2026-05-12T12:00:00Z",
+        customerEmail: "active@test.com",
+        seats: 2,
+        restaurantName: "R1",
+        isCancelled: false,
+      },
+      {
+        id: 2,
+        date: "2026-05-12T14:00:00Z",
+        customerEmail: "cancelled@test.com",
+        seats: 3,
+        restaurantName: "R1",
+        isCancelled: true,
+      },
     ];
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => overview });
     mockFetch.mockResolvedValueOnce({ ok: true, json: async () => bookings });

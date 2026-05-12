@@ -230,7 +230,13 @@ export default function AdminDashboardScreen() {
                 </View>
               ) : (
                 stats?.recentBookings.map((b: BookingSummaryDto) => (
-                  <BookingItem key={b.bookingRef} booking={b} colors={colors} isDark={isDark} router={router} />
+                  <BookingItem
+                    key={b.bookingRef}
+                    booking={b}
+                    colors={colors}
+                    isDark={isDark}
+                    router={router}
+                  />
                 ))
               )}
             </View>

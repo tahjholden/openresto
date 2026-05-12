@@ -45,10 +45,7 @@ describe("BookingDetailsCard", () => {
 
   it("shows None when there are no special requests", () => {
     render(
-      <BookingDetailsCard
-        {...props}
-        booking={{ ...mockBooking, specialRequests: undefined }}
-      />
+      <BookingDetailsCard {...props} booking={{ ...mockBooking, specialRequests: undefined }} />
     );
     expect(screen.getByText("None")).toBeTruthy();
   });

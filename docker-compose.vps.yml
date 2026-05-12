@@ -7,6 +7,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - PORT=8080
       - CORS_ORIGINS=https://${DOMAIN_NAME}
+      - JWT_KEY=${JWT_KEY}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - CONNECTION_STRING=${CONNECTION_STRING:-Data Source=/data/openresto.db}
     volumes:
       - ./data:/data
     restart: always

@@ -225,13 +225,16 @@ public static partial class DatabaseExtensions
 
                     if (!db.AdminCredentials.Any())
                     {
-                        string email = configuration["Admin:Email"] ?? "admin@openresto.com";
-                        string? password = configuration["Admin:Password"];
+                        string email = configuration["Admin:Email"]
+                            ?? Environment.GetEnvironmentVariable("ADMIN_EMAIL")
+                            ?? "admin@openresto.com";
+                        string? password = configuration["Admin:Password"]
+                            ?? Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
                         if (string.IsNullOrWhiteSpace(password))
                         {
                             throw new InvalidOperationException(
-                                "Admin:Password must be configured before first use. Set it via config or Admin__Password env var.");
+                                "Admin:Password must be configured before first use. Set it via ADMIN_PASSWORD env var.");
                         }
                         byte[] saltBytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(16);
                         string salt = Convert.ToBase64String(saltBytes);

@@ -85,8 +85,10 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddCustomAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        string? jwtKey = configuration["Jwt:Key"]
-            ?? Environment.GetEnvironmentVariable("JWT_KEY");
+        string? configJwtKey = configuration["Jwt:Key"];
+        string? jwtKey = string.IsNullOrWhiteSpace(configJwtKey)
+            ? Environment.GetEnvironmentVariable("JWT_KEY")
+            : configJwtKey;
 
         if (string.IsNullOrWhiteSpace(jwtKey) || jwtKey.Length < 32)
         {

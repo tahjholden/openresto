@@ -225,11 +225,15 @@ public static partial class DatabaseExtensions
 
                     if (!db.AdminCredentials.Any())
                     {
-                        string email = configuration["Admin:Email"]
-                            ?? Environment.GetEnvironmentVariable("ADMIN_EMAIL")
-                            ?? "admin@openresto.com";
-                        string? password = configuration["Admin:Password"]
-                            ?? Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+                        string? configEmail = configuration["Admin:Email"];
+                        string email = !string.IsNullOrWhiteSpace(configEmail)
+                            ? configEmail
+                            : Environment.GetEnvironmentVariable("ADMIN_EMAIL") ?? "admin@openresto.com";
+
+                        string? configPassword = configuration["Admin:Password"];
+                        string? password = !string.IsNullOrWhiteSpace(configPassword)
+                            ? configPassword
+                            : Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
                         if (string.IsNullOrWhiteSpace(password))
                         {

@@ -171,11 +171,15 @@ public class AuthController(IConfiguration config, AppDbContext db) : Controller
             return cred;
         }
 
-        string email = _config["Admin:Email"]
-            ?? Environment.GetEnvironmentVariable("ADMIN_EMAIL")
-            ?? "admin@openresto.com";
-        string? password = _config["Admin:Password"]
-            ?? Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+        string? configEmail = _config["Admin:Email"];
+        string email = !string.IsNullOrWhiteSpace(configEmail)
+            ? configEmail
+            : Environment.GetEnvironmentVariable("ADMIN_EMAIL") ?? "admin@openresto.com";
+
+        string? configPassword = _config["Admin:Password"];
+        string? password = !string.IsNullOrWhiteSpace(configPassword)
+            ? configPassword
+            : Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
         if (string.IsNullOrWhiteSpace(password))
         {

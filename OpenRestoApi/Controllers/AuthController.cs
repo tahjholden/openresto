@@ -196,7 +196,11 @@ public class AuthController(IConfiguration config, AppDbContext db) : Controller
 
     private string GenerateJwt(string email)
     {
-        byte[] keyBytes = Encoding.UTF8.GetBytes(_config["Jwt:Key"]!);
+        string? configKey = _config["Jwt:Key"];
+        string jwtKey = string.IsNullOrWhiteSpace(configKey)
+            ? Environment.GetEnvironmentVariable("JWT_KEY")!
+            : configKey;
+        byte[] keyBytes = Encoding.UTF8.GetBytes(jwtKey);
         var credentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(

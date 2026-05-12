@@ -70,6 +70,7 @@ public class TestWebAppFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:Audience", JwtAudience);
         builder.UseSetting("Admin:Email", AdminEmail);
         builder.UseSetting("Admin:Password", AdminPassword);
+        builder.UseSetting("Cors:Origins", "http://localhost");
     }
 
     /// <summary>

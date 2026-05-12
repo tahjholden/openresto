@@ -16,8 +16,10 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddCustomCors(this IServiceCollection services, IConfiguration configuration)
     {
-        string? corsOrigins = configuration["Cors:Origins"]
-            ?? Environment.GetEnvironmentVariable("CORS_ORIGINS");
+        string? configCorsOrigins = configuration["Cors:Origins"];
+        string? corsOrigins = string.IsNullOrWhiteSpace(configCorsOrigins)
+            ? Environment.GetEnvironmentVariable("CORS_ORIGINS")
+            : configCorsOrigins;
 
         if (string.IsNullOrWhiteSpace(corsOrigins) || corsOrigins.Trim() == "*")
         {

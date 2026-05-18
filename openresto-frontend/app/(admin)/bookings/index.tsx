@@ -61,7 +61,11 @@ export default function AdminBookingsScreen() {
   const [showNewModal, setShowNewModal] = useState(false);
 
   const router = useRouter();
-  const { create, email: emailParam, bookingRef: bookingRefParam } = useLocalSearchParams<{ create?: string; email?: string; bookingRef?: string }>();
+  const {
+    create,
+    email: emailParam,
+    bookingRef: bookingRefParam,
+  } = useLocalSearchParams<{ create?: string; email?: string; bookingRef?: string }>();
   const searchQuery = emailParam || bookingRefParam || null;
 
   useEffect(() => {

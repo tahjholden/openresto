@@ -165,7 +165,15 @@ export default function AdminSidebar() {
         <ThemedText style={[styles.lookupLabel, { color: colors.muted }]}>
           Lookup Booking
         </ThemedText>
-        <View style={[styles.lookupRow, { borderColor: colors.border, backgroundColor: colors.input ?? (isDark ? "#1e1e1e" : "#f5f5f5") }]}>
+        <View
+          style={[
+            styles.lookupRow,
+            {
+              borderColor: colors.border,
+              backgroundColor: colors.input ?? (isDark ? "#1e1e1e" : "#f5f5f5"),
+            },
+          ]}
+        >
           <TextInput
             style={[styles.lookupInput, { color: colors.text }]}
             placeholder="Email or reference…"
@@ -182,7 +190,11 @@ export default function AdminSidebar() {
           <Pressable
             onPress={handleLookup}
             disabled={lookupLoading || !lookupQuery.trim()}
-            style={[styles.lookupBtn, { backgroundColor: PRIMARY }, (!lookupQuery.trim() || lookupLoading) && { opacity: 0.5 }]}
+            style={[
+              styles.lookupBtn,
+              { backgroundColor: PRIMARY },
+              (!lookupQuery.trim() || lookupLoading) && { opacity: 0.5 },
+            ]}
           >
             {lookupLoading ? (
               <ActivityIndicator size="small" color="#fff" />

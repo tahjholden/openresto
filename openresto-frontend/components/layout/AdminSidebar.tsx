@@ -213,6 +213,11 @@ export default function AdminSidebar() {
             Showing all matches…
           </ThemedText>
         )}
+        {lookupStatus === "idle" && (
+          <ThemedText style={[styles.lookupHint, { color: PRIMARY }]}>
+            Search by booking ref or email address
+          </ThemedText>
+        )}
       </View>
 
       <View style={[styles.divider, { backgroundColor: colors.border }]} />

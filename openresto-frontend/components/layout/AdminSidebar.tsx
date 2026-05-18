@@ -165,44 +165,44 @@ export default function AdminSidebar() {
         <ThemedText style={[styles.lookupLabel, { color: colors.muted }]}>
           Lookup Booking
         </ThemedText>
-        <View
+        <TextInput
           style={[
-            styles.lookupRow,
+            styles.lookupInput,
             {
+              color: colors.text,
               borderColor: colors.border,
               backgroundColor: colors.input ?? (isDark ? "#1e1e1e" : "#f5f5f5"),
             },
           ]}
+          placeholder="Email or reference…"
+          placeholderTextColor={colors.muted}
+          value={lookupQuery}
+          onChangeText={(t) => {
+            setLookupQuery(t);
+            if (lookupStatus !== "idle") setLookupStatus("idle");
+          }}
+          autoCapitalize="none"
+          returnKeyType="search"
+          onSubmitEditing={handleLookup}
+        />
+        <Pressable
+          onPress={handleLookup}
+          disabled={lookupLoading || !lookupQuery.trim()}
+          style={[
+            styles.lookupBtn,
+            { backgroundColor: PRIMARY },
+            (!lookupQuery.trim() || lookupLoading) && { opacity: 0.5 },
+          ]}
         >
-          <TextInput
-            style={[styles.lookupInput, { color: colors.text }]}
-            placeholder="Email or reference…"
-            placeholderTextColor={colors.muted}
-            value={lookupQuery}
-            onChangeText={(t) => {
-              setLookupQuery(t);
-              if (lookupStatus !== "idle") setLookupStatus("idle");
-            }}
-            autoCapitalize="none"
-            returnKeyType="search"
-            onSubmitEditing={handleLookup}
-          />
-          <Pressable
-            onPress={handleLookup}
-            disabled={lookupLoading || !lookupQuery.trim()}
-            style={[
-              styles.lookupBtn,
-              { backgroundColor: PRIMARY },
-              (!lookupQuery.trim() || lookupLoading) && { opacity: 0.5 },
-            ]}
-          >
-            {lookupLoading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Ionicons name="search-outline" size={14} color="#fff" />
-            )}
-          </Pressable>
-        </View>
+          {lookupLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Ionicons name="search-outline" size={15} color="#fff" />
+              <ThemedText style={styles.lookupBtnText}>Search</ThemedText>
+            </>
+          )}
+        </Pressable>
         {lookupStatus === "not_found" && (
           <ThemedText style={[styles.lookupHint, { color: COLORS.error }]}>
             No booking found.
@@ -341,24 +341,25 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     paddingLeft: 2,
   },
-  lookupRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 8,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
   lookupInput: {
-    flex: 1,
     height: 36,
     paddingHorizontal: 10,
     fontSize: 13,
+    borderRadius: 8,
+    borderWidth: 1,
   },
   lookupBtn: {
-    width: 36,
-    height: 36,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 6,
+    height: 36,
+    borderRadius: 8,
+  },
+  lookupBtnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
   },
   lookupHint: {
     fontSize: 11,

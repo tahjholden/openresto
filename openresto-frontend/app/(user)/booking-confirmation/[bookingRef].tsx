@@ -94,7 +94,7 @@ export default function BookingConfirmationScreen() {
     >
       {Platform.OS !== "web" && <Stack.Screen options={{ title: "Booking Confirmed" }} />}
       <PageContainer>
-        <View style={styles.successHeader}>
+        <View style={[styles.successHeader, { paddingTop: isWide ? 48 : 20 }]}>
           <View style={styles.checkCircle}>
             <Ionicons name="checkmark" size={32} color="#fff" />
           </View>
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   retryBtnText: { fontSize: 14, fontWeight: "600" },
-  successHeader: { alignItems: "center", paddingTop: 48, paddingBottom: 16, gap: 10 },
+  successHeader: { alignItems: "center", paddingBottom: 16, gap: 10 },
   checkCircle: {
     width: 56,
     height: 56,

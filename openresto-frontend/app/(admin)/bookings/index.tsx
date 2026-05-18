@@ -436,9 +436,11 @@ export default function AdminBookingsScreen() {
                 <ThemedText style={styles.tdGuest} numberOfLines={1}>
                   {b.customerEmail}
                 </ThemedText>
-                <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
-                  {b.specialRequests || "No special requests"}
-                </ThemedText>
+                {b.bookingRef ? (
+                  <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
+                    Ref: {b.bookingRef}
+                  </ThemedText>
+                ) : null}
               </View>
               <View style={styles.colParty}>
                 <View style={styles.partyPill}>
@@ -516,6 +518,11 @@ export default function AdminBookingsScreen() {
                   <ThemedText style={styles.tdGuest} numberOfLines={1}>
                     {b.customerEmail}
                   </ThemedText>
+                  {b.bookingRef ? (
+                    <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
+                      Ref: {b.bookingRef}
+                    </ThemedText>
+                  ) : null}
                   <View style={styles.partyPill}>
                     <Ionicons name="people-outline" size={12} color={mutedColor} />
                     <ThemedText style={[styles.tdDate, { color: mutedColor }]}>

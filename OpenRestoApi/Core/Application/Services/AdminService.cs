@@ -55,17 +55,21 @@ public class AdminService(AppDbContext db, IHoldService holdService)
             }
         }
 
-        // Calculate Occupancy Data (Last 7 days)
-        List<int> occupancyData = [];
-        int totalTables = await _db.Tables.CountAsync();
+        // Calculate Occupancy Data (Last 7 days) — raw counts first, then normalize to 0-100
+        // relative to the peak day so the busiest day fills the chart and others are proportional.
+        List<int> rawCounts = [];
         for (int i = 6; i >= 0; i--)
         {
-            DateTime dayStart = nowUtc.Date.AddDays(-i);
+            DateTime dayStart = DateTime.SpecifyKind(nowUtc.Date.AddDays(-i), DateTimeKind.Utc);
             DateTime dayEnd = dayStart.AddDays(1);
             int dayBookings = await _db.Bookings.CountAsync(b => !b.IsCancelled && b.Date >= dayStart && b.Date < dayEnd);
-            int occupancyPercent = totalTables > 0 ? (int)Math.Round((double)dayBookings / totalTables * 100) : 0;
-            occupancyData.Add(Math.Min(100, occupancyPercent));
+            rawCounts.Add(dayBookings);
         }
+
+        int maxCount = rawCounts.Count > 0 ? rawCounts.Max() : 0;
+        List<int> occupancyData = rawCounts
+            .Select(count => maxCount > 0 ? (int)Math.Round((double)count / maxCount * 100) : 0)
+            .ToList();
 
         return new AdminOverviewDto
         {

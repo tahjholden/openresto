@@ -59,6 +59,85 @@ public class AdminServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task GetOverviewAsync_OccupancyData_HasSevenElements()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        await _db.SaveChangesAsync();
+
+        AdminOverviewDto overview = await svc.GetOverviewAsync();
+
+        Assert.Equal(7, overview.OccupancyData.Count);
+    }
+
+    [Fact]
+    public async Task GetOverviewAsync_OccupancyData_AllZeroWhenNoBookings()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        await _db.SaveChangesAsync();
+
+        AdminOverviewDto overview = await svc.GetOverviewAsync();
+
+        Assert.All(overview.OccupancyData, v => Assert.Equal(0, v));
+    }
+
+    [Fact]
+    public async Task GetOverviewAsync_OccupancyData_PeakDayIs100Percent()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        DateTime nowUtc = DateTime.UtcNow;
+        // Add 3 bookings today (the peak day) and 1 booking yesterday
+        _db.Bookings.Add(new Booking { Id = 10, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddHours(12), BookingRef = "TODAY1" });
+        _db.Bookings.Add(new Booking { Id = 11, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddHours(13), BookingRef = "TODAY2" });
+        _db.Bookings.Add(new Booking { Id = 12, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddHours(14), BookingRef = "TODAY3" });
+        _db.Bookings.Add(new Booking { Id = 13, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddDays(-1).AddHours(12), BookingRef = "YEST" });
+        await _db.SaveChangesAsync();
+
+        AdminOverviewDto overview = await svc.GetOverviewAsync();
+
+        // Today (index 6) has 3 bookings — the peak — so it should be 100%
+        Assert.Equal(100, overview.OccupancyData[6]);
+        // Yesterday (index 5) has 1 booking out of 3 peak → ~33%
+        Assert.Equal(33, overview.OccupancyData[5]);
+    }
+
+    [Fact]
+    public async Task GetOverviewAsync_OccupancyData_NormalizesRelativeToPeakNotTables()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        // Add extra tables — should NOT affect histogram normalization
+        _db.Tables.Add(new Table { Id = 10, Name = "T10", Seats = 4, SectionId = 1 });
+        _db.Tables.Add(new Table { Id = 11, Name = "T11", Seats = 4, SectionId = 1 });
+        DateTime nowUtc = DateTime.UtcNow;
+        _db.Bookings.Add(new Booking { Id = 20, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddHours(12), BookingRef = "B1" });
+        await _db.SaveChangesAsync();
+
+        AdminOverviewDto overview = await svc.GetOverviewAsync();
+
+        // 1 booking today; peak = 1 → today should be 100% regardless of table count
+        Assert.Equal(100, overview.OccupancyData[6]);
+    }
+
+    [Fact]
+    public async Task GetOverviewAsync_OccupancyData_ExcludesCancelledBookings()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        DateTime nowUtc = DateTime.UtcNow;
+        _db.Bookings.Add(new Booking { Id = 30, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddHours(12), BookingRef = "ACTIVE", IsCancelled = false });
+        _db.Bookings.Add(new Booking { Id = 31, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddHours(13), BookingRef = "CANCELLED", IsCancelled = true });
+        await _db.SaveChangesAsync();
+
+        AdminOverviewDto overview = await svc.GetOverviewAsync();
+
+        // Only 1 non-cancelled booking today; that is the peak → 100%
+        Assert.Equal(100, overview.OccupancyData[6]);
+    }
+
+    [Fact]
     public async Task GetOverviewAsync_TodayBookingsList_ContainsTodayBookings()
     {
         AdminService svc = CreateService();

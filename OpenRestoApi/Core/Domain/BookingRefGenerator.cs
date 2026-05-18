@@ -6,7 +6,12 @@ public static class BookingRefGenerator
     [
         "crispy", "golden", "smoky", "rustic", "zesty", "tender", "glazed",
         "roasted", "grilled", "braised", "fresh", "savory", "spiced", "toasted",
-        "charred", "caramelized", "marinated", "flambéed", "infused", "smoked"
+        "charred", "caramelized", "marinated", "seared", "infused", "smoked",
+        "buttery", "herbed", "honeyed", "tangy", "velvety", "hearty", "fragrant",
+        "briny", "earthy", "pickled", "crusted", "seasoned", "poached", "steamed",
+        "baked", "cured", "aged", "pungent", "mellow", "citrusy", "nutty",
+        "bold", "robust", "drizzled", "whipped", "silky", "delicate", "warm",
+        "bright", "sharp"
     ];
 
     private static readonly string[] _foods =
@@ -15,7 +20,12 @@ public static class BookingRefGenerator
         "lemon", "ginger", "garlic", "mint", "parsley", "rosemary", "vanilla",
         "paprika", "cumin", "fennel", "tarragon", "cardamom", "coriander",
         "turmeric", "clove", "nutmeg", "anise", "dill", "chive", "sage",
-        "oregano", "mustard", "cinnamon"
+        "oregano", "mustard", "cinnamon",
+        "tamarind", "sumac", "sesame", "lavender", "chamomile", "juniper",
+        "mace", "fenugreek", "lemongrass", "wasabi", "horseradish", "marjoram",
+        "caraway", "bergamot", "hyssop", "bay", "sorrel", "lovage", "peppercorn",
+        "capers", "chicory", "celery", "borage", "watercress", "endive",
+        "arugula", "radicchio", "galangal", "shallot", "leek"
     ];
 
     private static readonly Random _rng = Random.Shared;

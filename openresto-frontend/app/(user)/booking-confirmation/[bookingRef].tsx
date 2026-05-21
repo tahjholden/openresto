@@ -12,7 +12,15 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, BORDER_RADIUS, BUTTON_SIZES, SHADOWS, SPACING, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
+import {
+  COLORS,
+  BORDER_RADIUS,
+  BUTTON_SIZES,
+  SHADOWS,
+  SPACING,
+  TYPOGRAPHY,
+  getThemeColors,
+} from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import PageContainer from "@/components/layout/PageContainer";
 import { useBrand } from "@/context/BrandContext";
@@ -257,7 +265,12 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     ...SHADOWS.md,
   },
-  refLabel: { ...TYPOGRAPHY.labelSmall, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8 },
+  refLabel: {
+    ...TYPOGRAPHY.labelSmall,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
   refRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -278,7 +291,12 @@ const styles = StyleSheet.create({
   },
   copyBtnText: { ...TYPOGRAPHY.caption, fontWeight: "600" },
   refHint: { ...TYPOGRAPHY.caption, textAlign: "center" },
-  wideRow: { flexDirection: "row", gap: SPACING.xl, alignItems: "flex-start", marginTop: SPACING.lg },
+  wideRow: {
+    flexDirection: "row",
+    gap: SPACING.xl,
+    alignItems: "flex-start",
+    marginTop: SPACING.lg,
+  },
   narrowGap: { gap: SPACING.lg, marginTop: SPACING.lg },
   wideCol: { flex: 1 },
   detailCard: {

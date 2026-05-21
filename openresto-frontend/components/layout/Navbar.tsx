@@ -87,11 +87,7 @@ export default function Navbar() {
                 />
               ) : (
                 <ThemedText
-                  style={[
-                    styles.brandText,
-                    { color: primaryColor },
-                    isTiny && { fontSize: 18 },
-                  ]}
+                  style={[styles.brandText, { color: primaryColor }, isTiny && { fontSize: 18 }]}
                   numberOfLines={1}
                 >
                   {brand.appName}
@@ -107,7 +103,10 @@ export default function Navbar() {
             return (
               <Link key={href} href={href} asChild>
                 <Pressable
-                  style={StyleSheet.flatten([styles.linkBtn, isMobile && { paddingHorizontal: 10 }])}
+                  style={StyleSheet.flatten([
+                    styles.linkBtn,
+                    isMobile && { paddingHorizontal: 10 },
+                  ])}
                 >
                   <ThemedText
                     style={[

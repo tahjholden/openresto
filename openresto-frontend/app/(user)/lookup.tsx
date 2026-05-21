@@ -16,7 +16,15 @@ import {
   type ViewStyle,
 } from "react-native";
 import Input from "@/components/common/Input";
-import { BUTTON_SIZES, BORDER_RADIUS, COLORS, SHADOWS, SPACING, TYPOGRAPHY, ThemeColors } from "@/theme/theme";
+import {
+  BUTTON_SIZES,
+  BORDER_RADIUS,
+  COLORS,
+  SHADOWS,
+  SPACING,
+  TYPOGRAPHY,
+  ThemeColors,
+} from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import PageContainer from "@/components/layout/PageContainer";
 import { CachedBooking, fetchCachedBookings } from "@/utils/bookingCache";
@@ -411,7 +419,11 @@ const styles = StyleSheet.create({
   },
   resultHeader: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
   resultTitle: { ...TYPOGRAPHY.h3 },
-  refBadge: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, borderRadius: BORDER_RADIUS.md },
+  refBadge: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
+  },
   refText: { ...TYPOGRAPHY.bodyBold, fontWeight: "700", letterSpacing: 0.3 },
   divider: { height: 1 },
   cancelBtn: {

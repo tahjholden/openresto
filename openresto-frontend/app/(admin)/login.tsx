@@ -232,7 +232,12 @@ export default function AdminLoginScreen() {
             }}
           />
           <ThemedText style={styles.title}>Security question</ThemedText>
-          <View style={[styles.questionBox, { borderColor: colors.border, backgroundColor: colors.card }]}>
+          <View
+            style={[
+              styles.questionBox,
+              { borderColor: colors.border, backgroundColor: colors.card },
+            ]}
+          >
             <Ionicons name="help-circle-outline" size={18} color={primaryColor} />
             <ThemedText style={[styles.questionText, { color: mutedColor }]}>
               {pvqQuestion}

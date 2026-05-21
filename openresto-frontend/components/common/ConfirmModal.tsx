@@ -1,7 +1,15 @@
 import { Modal, Pressable, StyleSheet, View, TouchableWithoutFeedback } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, BUTTON_SIZES, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
+import {
+  COLORS,
+  BUTTON_SIZES,
+  BORDER_RADIUS,
+  SHADOWS,
+  SPACING,
+  TYPOGRAPHY,
+  getThemeColors,
+} from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 
 interface ConfirmModalProps {

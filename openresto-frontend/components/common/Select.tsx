@@ -3,7 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Modal, Pressable, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getThemeColors, COLORS, FORM_SIZES, BORDER_RADIUS } from "@/theme/theme";
+import { getThemeColors, COLORS, FORM_SIZES } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 
 export interface SelectOption {

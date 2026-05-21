@@ -195,7 +195,12 @@ export default function AdminDashboardScreen() {
               </View>
             </View>
 
-            <View style={[styles.listCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.listCard,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.listHeader}>
                 <ThemedText style={styles.cardTitle}>Today&apos;s Bookings</ThemedText>
                 <Pressable onPress={() => router.push("/(admin)/bookings")}>
@@ -377,14 +382,31 @@ function BookingItem({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  outer: { padding: SPACING.xxl, paddingBottom: 60, maxWidth: 1200, width: "100%", alignSelf: "center" },
+  outer: {
+    padding: SPACING.xxl,
+    paddingBottom: 60,
+    maxWidth: 1200,
+    width: "100%",
+    alignSelf: "center",
+  },
   header: { marginBottom: SPACING.xxxl },
   pageTitle: { ...TYPOGRAPHY.pageTitle },
   pageSub: { ...TYPOGRAPHY.body, marginTop: SPACING.xs },
   spinner: { marginTop: 100 },
-  metricsGrid: { flexDirection: "row", flexWrap: "wrap", gap: SPACING.lg, marginBottom: SPACING.xxl },
+  metricsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: SPACING.lg,
+    marginBottom: SPACING.xxl,
+  },
   metricsGridWide: { flexWrap: "nowrap" },
-  metricCard: { flex: 1, minWidth: 200, padding: SPACING.xl, borderRadius: BORDER_RADIUS.card, borderWidth: 1 },
+  metricCard: {
+    flex: 1,
+    minWidth: 200,
+    padding: SPACING.xl,
+    borderRadius: BORDER_RADIUS.card,
+    borderWidth: 1,
+  },
   metricIconWrap: {
     width: 40,
     height: 40,
@@ -450,7 +472,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: SPACING.lg,
   },
-  bookingTime: { paddingHorizontal: SPACING.xsm, paddingVertical: SPACING.xxs, borderRadius: BORDER_RADIUS.md },
+  bookingTime: {
+    paddingHorizontal: SPACING.xsm,
+    paddingVertical: SPACING.xxs,
+    borderRadius: BORDER_RADIUS.md,
+  },
   bookingTimeText: { ...TYPOGRAPHY.label, fontWeight: "700" },
   bookingInfo: { flex: 1, gap: 2 },
   bookingEmail: { ...TYPOGRAPHY.label, fontWeight: "500" },

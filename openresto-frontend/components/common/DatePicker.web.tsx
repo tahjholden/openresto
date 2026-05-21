@@ -2,7 +2,7 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { ThemedText } from "@/components/themed-text";
-import { getThemeColors, COLORS } from "@/theme/theme";
+import { getThemeColors, COLORS, TYPOGRAPHY } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 
 /** Convert a YYYY-MM-DD string to ISO day-of-week (1=Mon, 7=Sun) */
@@ -61,7 +61,7 @@ export default function DatePicker({
             height: "44px",
             borderWidth: "1px",
             borderStyle: "solid",
-            borderColor: isFocused ? primaryColor : isClosedDay ? "#dc2626" : borderColor,
+            borderColor: isFocused ? primaryColor : isClosedDay ? COLORS.error : borderColor,
             borderRadius: "8px",
             paddingLeft: "12px",
             paddingRight: "12px",
@@ -92,8 +92,8 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   closedWarning: {
-    fontSize: 12,
-    color: "#dc2626",
+    ...TYPOGRAPHY.caption,
+    color: COLORS.error,
     marginTop: 4,
   },
 });

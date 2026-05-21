@@ -1,16 +1,32 @@
 import { StyleSheet, Text, type TextProps } from "react-native";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { TYPOGRAPHY } from "@/theme/theme";
+
+export type ThemedTextType =
+  // TYPOGRAPHY-aligned variants (prefer these)
+  | "pageTitle"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "body"
+  | "bodyBold"
+  | "label"
+  | "labelSmall"
+  | "caption"
+  | "captionSmall"
+  // Legacy Expo template variants (kept for backwards compat)
+  | "default"
+  | "defaultSemiBold"
+  | "title"
+  | "subtitle"
+  | "link";
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: "default" | "title" | "defaultSemiBold" | "subtitle" | "link";
+  type?: ThemedTextType;
 };
 
-/**
- * Enhanced Text that automatically responds to theme changes and handles
- * style flattening to prevent React Native Web crashes on native DOM elements.
- */
 export function ThemedText({
   style,
   lightColor,
@@ -32,6 +48,19 @@ export function ThemedText({
 }
 
 const styles = StyleSheet.create({
+  // TYPOGRAPHY scale variants
+  pageTitle: TYPOGRAPHY.pageTitle,
+  h1: TYPOGRAPHY.h1,
+  h2: TYPOGRAPHY.h2,
+  h3: TYPOGRAPHY.h3,
+  body: TYPOGRAPHY.body,
+  bodyBold: TYPOGRAPHY.bodyBold,
+  label: TYPOGRAPHY.label,
+  labelSmall: TYPOGRAPHY.labelSmall,
+  caption: TYPOGRAPHY.caption,
+  captionSmall: TYPOGRAPHY.captionSmall,
+
+  // Legacy Expo template variants
   default: {
     fontSize: 16,
     lineHeight: 24,

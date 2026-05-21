@@ -3,7 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Modal, Pressable, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getThemeColors, COLORS } from "@/theme/theme";
+import { getThemeColors, COLORS, FORM_SIZES } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 
 export interface SelectOption {
@@ -104,25 +104,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 44,
+    borderRadius: FORM_SIZES.inputBorderRadius,
+    paddingHorizontal: FORM_SIZES.inputPaddingH,
+    height: FORM_SIZES.inputHeight,
   },
   triggerText: {
-    fontSize: 15,
+    fontSize: FORM_SIZES.inputFontSize,
   },
   chevron: {
     fontSize: 14,
   },
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
   },
   modalView: {
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     maxHeight: 360,
     width: "100%",

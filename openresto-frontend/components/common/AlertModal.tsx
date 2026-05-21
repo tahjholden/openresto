@@ -1,7 +1,7 @@
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, getThemeColors } from "@/theme/theme";
+import { COLORS, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 
 interface AlertModalProps {
@@ -27,7 +27,7 @@ export default function AlertModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <ThemedText style={styles.title}>{title}</ThemedText>
+          <ThemedText type="h3">{title}</ThemedText>
           <ThemedText style={[styles.message, { color: colors.muted }]}>{message}</ThemedText>
           <Pressable
             style={[styles.btn, { backgroundColor: brand.primaryColor || COLORS.primary }]}
@@ -47,39 +47,31 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    padding: SPACING.xxl,
   },
   card: {
-    borderRadius: 16,
+    borderRadius: BORDER_RADIUS.modal,
     borderWidth: 1,
-    padding: 24,
+    padding: SPACING.xxl,
     width: "100%",
     maxWidth: 400,
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 24,
-    elevation: 10,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: -0.3,
+    gap: SPACING.md,
+    ...SHADOWS.popup,
   },
   message: {
+    ...TYPOGRAPHY.body,
     fontSize: 14,
     lineHeight: 20,
   },
   btn: {
     paddingVertical: 11,
-    borderRadius: 10,
+    borderRadius: BORDER_RADIUS.lg,
     alignItems: "center",
-    marginTop: 8,
+    marginTop: SPACING.sm,
   },
   btnText: {
-    color: "#ffffff",
-    fontSize: 15,
+    color: COLORS.white,
+    ...TYPOGRAPHY.bodyBold,
     fontWeight: "700",
   },
 });

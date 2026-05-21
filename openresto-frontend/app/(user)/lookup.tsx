@@ -16,7 +16,15 @@ import {
   type ViewStyle,
 } from "react-native";
 import Input from "@/components/common/Input";
-import { BUTTON_SIZES, COLORS, ThemeColors } from "@/theme/theme";
+import {
+  BUTTON_SIZES,
+  BORDER_RADIUS,
+  COLORS,
+  SHADOWS,
+  SPACING,
+  TYPOGRAPHY,
+  ThemeColors,
+} from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import PageContainer from "@/components/layout/PageContainer";
 import { CachedBooking, fetchCachedBookings } from "@/utils/bookingCache";
@@ -94,7 +102,7 @@ export default function LookupScreen() {
           <View style={styles.header}>
             <Ionicons name="search-outline" size={32} color={primaryColor} />
             <ThemedText style={styles.title}>Find My Booking</ThemedText>
-            <ThemedText style={StyleSheet.flatten([styles.subtitle, { color: colors.muted }])}>
+            <ThemedText style={[styles.subtitle, { color: colors.muted }]}>
               Enter your booking reference and email to look up your reservation.
             </ThemedText>
           </View>
@@ -102,10 +110,10 @@ export default function LookupScreen() {
           <View style={isWide ? styles.wideRow : undefined}>
             <View style={isWide ? styles.wideCol : undefined}>
               <View
-                style={StyleSheet.flatten([
+                style={[
                   styles.searchCard,
                   { backgroundColor: colors.card, borderColor: colors.border },
-                ])}
+                ]}
               >
                 <ThemedText style={styles.label}>Booking Reference</ThemedText>
                 <Input
@@ -127,22 +135,22 @@ export default function LookupScreen() {
                 <Pressable
                   onPress={handleLookup}
                   disabled={!canSearch || loading}
-                  style={StyleSheet.flatten([
+                  style={[
                     styles.searchBtn,
                     { backgroundColor: primaryColor },
                     (!canSearch || loading) && { opacity: 0.5 },
-                  ])}
+                  ]}
                 >
                   {loading ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={COLORS.white} />
                   ) : (
                     <>
-                      <Ionicons name="search" size={16} color="#fff" />
+                      <Ionicons name="search" size={16} color={COLORS.white} />
                       <ThemedText style={styles.searchBtnText}>Look Up</ThemedText>
                     </>
                   )}
                 </Pressable>
-                <ThemedText style={StyleSheet.flatten([styles.helpText, { color: colors.muted }])}>
+                <ThemedText style={[styles.helpText, { color: colors.muted }]}>
                   Can&apos;t find your booking? Contact the restaurant directly.
                 </ThemedText>
               </View>
@@ -163,16 +171,14 @@ export default function LookupScreen() {
             <View style={isWide ? styles.wideCol : undefined}>
               {!loading && searched && !booking && (
                 <View
-                  style={StyleSheet.flatten([
+                  style={[
                     styles.resultCard,
                     { backgroundColor: colors.card, borderColor: colors.border },
                     isWide ? { marginTop: 0 } : { marginTop: 16 },
-                  ])}
+                  ]}
                 >
                   <Ionicons name="alert-circle-outline" size={28} color={colors.muted} />
-                  <ThemedText
-                    style={StyleSheet.flatten([styles.notFound, { color: colors.muted }])}
-                  >
+                  <ThemedText style={[styles.notFound, { color: colors.muted }]}>
                     No booking found matching that reference and email.
                   </ThemedText>
                 </View>
@@ -234,23 +240,20 @@ function RecentBookingsList({
 }) {
   if (cached.length === 0) return null;
   return (
-    <View style={StyleSheet.flatten([styles.recentSection, style])}>
-      <ThemedText style={StyleSheet.flatten([styles.recentTitle, { color: colors.muted }])}>
+    <View style={[styles.recentSection, style]}>
+      <ThemedText style={[styles.recentTitle, { color: colors.muted }]}>
         YOUR RECENT BOOKINGS
       </ThemedText>
       {cached.map((c) => (
         <Pressable
           key={c.bookingRef}
-          style={StyleSheet.flatten([
-            styles.recentCard,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ])}
+          style={[styles.recentCard, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => onSelect(c)}
         >
           <View style={styles.recentCardRow}>
             <View style={{ flex: 1, gap: 3 }}>
               <ThemedText style={styles.recentRef}>{c.bookingRef}</ThemedText>
-              <ThemedText style={StyleSheet.flatten([styles.recentMeta, { color: colors.muted }])}>
+              <ThemedText style={[styles.recentMeta, { color: colors.muted }]}>
                 {c.restaurantName ? `${c.restaurantName} · ` : ""}
                 {new Date(c.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                 {" · "}
@@ -284,36 +287,36 @@ function BookingResultCard({
 }) {
   return (
     <View
-      style={StyleSheet.flatten([
+      style={[
         styles.detailCard,
         { backgroundColor: colors.card, borderColor: colors.border },
         isWide ? {} : { marginTop: 24 },
-      ])}
+      ]}
     >
       <View style={styles.cardHeader}>
         <View style={styles.resultHeader}>
           <Ionicons
             name={booking.isCancelled ? "close-circle" : "checkmark-circle"}
             size={20}
-            color={booking.isCancelled ? COLORS.error : "#16a34a"}
+            color={booking.isCancelled ? COLORS.error : COLORS.success}
           />
           <ThemedText style={styles.resultTitle}>
             {booking.isCancelled ? "Booking Cancelled" : "Booking Found"}
           </ThemedText>
         </View>
         <View
-          style={StyleSheet.flatten([
+          style={[
             styles.refBadge,
             { backgroundColor: isDark ? `${primaryColor}22` : `${primaryColor}14` },
-          ])}
+          ]}
         >
-          <ThemedText style={StyleSheet.flatten([styles.refText, { color: primaryColor }])}>
+          <ThemedText style={[styles.refText, { color: primaryColor }]}>
             {booking.bookingRef}
           </ThemedText>
         </View>
       </View>
 
-      <View style={StyleSheet.flatten([styles.divider, { backgroundColor: colors.border }])} />
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
       {Platform.OS === "web" && booking.bookingRef && (
         <>
@@ -326,7 +329,7 @@ function BookingResultCard({
             restaurantAddress={restaurant?.address ?? ""}
             variant="compact"
           />
-          <View style={StyleSheet.flatten([styles.divider, { backgroundColor: colors.border }])} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
         </>
       )}
 
@@ -339,7 +342,7 @@ function BookingResultCard({
 
       {!booking.isCancelled && (
         <>
-          <View style={StyleSheet.flatten([styles.divider, { backgroundColor: colors.border }])} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <Pressable style={styles.cancelBtn} onPress={onCancel}>
             <Ionicons name="trash-outline" size={15} color={COLORS.error} />
             <ThemedText style={styles.cancelBtnText}>Cancel This Booking</ThemedText>
@@ -349,10 +352,10 @@ function BookingResultCard({
 
       {booking.isCancelled && (
         <>
-          <View style={StyleSheet.flatten([styles.divider, { backgroundColor: colors.border }])} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <View style={styles.cancelledContent}>
             <Ionicons name="close-circle" size={15} color={COLORS.error} />
-            <ThemedText style={StyleSheet.flatten([styles.cancelledText, { color: COLORS.error }])}>
+            <ThemedText style={[styles.cancelledText, { color: COLORS.error }]}>
               This booking has been cancelled.
             </ThemedText>
           </View>
@@ -371,95 +374,83 @@ const styles = StyleSheet.create({
   wideRow: { flexDirection: "row", gap: 24, alignItems: "flex-start" },
   wideCol: { flex: 1 },
   searchCard: {
-    borderRadius: 14,
+    borderRadius: BORDER_RADIUS.card,
     borderWidth: 1,
-    padding: 20,
-    gap: 12,
+    padding: SPACING.xl,
+    gap: SPACING.md,
     width: "100%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    ...SHADOWS.md,
   },
-  label: { fontSize: 13, fontWeight: "600", letterSpacing: 0.2 },
+  label: { ...TYPOGRAPHY.label, letterSpacing: 0.2 },
   searchBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: SPACING.sm,
     ...BUTTON_SIZES.primary,
-    borderRadius: 10,
+    borderRadius: BORDER_RADIUS.lg,
     marginTop: 4,
   },
-  searchBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  helpText: { fontSize: 12, textAlign: "center", lineHeight: 18, marginTop: 4 },
+  searchBtnText: { color: COLORS.white, ...TYPOGRAPHY.bodyBold, fontWeight: "700" },
+  helpText: { ...TYPOGRAPHY.caption, textAlign: "center", lineHeight: 18, marginTop: 4 },
   resultCard: {
-    borderRadius: 14,
+    borderRadius: BORDER_RADIUS.card,
     borderWidth: 1,
-    padding: 24,
-    marginTop: 20,
+    padding: SPACING.xxl,
+    marginTop: SPACING.xl,
     width: "100%",
     alignItems: "center",
-    gap: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    gap: SPACING.lg,
+    ...SHADOWS.md,
   },
-  notFound: { fontSize: 15, textAlign: "center" },
+  notFound: { ...TYPOGRAPHY.body, textAlign: "center" },
   detailCard: {
-    borderRadius: 14,
+    borderRadius: BORDER_RADIUS.card,
     borderWidth: 1,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    ...SHADOWS.md,
   },
   cardHeader: {
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 16,
+    gap: SPACING.xsm,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.xl,
+    paddingBottom: SPACING.lg,
   },
-  resultHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
-  resultTitle: { fontSize: 18, fontWeight: "700" },
-  refBadge: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  refText: { fontSize: 16, fontWeight: "700", letterSpacing: 0.3 },
+  resultHeader: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
+  resultTitle: { ...TYPOGRAPHY.h3 },
+  refBadge: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  refText: { ...TYPOGRAPHY.bodyBold, fontWeight: "700", letterSpacing: 0.3 },
   divider: { height: 1 },
   cancelBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
     paddingVertical: 14,
   },
-  cancelBtnText: { color: COLORS.error, fontSize: 15, fontWeight: "600" },
+  cancelBtnText: { color: COLORS.error, ...TYPOGRAPHY.bodyBold },
   cancelledContent: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
     paddingVertical: 14,
   },
-  cancelledText: { fontSize: 15, fontWeight: "600" },
-  recentSection: { marginTop: 20, gap: 10, width: "100%" },
-  recentTitle: { fontSize: 11, fontWeight: "700", letterSpacing: 0.8, marginBottom: 2 },
+  cancelledText: { ...TYPOGRAPHY.bodyBold },
+  recentSection: { marginTop: SPACING.xl, gap: SPACING.xsm, width: "100%" },
+  recentTitle: { ...TYPOGRAPHY.labelSmall, fontWeight: "700", letterSpacing: 0.8, marginBottom: 2 },
   recentCard: {
-    borderRadius: 14,
+    borderRadius: BORDER_RADIUS.card,
     borderWidth: 1,
     padding: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    ...SHADOWS.md,
   },
-  recentCardRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  recentCardRow: { flexDirection: "row", alignItems: "center", gap: SPACING.md },
   recentRef: { fontSize: 14, fontWeight: "700", letterSpacing: -0.2, flex: 1 },
-  recentMeta: { fontSize: 12 },
+  recentMeta: { ...TYPOGRAPHY.caption },
 });

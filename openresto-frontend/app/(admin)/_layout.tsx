@@ -49,7 +49,7 @@ function AdminLayoutInner() {
       document.title = `${page} | ${brand.appName}`;
     };
 
-    const last = segments[segments.length - 1];
+    const last = segments[segments.length - 1] as string | undefined;
     if (last === "dashboard") {
       setTabTitle("Dashboard");
     } else if (last === "settings") {

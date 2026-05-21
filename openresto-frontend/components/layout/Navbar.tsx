@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
 import { useTheme } from "@/context/ThemeContext";
-import { BUTTON_SIZES } from "@/theme/theme";
+import { BUTTON_SIZES, BORDER_RADIUS, TYPOGRAPHY } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
@@ -33,6 +33,8 @@ const NAV_LINKS = [
   },
 ];
 
+const NAV_HEIGHT = 64;
+
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -48,12 +50,12 @@ export default function Navbar() {
 
   return (
     <ThemedView
-      style={StyleSheet.flatten([
+      style={[
         styles.nav,
         {
           borderBottomColor: colors.border,
           paddingTop: insets.top,
-          height: 64 + insets.top,
+          height: NAV_HEIGHT + insets.top,
         },
         Platform.OS === "web" &&
           ({
@@ -61,14 +63,14 @@ export default function Navbar() {
             top: 0,
             zIndex: 100,
           } as unknown as ViewStyle),
-      ])}
+      ]}
     >
-      <View style={StyleSheet.flatten([styles.inner, isMobile && { paddingHorizontal: 12 }])}>
+      <View style={[styles.inner, isMobile && { paddingHorizontal: 12 }]}>
         <View style={styles.leftGroup}>
           {showBack && (
             <Pressable
               onPress={() => router.back()}
-              style={StyleSheet.flatten([styles.backBtn, isMobile && { marginLeft: -8 }])}
+              style={[styles.backBtn, isMobile && { marginLeft: -8 }]}
               accessibilityLabel="Go back"
             >
               <Ionicons name="chevron-back" size={22} color={primaryColor} />
@@ -76,7 +78,7 @@ export default function Navbar() {
           )}
 
           <Link href="/" asChild>
-            <Pressable style={StyleSheet.flatten([styles.brand, { flexShrink: 1 }])}>
+            <Pressable style={styles.brand}>
               {brand.logoUrl ? (
                 <Image
                   source={{ uri: brand.logoUrl }}
@@ -85,11 +87,7 @@ export default function Navbar() {
                 />
               ) : (
                 <ThemedText
-                  style={StyleSheet.flatten([
-                    styles.brandText,
-                    { color: primaryColor },
-                    isTiny && { fontSize: 18 },
-                  ])}
+                  style={[styles.brandText, { color: primaryColor }, isTiny && { fontSize: 18 }]}
                   numberOfLines={1}
                 >
                   {brand.appName}
@@ -99,7 +97,7 @@ export default function Navbar() {
           </Link>
         </View>
 
-        <View style={StyleSheet.flatten([styles.links, isMobile && { gap: 0 }])}>
+        <View style={[styles.links, isMobile && { gap: 0 }]}>
           {visibleLinks.map(({ label, href, match }) => {
             const active = match(pathname);
             return (
@@ -111,21 +109,21 @@ export default function Navbar() {
                   ])}
                 >
                   <ThemedText
-                    style={StyleSheet.flatten([
+                    style={[
                       styles.linkText,
                       { color: active ? primaryColor : colors.muted },
                       isMobile && { fontSize: 14 },
-                    ])}
+                    ]}
                   >
                     {label}
                   </ThemedText>
                   {active && (
                     <View
-                      style={StyleSheet.flatten([
+                      style={[
                         styles.linkUnderline,
                         { backgroundColor: primaryColor },
                         isMobile && { left: 8, right: 8 },
-                      ])}
+                      ]}
                     />
                   )}
                 </Pressable>
@@ -136,13 +134,11 @@ export default function Navbar() {
           <Pressable
             onPress={toggle}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            style={({ hovered }: any) =>
-              StyleSheet.flatten([
-                styles.themeBtn,
-                isMobile && { marginLeft: 0 },
-                hovered && { opacity: 0.7 },
-              ])
-            }
+            style={({ hovered }: any) => [
+              styles.themeBtn,
+              isMobile && { marginLeft: 0 },
+              hovered && { opacity: 0.7 },
+            ]}
             accessibilityLabel={isDark ? "Switch to light mode" : "Switch to dark mode"}
           >
             <Ionicons
@@ -161,7 +157,7 @@ const styles = StyleSheet.create({
   nav: {
     width: "100%",
     borderBottomWidth: 1,
-    height: 64,
+    height: NAV_HEIGHT,
     justifyContent: "center",
   },
   inner: {
@@ -184,7 +180,7 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 36,
     height: 36,
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.md,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: -18,
@@ -192,10 +188,11 @@ const styles = StyleSheet.create({
   },
   brand: {
     paddingVertical: 4,
+    flexShrink: 1,
   },
   brandText: {
+    ...TYPOGRAPHY.h2,
     fontSize: 20,
-    fontWeight: "800",
     letterSpacing: -0.5,
   },
   links: {
@@ -227,7 +224,7 @@ const styles = StyleSheet.create({
   themeBtn: {
     width: 36,
     height: 36,
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.md,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 4,

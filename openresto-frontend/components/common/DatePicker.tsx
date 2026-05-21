@@ -3,7 +3,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Modal, Pressable, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getThemeColors, COLORS } from "@/theme/theme";
+import { getThemeColors, COLORS, FORM_SIZES, BORDER_RADIUS } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 
 function generateDateOptions(): { label: string; value: string }[] {
@@ -65,7 +65,7 @@ export default function DatePicker({
       >
         <Pressable style={styles.backdrop} onPress={() => setModalVisible(false)}>
           <ThemedView style={[styles.modalView, { borderColor }]}>
-            <ThemedText type="defaultSemiBold" style={styles.modalTitle}>
+            <ThemedText type="bodyBold" style={styles.modalTitle}>
               Select a date
             </ThemedText>
             <FlatList
@@ -122,23 +122,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    height: 44,
+    height: FORM_SIZES.inputHeight,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: FORM_SIZES.inputBorderRadius,
+    paddingHorizontal: FORM_SIZES.inputPaddingH,
   },
   chevron: {
     fontSize: 14,
   },
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
   },
   modalView: {
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.card,
     borderWidth: 1,
     maxHeight: 400,
     width: "100%",

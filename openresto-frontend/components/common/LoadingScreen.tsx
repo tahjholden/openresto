@@ -64,13 +64,13 @@ export default function LoadingScreen({
   return (
     <View style={[styles.container, { backgroundColor: colors.page }]}>
       <Animated.View
-        style={StyleSheet.flatten([
+        style={[
           styles.content,
           {
             opacity: fadeAnim,
             transform: [{ scale: scaleAnim }],
           },
-        ])}
+        ]}
       >
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
           <MaterialCommunityIcons

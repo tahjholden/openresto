@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, BUTTON_SIZES, getThemeColors } from "@/theme/theme";
+import { COLORS, BORDER_RADIUS, BUTTON_SIZES, SHADOWS, SPACING, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import PageContainer from "@/components/layout/PageContainer";
 import { useBrand } from "@/context/BrandContext";
@@ -96,7 +96,7 @@ export default function BookingConfirmationScreen() {
       <PageContainer>
         <View style={[styles.successHeader, { paddingTop: isWide ? 48 : 20 }]}>
           <View style={styles.checkCircle}>
-            <Ionicons name="checkmark" size={32} color="#fff" />
+            <Ionicons name="checkmark" size={32} color={COLORS.white} />
           </View>
           <ThemedText style={styles.title}>Booking Confirmed</ThemedText>
           <ThemedText style={[styles.subtitle, { color: colors.muted }]}>
@@ -210,9 +210,9 @@ function RefCard({
             <Ionicons
               name={copied ? "checkmark" : "copy-outline"}
               size={14}
-              color={copied ? "#16a34a" : accent}
+              color={copied ? COLORS.success : accent}
             />
-            <ThemedText style={[styles.copyBtnText, { color: copied ? "#16a34a" : accent }]}>
+            <ThemedText style={[styles.copyBtnText, { color: copied ? COLORS.success : accent }]}>
               {copied ? "Copied" : "Copy"}
             </ThemedText>
           </Pressable>
@@ -230,14 +230,14 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12, padding: 24 },
   notFoundText: { fontSize: 16, marginTop: 8 },
   retryBtn: {
-    marginTop: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 10,
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.xsm,
+    borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
   },
   retryBtnText: { fontSize: 14, fontWeight: "600" },
-  successHeader: { alignItems: "center", paddingBottom: 16, gap: 10 },
+  successHeader: { alignItems: "center", paddingBottom: SPACING.lg, gap: SPACING.xsm },
   checkCircle: {
     width: 56,
     height: 56,
@@ -247,76 +247,64 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 4,
   },
-  title: { fontSize: 26, fontWeight: "800", letterSpacing: -0.5, textAlign: "center" },
-  subtitle: { fontSize: 15, textAlign: "center", lineHeight: 22, maxWidth: 400 },
+  title: { ...TYPOGRAPHY.h1, textAlign: "center" },
+  subtitle: { ...TYPOGRAPHY.body, textAlign: "center", maxWidth: 400 },
   refCard: {
-    borderRadius: 14,
+    borderRadius: BORDER_RADIUS.card,
     borderWidth: 1,
-    padding: 24,
+    padding: SPACING.xxl,
     alignItems: "center",
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    gap: SPACING.md,
+    ...SHADOWS.md,
   },
-  refLabel: { fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8 },
+  refLabel: { ...TYPOGRAPHY.labelSmall, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.8 },
   refRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: SPACING.xsm,
     flexWrap: "wrap",
     justifyContent: "center",
   },
-  refBadge: { ...BUTTON_SIZES.secondary, borderRadius: 10 },
-  refValue: { fontSize: 22, fontWeight: "800", letterSpacing: -0.3 },
+  refBadge: { ...BUTTON_SIZES.secondary, borderRadius: BORDER_RADIUS.lg },
+  refValue: { ...TYPOGRAPHY.h2, fontWeight: "800" },
   copyBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: SPACING.xsm,
+    paddingVertical: SPACING.xxs,
+    borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
   },
-  copyBtnText: { fontSize: 12, fontWeight: "600" },
-  refHint: { fontSize: 12, textAlign: "center" },
-  wideRow: { flexDirection: "row", gap: 20, alignItems: "flex-start", marginTop: 16 },
-  narrowGap: { gap: 16, marginTop: 16 },
+  copyBtnText: { ...TYPOGRAPHY.caption, fontWeight: "600" },
+  refHint: { ...TYPOGRAPHY.caption, textAlign: "center" },
+  wideRow: { flexDirection: "row", gap: SPACING.xl, alignItems: "flex-start", marginTop: SPACING.lg },
+  narrowGap: { gap: SPACING.lg, marginTop: SPACING.lg },
   wideCol: { flex: 1 },
   detailCard: {
-    borderRadius: 14,
+    borderRadius: BORDER_RADIUS.card,
     borderWidth: 1,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    ...SHADOWS.md,
   },
   actionCard: {
-    borderRadius: 14,
+    borderRadius: BORDER_RADIUS.card,
     borderWidth: 1,
-    padding: 16,
-    gap: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    padding: SPACING.lg,
+    gap: SPACING.xsm,
+    ...SHADOWS.md,
   },
-  actions: { gap: 10, marginTop: 16 },
-  actionsWide: { flexDirection: "row", gap: 12, marginTop: 16 },
+  actions: { gap: SPACING.xsm, marginTop: SPACING.lg },
+  actionsWide: { flexDirection: "row", gap: SPACING.md, marginTop: SPACING.lg },
   secondaryBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: SPACING.sm,
     paddingVertical: 13,
-    borderRadius: 10,
+    borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
     flex: 1,
   },
-  secondaryBtnText: { fontSize: 15, fontWeight: "600" },
+  secondaryBtnText: { ...TYPOGRAPHY.bodyBold },
 });

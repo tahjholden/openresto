@@ -10,6 +10,9 @@ export const COLORS = {
   warning: "#f59e0b",
   info: "#3b82f6",
 
+  white: "#ffffff",
+  black: "#000000",
+
   text: {
     light: "#000000",
     dark: "#ffffff",
@@ -97,8 +100,10 @@ export const BADGE_COLORS = {
 };
 
 export const SPACING = {
+  xxs: 6,
   xs: 4,
   sm: 8,
+  xsm: 10,
   md: 12,
   lg: 16,
   xl: 20,
@@ -139,10 +144,26 @@ export const BORDER_RADIUS = {
   lg: 10,
   xl: 12,
   card: 14,
+  modal: 16,
   full: 9999,
 };
 
+// Standard dimensions for form controls — centralises the "44px input" convention
+export const FORM_SIZES = {
+  inputHeight: 44,
+  inputSmHeight: 36,
+  inputBorderRadius: BORDER_RADIUS.md,
+  inputPaddingH: 12,
+  inputFontSize: 15,
+};
+
 export const TYPOGRAPHY = {
+  // Large page-level title (dashboard, full-page screens)
+  pageTitle: {
+    fontSize: 32,
+    fontWeight: "800" as const,
+    letterSpacing: -0.6,
+  },
   h1: {
     fontSize: 26,
     fontWeight: "800" as const,
@@ -215,6 +236,14 @@ export const SHADOWS = {
     shadowRadius: 12,
     elevation: 4,
   },
+  // For modals/dialogs that float above page content
+  popup: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 10,
+  },
 };
 
 export type ThemeColors = ReturnType<typeof getThemeColors>;
@@ -228,6 +257,7 @@ export const getThemeColors = (isDark: boolean) => ({
   input: isDark ? COLORS.input.dark : COLORS.input.light,
   border: isDark ? COLORS.border.dark : COLORS.border.light,
   overlay: isDark ? COLORS.overlay.dark : COLORS.overlay.light,
+  disabled: isDark ? COLORS.disabled.dark : COLORS.disabled.light,
   success: COLORS.success,
   error: COLORS.error,
   warning: COLORS.warning,

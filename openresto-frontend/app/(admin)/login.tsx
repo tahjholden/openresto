@@ -7,7 +7,7 @@ import { useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, TextInput, View, Platform } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, getThemeColors } from "@/theme/theme";
+import { COLORS, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -232,15 +232,7 @@ export default function AdminLoginScreen() {
             }}
           />
           <ThemedText style={styles.title}>Security question</ThemedText>
-          <View
-            style={StyleSheet.flatten([
-              styles.questionBox,
-              {
-                borderColor: colors.border,
-                backgroundColor: colors.card,
-              },
-            ])}
-          >
+          <View style={[styles.questionBox, { borderColor: colors.border, backgroundColor: colors.card }]}>
             <Ionicons name="help-circle-outline" size={18} color={primaryColor} />
             <ThemedText style={[styles.questionText, { color: mutedColor }]}>
               {pvqQuestion}
@@ -405,48 +397,43 @@ const styles = StyleSheet.create({
   brand: { fontSize: 22, fontWeight: "800", letterSpacing: -0.5 },
   brandBadge: { fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1 },
   card: {
-    borderRadius: 16,
+    borderRadius: BORDER_RADIUS.modal,
     borderWidth: 1,
     padding: 28,
     gap: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    ...SHADOWS.lg,
   },
   title: { fontSize: 24, fontWeight: "800", letterSpacing: -0.5, marginBottom: 4 },
-  subtitle: { fontSize: 14, marginBottom: 16 },
-  fields: { gap: 12 },
+  subtitle: { ...TYPOGRAPHY.body, fontSize: 14, marginBottom: SPACING.lg },
+  fields: { gap: SPACING.md },
   field: { gap: 4 },
-  label: { fontSize: 13, fontWeight: "600", marginBottom: 2 },
+  label: { ...TYPOGRAPHY.label, marginBottom: 2 },
   errorBanner: {
     backgroundColor: "rgba(220,38,38,0.08)",
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
     marginTop: 4,
   },
-  errorText: { color: "#dc2626", fontSize: 14 },
-  submitBtn: { marginTop: 8 },
+  errorText: { color: COLORS.error, fontSize: 14 },
+  submitBtn: { marginTop: SPACING.sm },
   forgotLink: {
-    fontSize: 13,
-    fontWeight: "600",
+    ...TYPOGRAPHY.label,
     textAlign: "center",
     marginTop: 12,
     cursor: "pointer" as const,
   },
   backLink: { fontSize: 14, textAlign: "center", cursor: "pointer" as const },
-  backBtn: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 12 },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: SPACING.md },
   backBtnText: { fontSize: 13 },
   questionBox: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 8,
+    gap: SPACING.sm,
     borderWidth: 1,
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
   },
   questionText: { flex: 1, fontSize: 14, lineHeight: 20 },
-  successIcon: { alignItems: "center", marginBottom: 8 },
+  successIcon: { alignItems: "center", marginBottom: SPACING.sm },
 });

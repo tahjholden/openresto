@@ -8,7 +8,7 @@ import BookingForm, { BookingFormData } from "@/components/booking/BookingForm";
 import { createBooking } from "@/api/bookings";
 import PageContainer from "@/components/layout/PageContainer";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getThemeColors } from "@/theme/theme";
+import { COLORS, BORDER_RADIUS, getThemeColors } from "@/theme/theme";
 import { convertLocalToUtc } from "@/utils/date";
 import BookingSkeleton from "@/components/booking/BookingSkeleton";
 
@@ -132,13 +132,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   errorBanner: {
-    backgroundColor: "rgba(229,62,62,0.1)",
-    borderRadius: 8,
+    backgroundColor: "rgba(220,38,38,0.08)",
+    borderRadius: BORDER_RADIUS.md,
     padding: 12,
     marginBottom: 8,
   },
   errorText: {
-    color: "#dc2626",
+    color: COLORS.error,
     fontSize: 14,
   },
 });

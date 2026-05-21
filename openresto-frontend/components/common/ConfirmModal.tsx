@@ -1,7 +1,7 @@
 import { Modal, Pressable, StyleSheet, View, TouchableWithoutFeedback } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, BUTTON_SIZES, getThemeColors } from "@/theme/theme";
+import { COLORS, BUTTON_SIZES, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 
 interface ConfirmModalProps {
@@ -34,7 +34,7 @@ export default function ConfirmModal({
       <Pressable style={styles.backdrop} onPress={onCancel}>
         <TouchableWithoutFeedback>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <ThemedText style={styles.title}>{title}</ThemedText>
+            <ThemedText type="h3">{title}</ThemedText>
             <ThemedText style={[styles.message, { color: colors.muted }]}>{message}</ThemedText>
             <View style={[styles.actions, { borderTopColor: colors.border }]}>
               <Pressable
@@ -48,7 +48,6 @@ export default function ConfirmModal({
               <Pressable
                 style={[
                   styles.btn,
-                  styles.confirmBtn,
                   {
                     backgroundColor: destructive
                       ? COLORS.error
@@ -73,25 +72,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    padding: SPACING.xxl,
   },
   card: {
-    borderRadius: 16,
+    borderRadius: BORDER_RADIUS.modal,
     borderWidth: 1,
-    padding: 24,
+    padding: SPACING.xxl,
     width: "100%",
     maxWidth: 400,
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 24,
-    elevation: 10,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: -0.3,
+    gap: SPACING.md,
+    ...SHADOWS.popup,
   },
   message: {
     fontSize: 14,
@@ -99,28 +89,26 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: "row",
-    gap: 10,
-    marginTop: 8,
-    paddingTop: 16,
+    gap: SPACING.xsm,
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.lg,
     borderTopWidth: 1,
   },
   btn: {
     flex: 1,
     ...BUTTON_SIZES.secondary,
-    borderRadius: 10,
+    borderRadius: BORDER_RADIUS.lg,
     alignItems: "center",
   },
   cancelBtn: {
     borderWidth: 1,
   },
-  confirmBtn: {},
   btnText: {
-    fontSize: 15,
-    fontWeight: "600",
+    ...TYPOGRAPHY.bodyBold,
   },
   confirmBtnText: {
-    color: "#ffffff",
-    fontSize: 15,
+    color: COLORS.white,
+    ...TYPOGRAPHY.bodyBold,
     fontWeight: "700",
   },
 });

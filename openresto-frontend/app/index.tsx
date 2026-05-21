@@ -16,6 +16,7 @@ import Navbar from "@/components/layout/Navbar";
 import PageContainer from "@/components/layout/PageContainer";
 import RestaurantCard from "@/components/restaurant/RestaurantCard";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { COLORS } from "@/theme/theme";
 
 export default function HomeScreen() {
   const [restaurants, setRestaurants] = useState<RestaurantDto[]>([]);
@@ -44,7 +45,7 @@ export default function HomeScreen() {
       {Platform.OS !== "web" && <Stack.Screen options={{ title: brand.appName }} />}
       <Navbar />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <View style={StyleSheet.flatten([styles.hero, { backgroundColor: primaryColor }])}>
+        <View style={[styles.hero, { backgroundColor: primaryColor }]}>
           <View style={styles.heroOverlay}>
             <View style={styles.heroContent}>
               <ThemedText style={styles.heroEyebrow}>Reserve online, instantly</ThemedText>
@@ -59,7 +60,7 @@ export default function HomeScreen() {
         </View>
 
         <PageContainer>
-          <ThemedText style={StyleSheet.flatten([styles.sectionLabel, { color: colors.muted }])}>
+          <ThemedText style={[styles.sectionLabel, { color: colors.muted }]}>
             {`${restaurants.length} restaurant${restaurants.length !== 1 ? "s" : ""}`}
           </ThemedText>
 
@@ -75,13 +76,13 @@ export default function HomeScreen() {
               {restaurants.map((r) => (
                 <View
                   key={r.id}
-                  style={StyleSheet.flatten([
+                  style={[
                     styles.cardWrapper,
                     {
                       width: cardWidth as DimensionValue,
                       minWidth: numColumns === 1 ? "100%" : 280,
                     },
-                  ])}
+                  ]}
                 >
                   <RestaurantCard restaurant={r} />
                 </View>
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   heroEyebrow: {
-    color: "#fff",
+    color: COLORS.white,
     fontSize: 14,
     fontWeight: "700",
     textTransform: "uppercase",
@@ -126,7 +127,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   heroTitle: {
-    color: "#fff",
+    color: COLORS.white,
     fontSize: 48,
     fontWeight: "900",
     letterSpacing: -1,
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   heroSubtitle: {
-    color: "#fff",
+    color: COLORS.white,
     fontSize: 18,
     opacity: 0.9,
     maxWidth: 500,

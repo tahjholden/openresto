@@ -1,13 +1,11 @@
 import { forwardRef } from "react";
 import { StyleSheet, TextInput, TextInputProps, View } from "react-native";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getThemeColors } from "@/theme/theme";
+import { FORM_SIZES, getThemeColors } from "@/theme/theme";
 
 const Input = forwardRef<TextInput, TextInputProps>(function Input({ style, ...props }, ref) {
   const isDark = useColorScheme() === "dark";
   const colors = getThemeColors(isDark);
-  const borderColor = colors.border;
-  const placeholderColor = colors.muted;
 
   return (
     <View style={styles.container}>
@@ -15,10 +13,10 @@ const Input = forwardRef<TextInput, TextInputProps>(function Input({ style, ...p
         ref={ref}
         style={[
           styles.input,
-          { color: colors.text, borderColor, backgroundColor: colors.input },
+          { color: colors.text, borderColor: colors.border, backgroundColor: colors.input },
           style,
         ]}
-        placeholderTextColor={placeholderColor}
+        placeholderTextColor={colors.muted}
         {...props}
       />
     </View>
@@ -32,10 +30,10 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   input: {
-    height: 44,
+    height: FORM_SIZES.inputHeight,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 15,
+    borderRadius: FORM_SIZES.inputBorderRadius,
+    paddingHorizontal: FORM_SIZES.inputPaddingH,
+    fontSize: FORM_SIZES.inputFontSize,
   },
 });

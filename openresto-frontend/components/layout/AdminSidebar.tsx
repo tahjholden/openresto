@@ -6,7 +6,7 @@ import { ThemedText } from "@/components/themed-text";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useTheme } from "@/context/ThemeContext";
 import { logout } from "@/api/auth";
-import { COLORS, BUTTON_SIZES, getThemeColors } from "@/theme/theme";
+import { COLORS, BORDER_RADIUS, FORM_SIZES, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 import { hexToRgba } from "@/utils/colors";
 import { Ionicons } from "@expo/vector-icons";
@@ -89,7 +89,7 @@ export default function AdminSidebar() {
 
   return (
     <ThemedView
-      lightColor="#ffffff"
+      lightColor={COLORS.white}
       style={[
         styles.sidebar,
         {
@@ -103,9 +103,9 @@ export default function AdminSidebar() {
     >
       <View style={styles.brand}>
         <View style={[styles.brandIcon, { backgroundColor: PRIMARY }]}>
-          <Ionicons name="restaurant-outline" size={16} color="#fff" />
+          <Ionicons name="restaurant-outline" size={16} color={COLORS.white} />
         </View>
-        <View style={[styles.brandText, { flex: 1 }]}>
+        <View style={styles.brandTextGroup}>
           <ThemedText style={styles.brandName} numberOfLines={1}>
             {brand.appName}
           </ThemedText>
@@ -171,7 +171,7 @@ export default function AdminSidebar() {
             {
               color: colors.text,
               borderColor: colors.border,
-              backgroundColor: colors.input ?? (isDark ? "#1e1e1e" : "#f5f5f5"),
+              backgroundColor: colors.input,
             },
           ]}
           placeholder="Email or reference…"
@@ -195,10 +195,10 @@ export default function AdminSidebar() {
           ]}
         >
           {lookupLoading ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={COLORS.white} />
           ) : (
             <>
-              <Ionicons name="search-outline" size={15} color="#fff" />
+              <Ionicons name="search-outline" size={15} color={COLORS.white} />
               <ThemedText style={styles.lookupBtnText}>Search</ThemedText>
             </>
           )}
@@ -281,20 +281,21 @@ const styles = StyleSheet.create({
   brandIcon: {
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.md,
     alignItems: "center",
     justifyContent: "center",
   },
-  brandText: {
+  brandTextGroup: {
+    flex: 1,
     gap: 1,
   },
   brandName: {
-    fontSize: 15,
+    ...TYPOGRAPHY.bodyBold,
     fontWeight: "800",
     letterSpacing: -0.3,
   },
   brandSub: {
-    fontSize: 11,
+    ...TYPOGRAPHY.captionSmall,
     fontWeight: "500",
   },
   divider: {
@@ -312,7 +313,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: BORDER_RADIUS.md,
     position: "relative",
     gap: 10,
   },
@@ -341,16 +342,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   lookupLabel: {
-    fontSize: 11,
+    ...TYPOGRAPHY.labelSmall,
     fontWeight: "700",
-    letterSpacing: 0.4,
     paddingLeft: 2,
   },
   lookupInput: {
-    height: 36,
-    paddingHorizontal: 10,
+    height: FORM_SIZES.inputSmHeight,
+    paddingHorizontal: FORM_SIZES.inputPaddingH,
     fontSize: 13,
-    borderRadius: 8,
+    borderRadius: FORM_SIZES.inputBorderRadius,
     borderWidth: 1,
   },
   lookupBtn: {
@@ -358,16 +358,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    height: 36,
-    borderRadius: 8,
+    height: FORM_SIZES.inputSmHeight,
+    borderRadius: FORM_SIZES.inputBorderRadius,
   },
   lookupBtnText: {
-    color: "#fff",
+    color: COLORS.white,
     fontSize: 13,
     fontWeight: "600",
   },
   lookupHint: {
-    fontSize: 11,
+    ...TYPOGRAPHY.captionSmall,
     paddingLeft: 2,
   },
   footer: {
@@ -379,8 +379,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    ...BUTTON_SIZES.secondary,
-    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: BORDER_RADIUS.md,
   },
   footerText: {
     fontSize: 13,

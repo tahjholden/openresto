@@ -209,8 +209,11 @@ public static partial class DatabaseExtensions
                             ""EncryptedPassword"" TEXT NOT NULL DEFAULT '',
                             ""EnableSsl"" INTEGER NOT NULL DEFAULT 1,
                             ""FromName"" TEXT,
-                            ""FromEmail"" TEXT
+                            ""FromEmail"" TEXT,
+                            ""SendBookingConfirmations"" INTEGER NOT NULL DEFAULT 0
                         )");
+
+                    AddColumnIfMissing("EmailSettings", "SendBookingConfirmations", "INTEGER NOT NULL DEFAULT 0");
 
                     db.Database.ExecuteSqlRaw(@"
                         CREATE TABLE IF NOT EXISTS ""BrandSettings"" (

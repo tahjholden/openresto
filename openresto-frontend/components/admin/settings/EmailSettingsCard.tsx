@@ -31,6 +31,8 @@ export function EmailSettingsCard({
   const [enableSsl, setEnableSsl] = useState(true);
   const [fromName, setFromName] = useState("");
   const [fromEmail, setFromEmail] = useState("");
+  const [sendBookingConfirmations, setSendBookingConfirmations] = useState(false);
+  const [showConfirmationWarning, setShowConfirmationWarning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -50,6 +52,7 @@ export function EmailSettingsCard({
       setFromName(s.fromName ?? "");
       setFromEmail(s.fromEmail ?? "");
       setIsConfigured(s.isConfigured);
+      setSendBookingConfirmations(s.sendBookingConfirmations ?? false);
     });
   }, []);
 
@@ -64,6 +67,7 @@ export function EmailSettingsCard({
       enableSsl,
       fromName: fromName || undefined,
       fromEmail: fromEmail || undefined,
+      sendBookingConfirmations,
     });
     setSaving(false);
     if (result) {
@@ -85,6 +89,7 @@ export function EmailSettingsCard({
       enableSsl,
       fromName: fromName || undefined,
       fromEmail: fromEmail || undefined,
+      sendBookingConfirmations,
     });
     setIsConfigured(true);
     const result = await testEmailConnection();
@@ -248,6 +253,72 @@ export function EmailSettingsCard({
                 />
               </View>
             </View>
+          </View>
+
+          <View style={{ gap: 8, marginTop: 4 }}>
+            <ThemedText style={styles.editorSectionTitle}>Booking Confirmations</ThemedText>
+            <Pressable
+              style={[
+                styles.secBtn,
+                {
+                  borderColor: sendBookingConfirmations ? primaryColor : borderColor,
+                  backgroundColor: sendBookingConfirmations ? `${primaryColor}10` : "transparent",
+                  alignItems: "center" as const,
+                  flexDirection: "row",
+                  gap: 8,
+                  paddingHorizontal: 12,
+                },
+                !isConfigured && { opacity: 0.4 },
+              ]}
+              onPress={() => {
+                if (!isConfigured) return;
+                const next = !sendBookingConfirmations;
+                setSendBookingConfirmations(next);
+                setShowConfirmationWarning(next);
+              }}
+            >
+              <Ionicons
+                name={sendBookingConfirmations ? "mail" : "mail-outline"}
+                size={16}
+                color={sendBookingConfirmations ? primaryColor : mutedColor}
+              />
+              <ThemedText
+                style={[
+                  styles.secBtnText,
+                  {
+                    color: sendBookingConfirmations ? primaryColor : mutedColor,
+                    fontWeight: sendBookingConfirmations ? "600" : "400",
+                  },
+                ]}
+              >
+                {sendBookingConfirmations ? "Confirmations enabled" : "Send confirmation emails"}
+              </ThemedText>
+            </Pressable>
+
+            {!isConfigured && (
+              <ThemedText style={[styles.secBtnText, { color: mutedColor, fontSize: 12, paddingHorizontal: 4 }]}>
+                Configure and save SMTP settings above to enable this.
+              </ThemedText>
+            )}
+
+            {showConfirmationWarning && sendBookingConfirmations && isConfigured && (
+              <View
+                style={[
+                  styles.successBanner,
+                  {
+                    backgroundColor: `${COLORS.warning}15`,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: `${COLORS.warning}40`,
+                  },
+                ]}
+              >
+                <Ionicons name="warning-outline" size={16} color={COLORS.warning} />
+                <ThemedText style={[styles.secBtnText, { color: COLORS.warning, flex: 1, padding: 4 }]}>
+                  Emails will be sent using your configured SMTP account. Save settings to apply.
+                </ThemedText>
+              </View>
+            )}
           </View>
 
           {msg && (

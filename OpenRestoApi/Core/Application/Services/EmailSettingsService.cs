@@ -19,7 +19,8 @@ public class EmailSettingsService(AppDbContext db, CredentialProtector protector
 
     public virtual async Task SaveAsync(
         string host, int port, string username, string? password,
-        bool enableSsl, string? fromName, string? fromEmail)
+        bool enableSsl, string? fromName, string? fromEmail,
+        bool sendBookingConfirmations = false)
     {
         EmailSettings? settings = await _db.Set<EmailSettings>().FirstOrDefaultAsync();
         if (settings == null)
@@ -34,6 +35,7 @@ public class EmailSettingsService(AppDbContext db, CredentialProtector protector
         settings.EnableSsl = enableSsl;
         settings.FromName = fromName;
         settings.FromEmail = fromEmail;
+        settings.SendBookingConfirmations = sendBookingConfirmations;
 
         if (!string.IsNullOrEmpty(password) && password != "••••••••")
         {

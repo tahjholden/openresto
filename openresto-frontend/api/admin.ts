@@ -389,6 +389,7 @@ export interface EmailSettingsDto {
   fromName?: string;
   fromEmail?: string;
   isConfigured: boolean;
+  sendBookingConfirmations: boolean;
 }
 
 export async function getEmailSettings(): Promise<EmailSettingsDto> {
@@ -404,6 +405,7 @@ export async function getEmailSettings(): Promise<EmailSettingsDto> {
       password: "",
       enableSsl: true,
       isConfigured: false,
+      sendBookingConfirmations: false,
     };
   }
 }

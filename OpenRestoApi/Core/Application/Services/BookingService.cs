@@ -1,3 +1,4 @@
+using System.Globalization;
 using OpenRestoApi.Core.Application.DTOs;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Application.Mappings;
@@ -11,7 +12,9 @@ public class BookingService(
     ISectionRepository sectionRepository,
     IRestaurantRepository restaurantRepository,
     IHoldService holdService,
-    BookingMapper mapper)
+    BookingMapper mapper,
+    EmailSettingsService? emailSettingsService = null,
+    IEmailService? emailService = null)
 {
     private readonly IBookingRepository _bookingRepository = bookingRepository;
     private readonly ITableRepository _tableRepository = tableRepository;
@@ -19,6 +22,8 @@ public class BookingService(
     private readonly IRestaurantRepository _restaurantRepository = restaurantRepository;
     private readonly IHoldService _holdService = holdService;
     private readonly BookingMapper _mapper = mapper;
+    private readonly EmailSettingsService? _emailSettingsService = emailSettingsService;
+    private readonly IEmailService? _emailService = emailService;
 
     /// <summary>
     /// Creates a booking after validating:
@@ -97,10 +102,29 @@ public class BookingService(
 
         Booking newBooking = await _bookingRepository.AddAsync(booking);
 
-        // 4. Release the hold now that the booking is confirmed
+        // 5. Release the hold now that the booking is confirmed
         if (!string.IsNullOrEmpty(bookingDto.HoldId))
         {
             _holdService.ReleaseHold(bookingDto.HoldId);
+        }
+
+        // 6. Send booking confirmation email (best-effort, never fails the booking)
+        if (_emailSettingsService != null && _emailService != null && !string.IsNullOrEmpty(newBooking.CustomerEmail))
+        {
+            try
+            {
+                var settings = await _emailSettingsService.GetAsync();
+                if (settings?.SendBookingConfirmations == true)
+                {
+                    string subject = $"Booking confirmed – {restaurant.Name}";
+                    string body = BuildConfirmationEmail(newBooking, restaurant);
+                    await _emailService.SendEmailAsync(newBooking.CustomerEmail, subject, body);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[BookingService] Confirmation email failed for ref {newBooking.BookingRef}: {ex.Message}");
+            }
         }
 
         return _mapper.ToDto(newBooking);
@@ -155,6 +179,66 @@ public class BookingService(
     public virtual async Task DeleteBookingAsync(int id)
     {
         await _bookingRepository.DeleteAsync(id);
+    }
+
+    private static string BuildConfirmationEmail(Booking booking, Restaurant restaurant)
+    {
+        TimeZoneInfo tz;
+        try { tz = TimeZoneInfo.FindSystemTimeZoneById(restaurant.Timezone); }
+        catch { tz = TimeZoneInfo.Utc; }
+
+        DateTime localDate = TimeZoneInfo.ConvertTimeFromUtc(booking.Date, tz);
+        string dateStr = localDate.ToString("dddd, d MMMM yyyy", CultureInfo.InvariantCulture);
+        string timeStr = localDate.ToString("h:mm tt", CultureInfo.InvariantCulture);
+
+        string specialReqs = string.IsNullOrWhiteSpace(booking.SpecialRequests)
+            ? ""
+            : $"<tr><td style='padding:8px 0;color:#6b7280;font-size:14px;'>Special requests</td><td style='padding:8px 0;font-size:14px;'>{System.Net.WebUtility.HtmlEncode(booking.SpecialRequests)}</td></tr>";
+
+        return $"""
+            <!DOCTYPE html>
+            <html>
+            <body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,sans-serif;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 0;">
+                <tr><td align="center">
+                  <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;padding:40px;border:1px solid #e5e7eb;">
+                    <tr><td style="padding-bottom:24px;border-bottom:1px solid #e5e7eb;">
+                      <h1 style="margin:0;font-size:22px;color:#111827;">{System.Net.WebUtility.HtmlEncode(restaurant.Name)}</h1>
+                      <p style="margin:4px 0 0;font-size:14px;color:#6b7280;">Booking confirmation</p>
+                    </td></tr>
+                    <tr><td style="padding:24px 0 16px;">
+                      <p style="margin:0;font-size:16px;color:#111827;">Your booking is confirmed!</p>
+                    </td></tr>
+                    <tr><td>
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="padding:8px 0;color:#6b7280;font-size:14px;">Reference</td>
+                          <td style="padding:8px 0;font-size:14px;font-weight:600;letter-spacing:0.05em;">{System.Net.WebUtility.HtmlEncode(booking.BookingRef ?? "")}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:8px 0;color:#6b7280;font-size:14px;">Date</td>
+                          <td style="padding:8px 0;font-size:14px;">{dateStr}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:8px 0;color:#6b7280;font-size:14px;">Time</td>
+                          <td style="padding:8px 0;font-size:14px;">{timeStr}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:8px 0;color:#6b7280;font-size:14px;">Guests</td>
+                          <td style="padding:8px 0;font-size:14px;">{booking.Seats}</td>
+                        </tr>
+                        {specialReqs}
+                      </table>
+                    </td></tr>
+                    <tr><td style="padding-top:24px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;">
+                      To cancel or manage your booking, visit the restaurant's booking page and use your reference number.
+                    </td></tr>
+                  </table>
+                </td></tr>
+              </table>
+            </body>
+            </html>
+            """;
     }
 
     public virtual async Task<bool> CancelBookingAsync(string bookingRef, string email)

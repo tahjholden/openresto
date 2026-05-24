@@ -3,6 +3,7 @@ import {
   getAdminBookings,
   adminGetTables,
   adminDeleteBooking,
+  adminLookupBookings,
   BookingDetailDto,
   SectionWithTables,
   BookingStatusFilter,
@@ -15,22 +16,23 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  TextInput,
   useWindowDimensions,
   View,
   Platform,
 } from "react-native";
 import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, getThemeColors } from "@/theme/theme";
+import { COLORS, FORM_SIZES, getThemeColors } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useBrand } from "@/context/BrandContext";
 
-// Refactored components
 import { StatusBadge } from "@/components/admin/bookings/StatusBadge";
 import { AvailabilityGrid } from "@/components/admin/bookings/AvailabilityGrid";
+import { BookingDetailPopup } from "@/components/admin/bookings/BookingDetailPopup";
 import { styles } from "@/components/admin/bookings/bookings.styles";
 
-type ViewMode = "list" | "grid";
+type ViewMode = "timetable" | "list";
 
 function fmtDate(d: Date) {
   return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
@@ -43,22 +45,35 @@ function isoDate(d: Date) {
   return `${year}-${month}-${day}`;
 }
 
+function initials(email: string) {
+  const name = email.split("@")[0].replace(/[._-]/g, " ").trim();
+  const parts = name.split(" ");
+  return parts.length > 1
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+}
+
 export default function AdminBookingsScreen() {
   const [restaurants, setRestaurants] = useState<RestaurantDto[]>([]);
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<number | null>(null);
   const [bookings, setBookings] = useState<BookingDetailDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewMode] = useState<ViewMode>("timetable");
   const [statusFilter, setStatusFilter] = useState<BookingStatusFilter>("active");
 
-  // Grid state
   const [gridDate, setGridDate] = useState(new Date());
   const [gridSections, setGridSections] = useState<SectionWithTables[]>([]);
   const [gridBookings, setGridBookings] = useState<BookingDetailDto[]>([]);
   const [gridLoading, setGridLoading] = useState(false);
 
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [cancelTarget, setCancelTarget] = useState<BookingDetailDto | null>(null);
   const [showNewModal, setShowNewModal] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const [lookupQuery, setLookupQuery] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupStatus, setLookupStatus] = useState<"idle" | "not_found" | "multiple">("idle");
 
   const router = useRouter();
   const {
@@ -69,38 +84,36 @@ export default function AdminBookingsScreen() {
   const searchQuery = emailParam || bookingRefParam || null;
 
   useEffect(() => {
-    if (create === "1") {
-      setShowNewModal(true);
-    }
+    if (create === "1") setShowNewModal(true);
   }, [create]);
+
   const isDark = useColorScheme() === "dark";
   const colors = getThemeColors(isDark);
   const { width } = useWindowDimensions();
   const brand = useBrand();
   const PRIMARY = brand.primaryColor || COLORS.primary;
 
+  const selectedRestaurant = restaurants.find((r) => r.id === selectedRestaurantId);
+  const openTime = selectedRestaurant?.openTime ?? "09:00";
+  const closeTime = selectedRestaurant?.closeTime ?? "22:00";
+
   const borderColor = colors.border;
   const cardBg = colors.card;
-  const headerBg = isDark ? "#28292b" : "#f8f8f9";
   const mutedColor = colors.muted;
   const isWide = width >= 640;
 
-  // Load restaurants once on mount
   useEffect(() => {
     let cancelled = false;
     fetchRestaurants().then((data) => {
       if (cancelled) return;
       setRestaurants(data);
-      if (data.length > 0) {
-        setSelectedRestaurantId(data[0].id);
-      }
+      if (data.length > 0) setSelectedRestaurantId(data[0].id);
     });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // Fetch bookings whenever restaurant, filter, or search query changes
   useEffect(() => {
     if (searchQuery) {
       let cancelled = false;
@@ -127,12 +140,12 @@ export default function AdminBookingsScreen() {
     return () => {
       cancelled = true;
     };
-  }, [statusFilter, selectedRestaurantId, searchQuery, emailParam, bookingRefParam]);
+  }, [statusFilter, selectedRestaurantId, searchQuery, emailParam, bookingRefParam, refreshKey]);
 
   const handleSelectRestaurant = (id: number) => {
     if (id === selectedRestaurantId) return;
-    setSelectedRestaurantId(id); // triggers the useEffect to refetch
-    if (viewMode === "grid") loadGrid(id, gridDate);
+    setSelectedRestaurantId(id);
+    if (viewMode === "timetable") loadGrid(id, gridDate);
   };
 
   async function loadGrid(restaurantId: number, date: Date) {
@@ -146,8 +159,8 @@ export default function AdminBookingsScreen() {
     setGridLoading(false);
   }
 
-  const switchToGrid = () => {
-    setViewMode("grid");
+  const switchToTimetable = () => {
+    setViewMode("timetable");
     if (selectedRestaurantId) loadGrid(selectedRestaurantId, gridDate);
   };
 
@@ -158,17 +171,50 @@ export default function AdminBookingsScreen() {
     if (selectedRestaurantId) loadGrid(selectedRestaurantId, next);
   };
 
+  // Load timetable on mount when restaurant is selected
+  useEffect(() => {
+    if (selectedRestaurantId && viewMode === "timetable") {
+      loadGrid(selectedRestaurantId, gridDate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRestaurantId]);
+
   const sorted = [...bookings].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
+  const handleLookup = async () => {
+    const q = lookupQuery.trim();
+    if (!q) return;
+    setLookupLoading(true);
+    setLookupStatus("idle");
+    try {
+      const results = await adminLookupBookings(q);
+      if (results.length === 0) {
+        setLookupStatus("not_found");
+      } else if (results.length === 1) {
+        setLookupQuery("");
+        setSelectedBookingId(results[0].id);
+      } else {
+        setLookupStatus("multiple");
+        const isEmail = q.includes("@");
+        router.replace({
+          pathname: "/(admin)/bookings",
+          params: isEmail ? { email: q } : { bookingRef: q },
+        });
+      }
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
   const todayCount = bookings.filter((b) => {
-    const bookingDate = new Date(b.date);
+    const bd = new Date(b.date);
     const today = new Date();
     return (
-      bookingDate.getDate() === today.getDate() &&
-      bookingDate.getMonth() === today.getMonth() &&
-      bookingDate.getFullYear() === today.getFullYear()
+      bd.getDate() === today.getDate() &&
+      bd.getMonth() === today.getMonth() &&
+      bd.getFullYear() === today.getFullYear()
     );
   }).length;
 
@@ -178,8 +224,8 @@ export default function AdminBookingsScreen() {
         <Stack.Screen
           options={{
             title:
-              viewMode === "grid"
-                ? "Availability"
+              viewMode === "timetable"
+                ? fmtDate(gridDate)
                 : statusFilter === "past"
                   ? "Past Bookings"
                   : statusFilter === "cancelled"
@@ -188,37 +234,77 @@ export default function AdminBookingsScreen() {
           }}
         />
       )}
-      {/* Header */}
+
+      {/* Page header */}
       <View style={styles.pageHeader}>
         <View style={{ flex: 1 }}>
           <ThemedText style={styles.pageTitle}>
-            {searchQuery
-              ? "Search Results"
-              : viewMode === "grid"
-                ? "Availability"
-                : statusFilter === "past"
-                  ? "Past Bookings"
-                  : statusFilter === "cancelled"
-                    ? "Cancelled Bookings"
-                    : "Live Bookings"}
+            {searchQuery ? "Search Results" : "Bookings"}
           </ThemedText>
           <ThemedText style={[styles.pageSub, { color: mutedColor }]}>
             {searchQuery
               ? `${bookings.length} result${bookings.length !== 1 ? "s" : ""} for "${searchQuery}"`
-              : viewMode === "list"
-                ? `${bookings.length} total · ${todayCount} today`
-                : fmtDate(gridDate)}
+              : viewMode === "timetable"
+                ? fmtDate(gridDate)
+                : `${bookings.length} total · ${todayCount} today`}
           </ThemedText>
         </View>
 
         <View style={styles.headerControls}>
+          {/* Lookup input */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <TextInput
+              style={[
+                {
+                  height: FORM_SIZES.inputSmHeight,
+                  paddingHorizontal: FORM_SIZES.inputPaddingH,
+                  fontSize: 13,
+                  borderRadius: FORM_SIZES.inputBorderRadius,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.input,
+                  color: colors.text,
+                  minWidth: 180,
+                },
+              ]}
+              placeholder="Email or reference…"
+              placeholderTextColor={colors.muted}
+              value={lookupQuery}
+              onChangeText={(t) => {
+                setLookupQuery(t);
+                if (lookupStatus !== "idle") setLookupStatus("idle");
+              }}
+              autoCapitalize="none"
+              returnKeyType="search"
+              onSubmitEditing={handleLookup}
+            />
+            <Pressable
+              onPress={handleLookup}
+              disabled={lookupLoading || !lookupQuery.trim()}
+              style={[
+                styles.newBookingBtn,
+                { backgroundColor: PRIMARY },
+                (!lookupQuery.trim() || lookupLoading) && { opacity: 0.5 },
+              ]}
+            >
+              {lookupLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="search-outline" size={15} color="#fff" />
+                  <ThemedText style={styles.newBookingBtnText}>Find</ThemedText>
+                </>
+              )}
+            </Pressable>
+          </View>
+
           {searchQuery ? (
             <Pressable
               style={[styles.newBookingBtn, { backgroundColor: mutedColor }]}
               onPress={() => router.replace("/(admin)/bookings")}
             >
               <Ionicons name="close-outline" size={16} color="#fff" />
-              <ThemedText style={styles.newBookingBtnText}>Clear Search</ThemedText>
+              <ThemedText style={styles.newBookingBtnText}>Clear</ThemedText>
             </Pressable>
           ) : (
             <Pressable
@@ -229,40 +315,58 @@ export default function AdminBookingsScreen() {
               <ThemedText style={styles.newBookingBtnText}>New Booking</ThemedText>
             </Pressable>
           )}
+        </View>
+      </View>
 
-          {/* Restaurant selector chips */}
-          {restaurants.length > 1 &&
-            restaurants.map((r) => (
-              <Pressable
-                key={r.id}
-                style={[
-                  styles.chip,
-                  { borderColor },
-                  r.id === selectedRestaurantId && {
-                    backgroundColor: PRIMARY,
-                    borderColor: PRIMARY,
-                  },
-                ]}
-                onPress={() => handleSelectRestaurant(r.id)}
+      {lookupStatus === "not_found" && (
+        <ThemedText style={{ fontSize: 12, color: COLORS.error, marginTop: -4 }}>
+          No booking found.
+        </ThemedText>
+      )}
+      {lookupStatus === "multiple" && (
+        <ThemedText style={{ fontSize: 12, color: PRIMARY, marginTop: -4 }}>
+          Showing all matches…
+        </ThemedText>
+      )}
+
+      {/* Toolbar */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 8,
+        }}
+      >
+        {/* Restaurant chips */}
+        {restaurants.length > 1 &&
+          restaurants.map((r) => (
+            <Pressable
+              key={r.id}
+              style={[
+                styles.chip,
+                { borderColor },
+                r.id === selectedRestaurantId && { backgroundColor: PRIMARY, borderColor: PRIMARY },
+              ]}
+              onPress={() => handleSelectRestaurant(r.id)}
+            >
+              <ThemedText
+                style={
+                  r.id === selectedRestaurantId
+                    ? styles.chipTextActive
+                    : [styles.chipText, { color: mutedColor }]
+                }
               >
-                <ThemedText
-                  style={
-                    r.id === selectedRestaurantId
-                      ? styles.chipTextActive
-                      : [styles.chipText, { color: mutedColor }]
-                  }
-                >
-                  {r.name}
-                </ThemedText>
-              </Pressable>
-            ))}
+                {r.name}
+              </ThemedText>
+            </Pressable>
+          ))}
 
-          {/* Separator between chips and toggles */}
-          {restaurants.length > 1 && (
-            <View style={[styles.headerSep, { backgroundColor: borderColor }]} />
-          )}
+        {/* Spacer */}
+        <View style={{ flex: 1 }} />
 
-          {/* Status filter toggle */}
+        {/* Status filter — only show for list view */}
+        {viewMode === "list" && (
           <View style={[styles.modeToggle, { borderColor, backgroundColor: cardBg }]}>
             {(
               [
@@ -274,10 +378,7 @@ export default function AdminBookingsScreen() {
               <Pressable
                 key={key}
                 style={[styles.modeBtn, statusFilter === key && { backgroundColor: color }]}
-                onPress={() => {
-                  setStatusFilter(key);
-                  if (key !== "active") setViewMode("list");
-                }}
+                onPress={() => setStatusFilter(key)}
               >
                 <ThemedText
                   style={[
@@ -290,41 +391,56 @@ export default function AdminBookingsScreen() {
               </Pressable>
             ))}
           </View>
+        )}
 
-          {/* View mode toggle */}
-          {statusFilter === "active" && (
-            <View style={[styles.modeToggle, { borderColor, backgroundColor: cardBg }]}>
-              <Pressable
-                style={[styles.modeBtn, viewMode === "list" && { backgroundColor: PRIMARY }]}
-                onPress={() => setViewMode("list")}
+        {/* View toggle */}
+        <View style={[styles.modeToggle, { borderColor, backgroundColor: cardBg }]}>
+          <Pressable
+            style={[styles.modeBtn, viewMode === "timetable" && { backgroundColor: PRIMARY }]}
+            onPress={switchToTimetable}
+          >
+            <Ionicons
+              name="grid-outline"
+              size={15}
+              color={viewMode === "timetable" ? "#fff" : mutedColor}
+            />
+            {isWide && (
+              <ThemedText
+                style={[
+                  styles.modeBtnText,
+                  { color: viewMode === "timetable" ? "#fff" : mutedColor },
+                ]}
               >
-                <Ionicons
-                  name="list-outline"
-                  size={16}
-                  color={viewMode === "list" ? "#fff" : mutedColor}
-                />
-              </Pressable>
-              <Pressable
-                style={[styles.modeBtn, viewMode === "grid" && { backgroundColor: PRIMARY }]}
-                onPress={switchToGrid}
+                Timetable
+              </ThemedText>
+            )}
+          </Pressable>
+          <Pressable
+            style={[styles.modeBtn, viewMode === "list" && { backgroundColor: PRIMARY }]}
+            onPress={() => setViewMode("list")}
+          >
+            <Ionicons
+              name="list-outline"
+              size={15}
+              color={viewMode === "list" ? "#fff" : mutedColor}
+            />
+            {isWide && (
+              <ThemedText
+                style={[styles.modeBtnText, { color: viewMode === "list" ? "#fff" : mutedColor }]}
               >
-                <Ionicons
-                  name="grid-outline"
-                  size={16}
-                  color={viewMode === "grid" ? "#fff" : mutedColor}
-                />
-              </Pressable>
-            </View>
-          )}
+                List
+              </ThemedText>
+            )}
+          </Pressable>
         </View>
       </View>
 
-      {loading ? (
+      {/* Content */}
+      {loading && viewMode === "list" ? (
         <ActivityIndicator style={styles.spinner} size="large" color={PRIMARY} />
-      ) : viewMode === "grid" && statusFilter === "active" ? (
-        /* ── Grid view ── */
+      ) : viewMode === "timetable" ? (
+        /* ── Timetable view ── */
         <View style={[styles.gridCard, { backgroundColor: cardBg, borderColor }]}>
-          {/* Date navigation */}
           <View style={[styles.gridDateBar, { borderBottomColor: borderColor }]}>
             <Pressable style={styles.gridNavBtn} onPress={() => handleGridDateChange(-1)}>
               <Ionicons name="chevron-back" size={18} color={PRIMARY} />
@@ -348,23 +464,37 @@ export default function AdminBookingsScreen() {
             </Pressable>
           </View>
 
-          {/* Legend */}
           <View style={[styles.gridLegend, { borderBottomColor: borderColor }]}>
-            <View style={[styles.legendItem, { backgroundColor: `${PRIMARY}22` }]}>
+            <View
+              style={[
+                styles.legendItem,
+                {
+                  backgroundColor: `${PRIMARY}22`,
+                  borderRadius: 6,
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                },
+              ]}
+            >
               <View style={[styles.legendDot, { backgroundColor: PRIMARY }]} />
               <ThemedText style={[styles.legendText, { color: mutedColor }]}>Booked</ThemedText>
             </View>
-            <View style={styles.legendItem}>
+            <View
+              style={[
+                styles.legendItem,
+                { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
+              ]}
+            >
               <View
                 style={[
                   styles.legendDot,
-                  { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#f0f0f0" },
+                  { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#e5e7eb" },
                 ]}
               />
               <ThemedText style={[styles.legendText, { color: mutedColor }]}>Available</ThemedText>
             </View>
-            <ThemedText style={[styles.legendText, { color: mutedColor }]}>
-              Tap a booked cell to view details
+            <ThemedText style={[styles.legendText, { color: mutedColor, marginLeft: 4 }]}>
+              Tap a booking to view details
             </ThemedText>
           </View>
 
@@ -375,7 +505,9 @@ export default function AdminBookingsScreen() {
               sections={gridSections}
               bookings={gridBookings}
               isDark={isDark}
-              onBookingPress={(b) => router.push(`/(admin)/bookings/${b.id}`)}
+              onBookingPress={(b) => setSelectedBookingId(b.id)}
+              openTime={openTime}
+              closeTime={closeTime}
             />
           )}
         </View>
@@ -385,11 +517,18 @@ export default function AdminBookingsScreen() {
           <ThemedText style={[styles.emptyText, { color: mutedColor }]}>
             No bookings found
           </ThemedText>
+          <Pressable
+            style={[styles.newBookingBtn, { backgroundColor: PRIMARY, marginTop: 8 }]}
+            onPress={() => setShowNewModal(true)}
+          >
+            <Ionicons name="add-outline" size={16} color="#fff" />
+            <ThemedText style={styles.newBookingBtnText}>New Booking</ThemedText>
+          </Pressable>
         </View>
       ) : isWide ? (
-        /* ── Table view ── */
+        /* ── Wide table view ── */
         <View style={[styles.tableCard, { backgroundColor: cardBg, borderColor }]}>
-          <View style={[styles.tableHeader, { backgroundColor: headerBg }]}>
+          <View style={[styles.tableHeader, { backgroundColor: isDark ? "#28292b" : "#f8f8f9" }]}>
             <ThemedText style={[styles.thCell, styles.colTime, { color: mutedColor }]}>
               TIME
             </ThemedText>
@@ -414,43 +553,66 @@ export default function AdminBookingsScreen() {
               style={[
                 styles.tableRow,
                 i > 0 && { borderTopWidth: 1, borderTopColor: borderColor },
-                { cursor: "pointer" } as const, // Cast required for web only style
+                { cursor: "pointer" } as const,
               ]}
-              onPress={() => router.push(`/(admin)/bookings/${b.id}`)}
+              onPress={() => setSelectedBookingId(b.id)}
             >
-              <View style={styles.colTime}>
-                <ThemedText style={styles.tdTime}>
-                  {new Date(b.date).toLocaleTimeString(undefined, {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </ThemedText>
-                <ThemedText style={[styles.tdDate, { color: mutedColor }]}>
-                  {new Date(b.date).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </ThemedText>
+              {/* Avatar + time */}
+              <View
+                style={[styles.colTime, { flexDirection: "row", alignItems: "center", gap: 8 }]}
+              >
+                <View
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: `${PRIMARY}18`,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <ThemedText style={{ fontSize: 11, fontWeight: "700", color: PRIMARY }}>
+                    {initials(b.customerEmail)}
+                  </ThemedText>
+                </View>
+                <View>
+                  <ThemedText style={styles.tdTime}>
+                    {new Date(b.date).toLocaleTimeString(undefined, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </ThemedText>
+                  <ThemedText style={[styles.tdDate, { color: mutedColor }]}>
+                    {new Date(b.date).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </ThemedText>
+                </View>
               </View>
+
               <View style={styles.colGuest}>
                 <ThemedText style={styles.tdGuest} numberOfLines={1}>
                   {b.customerEmail}
                 </ThemedText>
-                {b.bookingRef ? (
+                {b.bookingRef && (
                   <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
-                    Ref: {b.bookingRef}
+                    {b.bookingRef}
                   </ThemedText>
-                ) : null}
+                )}
               </View>
+
               <View style={styles.colParty}>
                 <View style={styles.partyPill}>
                   <Ionicons name="people-outline" size={12} color={mutedColor} />
                   <ThemedText style={[styles.tdParty, { color: mutedColor }]}>{b.seats}</ThemedText>
                 </View>
               </View>
+
               <ThemedText style={[styles.tdTableNum, styles.colTable, { color: mutedColor }]}>
                 {b.tableName}
               </ThemedText>
+
               <View style={styles.colStatus}>
                 {statusFilter === "cancelled" ? (
                   <View style={[styles.badge, { backgroundColor: "rgba(220,38,38,0.1)" }]}>
@@ -470,16 +632,8 @@ export default function AdminBookingsScreen() {
                   <StatusBadge date={b.date} isDark={isDark} />
                 )}
               </View>
+
               <View style={styles.colAction}>
-                <Pressable
-                  style={[styles.rowActionBtn, { backgroundColor: `${PRIMARY}14` }]}
-                  onPress={(e) => {
-                    (e as { stopPropagation?: () => void }).stopPropagation?.();
-                    router.push(`/(admin)/bookings/${b.id}`);
-                  }}
-                >
-                  <Ionicons name="eye-outline" size={14} color={PRIMARY} />
-                </Pressable>
                 {statusFilter === "active" && (
                   <Pressable
                     style={[styles.rowActionBtn, { backgroundColor: "rgba(220,38,38,0.1)" }]}
@@ -496,17 +650,34 @@ export default function AdminBookingsScreen() {
           ))}
         </View>
       ) : (
-        /* ── Card list (mobile) ── */
+        /* ── Mobile card list ── */
         <View style={styles.cardList}>
           {sorted.map((b) => (
             <Pressable
               key={b.id}
               style={[styles.listCard, { backgroundColor: cardBg, borderColor }]}
-              onPress={() => router.push(`/(admin)/bookings/${b.id}`)}
+              onPress={() => setSelectedBookingId(b.id)}
             >
               <View style={styles.listCardRow}>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: `${PRIMARY}18`,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <ThemedText style={{ fontSize: 13, fontWeight: "700", color: PRIMARY }}>
+                    {initials(b.customerEmail)}
+                  </ThemedText>
+                </View>
                 <View style={styles.listCardInfo}>
-                  <ThemedText style={styles.tdTime}>
+                  <ThemedText style={styles.tdGuest} numberOfLines={1}>
+                    {b.customerEmail}
+                  </ThemedText>
+                  <ThemedText style={[styles.tdTime, { fontSize: 13 }]}>
                     {new Date(b.date).toLocaleString(undefined, {
                       weekday: "short",
                       month: "short",
@@ -515,41 +686,40 @@ export default function AdminBookingsScreen() {
                       minute: "2-digit",
                     })}
                   </ThemedText>
-                  <ThemedText style={styles.tdGuest} numberOfLines={1}>
-                    {b.customerEmail}
-                  </ThemedText>
-                  {b.bookingRef ? (
-                    <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
-                      Ref: {b.bookingRef}
-                    </ThemedText>
-                  ) : null}
                   <View style={styles.partyPill}>
                     <Ionicons name="people-outline" size={12} color={mutedColor} />
                     <ThemedText style={[styles.tdDate, { color: mutedColor }]}>
-                      {b.seats} guests
+                      {b.seats} guests · {b.tableName}
                     </ThemedText>
                   </View>
                 </View>
                 <View style={styles.listCardRight}>
                   <StatusBadge date={b.date} isDark={isDark} />
-                  <Ionicons
-                    name="chevron-forward-outline"
-                    size={16}
-                    color={mutedColor}
-                    style={{ marginTop: 10 }}
-                  />
                 </View>
               </View>
             </Pressable>
           ))}
         </View>
       )}
+
+      {/* Booking detail popup */}
+      <BookingDetailPopup
+        bookingId={selectedBookingId}
+        onClose={() => setSelectedBookingId(null)}
+        onDeleted={() => {
+          setRefreshKey((k) => k + 1);
+          if (selectedRestaurantId && viewMode === "timetable") {
+            loadGrid(selectedRestaurantId, gridDate);
+          }
+        }}
+      />
+
       <NewBookingModal
         visible={showNewModal}
         onClose={() => setShowNewModal(false)}
         onCreated={(id) => {
           setShowNewModal(false);
-          router.push(`/(admin)/bookings/${id}`);
+          setSelectedBookingId(id);
         }}
       />
 

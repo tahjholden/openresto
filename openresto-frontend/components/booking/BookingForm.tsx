@@ -67,10 +67,14 @@ export default function BookingForm({
   restaurant,
   onSubmit,
   onRefresh,
+  initialTime,
+  initialSeats,
 }: {
   restaurant: RestaurantDto;
   onSubmit: (data: BookingFormData) => Promise<void> | void;
   onRefresh?: () => void;
+  initialTime?: string;
+  initialSeats?: number;
 }) {
   const isDark = useColorScheme() === "dark";
   const colors = getThemeColors(isDark);
@@ -78,7 +82,7 @@ export default function BookingForm({
   const PRIMARY = brand.primaryColor || COLORS.primary;
   const [customerEmail, setCustomerEmail] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
-  const [seats, setSeats] = useState(2);
+  const [seats, setSeats] = useState(initialSeats ?? 2);
   const [submitting, setSubmitting] = useState(false);
 
   const allTables = restaurant.sections.flatMap((s) => s.tables);
@@ -89,7 +93,7 @@ export default function BookingForm({
 
   const [tableId, setTableId] = useState<number | undefined>();
   const [date, setDate] = useState<string>(() => suggestDate(closeH));
-  const [time, setTime] = useState<string>(() => suggestTime(openTime, closeTime));
+  const [time, setTime] = useState<string>(() => initialTime ?? suggestTime(openTime, closeTime));
 
   const [availabilitySlots, setAvailabilitySlots] = useState<TimeSlotDto[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(false);

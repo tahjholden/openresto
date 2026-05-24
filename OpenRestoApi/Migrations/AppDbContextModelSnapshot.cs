@@ -124,7 +124,7 @@ namespace OpenRestoApi.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("LogoBase64")
+                    b.Property<string>("HeaderImageUrl")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PrimaryColor")
@@ -190,6 +190,9 @@ namespace OpenRestoApi.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -200,6 +203,9 @@ namespace OpenRestoApi.Migrations
 
                     b.Property<string>("OpenTime")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Tags")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Timezone")

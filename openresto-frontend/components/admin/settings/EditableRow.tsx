@@ -12,7 +12,7 @@ export function EditableRow({
   onSave,
   onDelete,
   placeholder,
-  deleteLabel = "Delete",
+  deleteLabel: _deleteLabel = "Delete",
   isDark,
   confirmAction,
 }: {
@@ -48,15 +48,13 @@ export function EditableRow({
           </Pressable>
           {onDelete && (
             <Pressable
-              style={styles.smallBtn}
+              style={[styles.smallBtn, { paddingHorizontal: 6 }]}
               onPress={async () => {
                 const ok = await confirmAction(`Delete "${value}"? This cannot be undone.`);
                 if (ok) await onDelete();
               }}
             >
-              <ThemedText style={[styles.smallBtnText, { color: COLORS.error }]}>
-                {deleteLabel}
-              </ThemedText>
+              <Ionicons name="trash-outline" size={16} color={COLORS.error} />
             </Pressable>
           )}
         </View>

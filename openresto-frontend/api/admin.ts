@@ -435,7 +435,6 @@ export interface BrandSettingsDto {
   appName: string;
   primaryColor: string;
   accentColor?: string;
-  logoBase64?: string;
 }
 
 export async function saveBrandSettings(
@@ -450,5 +449,105 @@ export async function saveBrandSettings(
     return await res.json();
   } catch {
     return null;
+  }
+}
+
+export async function uploadHeroImage(file: File): Promise<string | null> {
+  try {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL ?? "/api"}/media/hero`, {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.url ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteHeroImage(): Promise<void> {
+  try {
+    await fetch(`${process.env.EXPO_PUBLIC_API_URL ?? "/api"}/media/hero`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+  } catch {
+    // ignore
+  }
+}
+
+// ---------- Highlights ----------
+
+export interface AdminHighlightDto {
+  id: number;
+  title: string;
+  body: string;
+  iconKey: string;
+  sortOrder: number;
+}
+
+export interface CreateHighlightRequest {
+  title: string;
+  body: string;
+  iconKey: string;
+  sortOrder: number;
+}
+
+export interface UpdateHighlightRequest {
+  title: string;
+  body: string;
+  iconKey: string;
+  sortOrder: number;
+}
+
+export async function adminGetHighlights(): Promise<AdminHighlightDto[]> {
+  try {
+    const res = await get("/highlights");
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (err) {
+    console.error("adminGetHighlights error:", err);
+    return [];
+  }
+}
+
+export async function adminCreateHighlight(
+  req: CreateHighlightRequest
+): Promise<AdminHighlightDto | null> {
+  try {
+    const res = await post("/highlights", req);
+    if (!res.ok) throw new Error("Failed to create highlight");
+    return await res.json();
+  } catch (err) {
+    console.error("adminCreateHighlight error:", err);
+    return null;
+  }
+}
+
+export async function adminUpdateHighlight(
+  id: number,
+  req: UpdateHighlightRequest
+): Promise<AdminHighlightDto | null> {
+  try {
+    const res = await put(`/highlights/${id}`, req);
+    if (!res.ok) throw new Error("Failed to update highlight");
+    return await res.json();
+  } catch (err) {
+    console.error("adminUpdateHighlight error:", err);
+    return null;
+  }
+}
+
+export async function adminDeleteHighlight(id: number): Promise<boolean> {
+  try {
+    const res = await del(`/highlights/${id}`);
+    return res.ok;
+  } catch (err) {
+    console.error("adminDeleteHighlight error:", err);
+    return false;
   }
 }

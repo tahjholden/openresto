@@ -12,7 +12,8 @@ import { hexToRgba } from "@/utils/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { fetchRestaurants } from "@/api/restaurants";
-import { adminLookupBookings } from "@/api/admin";
+import { adminLookupBookings, getAdminBookings, BookingDetailDto } from "@/api/admin";
+import { BookingDetailPopup } from "@/components/admin/bookings/BookingDetailPopup";
 
 const NAV_ITEMS = [
   {
@@ -49,13 +50,28 @@ export default function AdminSidebar() {
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupStatus, setLookupStatus] = useState<"idle" | "not_found" | "multiple">("idle");
+  const [upcomingBookings, setUpcomingBookings] = useState<BookingDetailDto[]>([]);
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
 
   const hoverBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)";
   const activeBg = isDark ? hexToRgba(PRIMARY, 0.18) : hexToRgba(PRIMARY, 0.09);
 
   useEffect(() => {
     fetchRestaurants().then((data) => setLocationCount(data.length));
+    const today = new Date().toISOString().split("T")[0];
+    getAdminBookings(undefined, today, "active").then((data) => {
+      const now = new Date();
+      setUpcomingBookings(
+        data
+          .filter((b) => new Date(b.date) >= now)
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .slice(0, 4)
+      );
+    });
   }, []);
+
+  const formatTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   const handleLookup = async () => {
     const q = lookupQuery.trim();
@@ -68,7 +84,7 @@ export default function AdminSidebar() {
         setLookupStatus("not_found");
       } else if (results.length === 1) {
         setLookupQuery("");
-        router.push(`/(admin)/bookings/${results[0].id}`);
+        setSelectedBookingId(results[0].id);
       } else {
         setLookupStatus("multiple");
         const isEmail = q.includes("@");
@@ -159,6 +175,57 @@ export default function AdminSidebar() {
         })}
       </View>
 
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+      <View style={styles.upcomingWrapper}>
+        <View style={styles.upcomingHeader}>
+          <ThemedText style={[styles.upcomingLabel, { color: colors.muted }]}>Upcoming</ThemedText>
+          <Pressable onPress={() => router.push("/(admin)/bookings")}>
+            <ThemedText style={[styles.upcomingAll, { color: PRIMARY }]}>View all</ThemedText>
+          </Pressable>
+        </View>
+        {upcomingBookings.length === 0 ? (
+          <ThemedText style={[styles.upcomingEmpty, { color: colors.muted }]}>
+            No upcoming bookings today
+          </ThemedText>
+        ) : (
+          upcomingBookings.map((b) => (
+            <Pressable
+              key={b.id}
+              onPress={() => setSelectedBookingId(b.id)}
+              style={(state) => [
+                styles.upcomingItem,
+                (state as { hovered?: boolean }).hovered && { backgroundColor: hoverBg },
+              ]}
+            >
+              <ThemedText style={[styles.upcomingTime, { color: PRIMARY }]}>
+                {formatTime(b.date)}
+              </ThemedText>
+              <View style={styles.upcomingDetails}>
+                <ThemedText
+                  style={[styles.upcomingEmail, { color: colors.text }]}
+                  numberOfLines={1}
+                >
+                  {b.customerEmail.split("@")[0]}
+                </ThemedText>
+                <View style={styles.upcomingMeta}>
+                  <Ionicons name="people-outline" size={11} color={colors.muted} />
+                  <ThemedText style={[styles.upcomingSeats, { color: colors.muted }]}>
+                    {b.seats} · {b.tableName}
+                  </ThemedText>
+                </View>
+                <ThemedText
+                  style={[styles.upcomingRestaurant, { color: colors.muted }]}
+                  numberOfLines={1}
+                >
+                  {b.restaurantName}
+                </ThemedText>
+              </View>
+            </Pressable>
+          ))
+        )}
+      </View>
+
       <View style={styles.spacer} />
 
       <View style={styles.ctaWrapper}>
@@ -219,6 +286,11 @@ export default function AdminSidebar() {
           </ThemedText>
         )}
       </View>
+
+      <BookingDetailPopup
+        bookingId={selectedBookingId}
+        onClose={() => setSelectedBookingId(null)}
+      />
 
       <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
@@ -369,6 +441,63 @@ const styles = StyleSheet.create({
   lookupHint: {
     ...TYPOGRAPHY.captionSmall,
     paddingLeft: 2,
+  },
+  upcomingWrapper: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 2,
+  },
+  upcomingHeader: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    paddingHorizontal: 2,
+    marginBottom: 4,
+  },
+  upcomingLabel: {
+    ...TYPOGRAPHY.labelSmall,
+    fontWeight: "700" as const,
+  },
+  upcomingAll: {
+    fontSize: 11,
+    fontWeight: "600" as const,
+  },
+  upcomingEmpty: {
+    fontSize: 12,
+    paddingHorizontal: 2,
+    paddingVertical: 4,
+  },
+  upcomingItem: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 7,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  upcomingTime: {
+    fontSize: 12,
+    fontWeight: "700" as const,
+    minWidth: 46,
+  },
+  upcomingDetails: {
+    flex: 1,
+    gap: 1,
+  },
+  upcomingEmail: {
+    fontSize: 12,
+    fontWeight: "600" as const,
+  },
+  upcomingMeta: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 3,
+  },
+  upcomingSeats: {
+    fontSize: 11,
+  },
+  upcomingRestaurant: {
+    fontSize: 11,
   },
   footer: {
     paddingTop: 4,

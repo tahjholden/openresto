@@ -199,6 +199,8 @@ public static partial class DatabaseExtensions
                     AddColumnIfMissing("Restaurants", "OpenDays", "TEXT NOT NULL DEFAULT '1,2,3,4,5,6,7'");
                     AddColumnIfMissing("Restaurants", "Timezone", "TEXT NOT NULL DEFAULT 'UTC'");
                     AddColumnIfMissing("Restaurants", "BookingsPausedUntil", "TEXT");
+                    AddColumnIfMissing("Restaurants", "Tags", "TEXT");
+                    AddColumnIfMissing("Restaurants", "ImageUrl", "TEXT");
 
                     db.Database.ExecuteSqlRaw(@"
                         CREATE TABLE IF NOT EXISTS ""EmailSettings"" (
@@ -221,7 +223,18 @@ public static partial class DatabaseExtensions
                             ""AppName"" TEXT NOT NULL DEFAULT 'Open Resto',
                             ""PrimaryColor"" TEXT NOT NULL DEFAULT '#0a7ea4',
                             ""AccentColor"" TEXT,
-                            ""LogoBase64"" TEXT
+                            ""HeaderImageUrl"" TEXT
+                        )");
+
+                    AddColumnIfMissing("BrandSettings", "HeaderImageUrl", "TEXT");
+
+                    db.Database.ExecuteSqlRaw(@"
+                        CREATE TABLE IF NOT EXISTS ""Highlights"" (
+                            ""Id""        INTEGER NOT NULL CONSTRAINT ""PK_Highlights"" PRIMARY KEY AUTOINCREMENT,
+                            ""Title""     TEXT    NOT NULL DEFAULT '',
+                            ""Body""      TEXT    NOT NULL DEFAULT '',
+                            ""IconKey""   TEXT    NOT NULL DEFAULT 'star-outline',
+                            ""SortOrder"" INTEGER NOT NULL DEFAULT 0
                         )");
 
                     DbSeeder.Seed(db);

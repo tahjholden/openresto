@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import { getAdminDashboardStats, AdminDashboardStats, BookingSummaryDto } from "@/api/admin";
+import { BookingDetailPopup } from "@/components/admin/bookings/BookingDetailPopup";
 import { StatusBadge } from "@/components/admin/bookings/StatusBadge";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { ThemeColors, COLORS, BORDER_RADIUS, SPACING, TYPOGRAPHY } from "@/theme/theme";
@@ -26,6 +27,7 @@ export default function AdminDashboardScreen() {
   const { width } = useWindowDimensions();
   const { colors, primaryColor, isDark } = useAppTheme();
 
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [actionModalVisible, setActionModalVisible] = useState(false);
   const [actionType, setActionType] = useState<"pause" | "extend">("pause");
   const [alertVisible, setAlertVisible] = useState(false);
@@ -222,7 +224,7 @@ export default function AdminDashboardScreen() {
                     booking={b}
                     colors={colors}
                     isDark={isDark}
-                    router={router}
+                    onPress={() => setSelectedBookingId(b.id)}
                   />
                 ))
               )}
@@ -246,6 +248,11 @@ export default function AdminDashboardScreen() {
         title="Success"
         message={alertMessage}
         onClose={() => setAlertVisible(false)}
+      />
+
+      <BookingDetailPopup
+        bookingId={selectedBookingId}
+        onClose={() => setSelectedBookingId(null)}
       />
     </ThemedView>
   );
@@ -318,12 +325,12 @@ function BookingItem({
   booking,
   colors,
   isDark,
-  router,
+  onPress,
 }: {
   booking: BookingSummaryDto;
   colors: ThemeColors;
   isDark: boolean;
-  router: ReturnType<typeof useRouter>;
+  onPress: () => void;
 }) {
   const now = new Date();
   const startTime = new Date(booking.date);
@@ -344,7 +351,7 @@ function BookingItem({
 
   return (
     <Pressable
-      onPress={() => router.push(`/(admin)/bookings/${booking.id}`)}
+      onPress={onPress}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       style={({ hovered }: any) => [
         styles.bookingItem,

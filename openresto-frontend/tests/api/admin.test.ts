@@ -19,6 +19,10 @@ import {
   saveEmailSettings,
   testEmailConnection,
   saveBrandSettings,
+  adminGetHighlights,
+  adminCreateHighlight,
+  adminUpdateHighlight,
+  adminDeleteHighlight,
 } from "@/api/admin";
 
 // Admin API now uses credentials: "include" for cookie-based auth — no mock needed
@@ -442,6 +446,7 @@ describe("getEmailSettings", () => {
       password: "",
       enableSsl: true,
       isConfigured: false,
+      sendBookingConfirmations: false,
     });
   });
 });
@@ -453,6 +458,7 @@ describe("saveEmailSettings", () => {
     username: "user",
     password: "pass",
     enableSsl: true,
+    sendBookingConfirmations: false,
   };
 
   it("posts email settings and returns response", async () => {
@@ -629,5 +635,90 @@ describe("brand settings", () => {
   it("returns null on network error", async () => {
     mockFetch.mockRejectedValueOnce(new Error("offline"));
     expect(await saveBrandSettings(brandData)).toBeNull();
+  });
+});
+
+// ---------- Highlights ----------
+
+describe("adminGetHighlights", () => {
+  it("returns parsed highlights on success", async () => {
+    const mockHighlights = [
+      {
+        id: 1,
+        title: "Wood-fired kitchen",
+        body: "Fresh daily.",
+        iconKey: "flame-outline",
+        sortOrder: 0,
+      },
+    ];
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => mockHighlights });
+    const result = await adminGetHighlights();
+    expect(result).toEqual(mockHighlights);
+  });
+
+  it("returns empty array on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    const result = await adminGetHighlights();
+    expect(result).toEqual([]);
+  });
+
+  it("returns empty array on network error", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("network"));
+    const result = await adminGetHighlights();
+    expect(result).toEqual([]);
+  });
+});
+
+describe("adminCreateHighlight", () => {
+  const req = { title: "Test", body: "Body", iconKey: "star-outline", sortOrder: 0 };
+
+  it("returns created highlight on success", async () => {
+    const created = { id: 5, ...req };
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => created });
+    const result = await adminCreateHighlight(req);
+    expect(result).toEqual(created);
+  });
+
+  it("returns null on network error", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("network"));
+    const result = await adminCreateHighlight(req);
+    expect(result).toBeNull();
+  });
+});
+
+describe("adminUpdateHighlight", () => {
+  const req = { title: "Updated", body: "New body", iconKey: "heart-outline", sortOrder: 1 };
+
+  it("returns updated highlight on success", async () => {
+    const updated = { id: 3, ...req };
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => updated });
+    const result = await adminUpdateHighlight(3, req);
+    expect(result).toEqual(updated);
+  });
+
+  it("returns null on network error", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("network"));
+    const result = await adminUpdateHighlight(3, req);
+    expect(result).toBeNull();
+  });
+});
+
+describe("adminDeleteHighlight", () => {
+  it("returns true when delete succeeds", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true });
+    const result = await adminDeleteHighlight(1);
+    expect(result).toBe(true);
+  });
+
+  it("returns false when delete fails", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    const result = await adminDeleteHighlight(1);
+    expect(result).toBe(false);
+  });
+
+  it("returns false on network error", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("network"));
+    const result = await adminDeleteHighlight(1);
+    expect(result).toBe(false);
   });
 });

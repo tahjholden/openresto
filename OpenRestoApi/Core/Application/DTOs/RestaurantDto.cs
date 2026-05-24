@@ -10,6 +10,7 @@ public class UpdateRestaurantRequest
     public string? CloseTime { get; set; }
     public string? OpenDays { get; set; }
     public string? Timezone { get; set; }
+    public string? Tags { get; set; }
 }
 
 public class PauseRestaurantRequest
@@ -69,5 +70,7 @@ public class RestaurantDto
     public string CloseTime { get; set; } = "22:00";
     public string OpenDays { get; set; } = "1,2,3,4,5,6,7";
     public string Timezone { get; set; } = "UTC";
+    public string[] Tags { get; set; } = [];
+    public string? ImageUrl { get; set; }
     public List<SectionDto> Sections { get; set; } = new();
 }

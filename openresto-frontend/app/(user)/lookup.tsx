@@ -99,7 +99,7 @@ export default function LookupScreen() {
     <ThemedView style={styles.root}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <PageContainer>
-          <View style={styles.header}>
+          <View style={[styles.header, !isWide && { marginBottom: 12 }]}>
             <Ionicons name="search-outline" size={32} color={primaryColor} />
             <ThemedText style={styles.title}>Find My Booking</ThemedText>
             <ThemedText style={[styles.subtitle, { color: colors.muted }]}>
@@ -368,7 +368,7 @@ function BookingResultCard({
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scrollContent: { paddingBottom: 60 },
-  header: { alignItems: "center", gap: 8, marginTop: 24, marginBottom: 32 },
+  header: { alignItems: "center", gap: 8, marginTop: 8, marginBottom: 20 },
   title: { fontSize: 28, fontWeight: "800", letterSpacing: -0.6, marginTop: 8 },
   subtitle: { fontSize: 15, textAlign: "center", lineHeight: 22 },
   wideRow: { flexDirection: "row", gap: 24, alignItems: "flex-start" },

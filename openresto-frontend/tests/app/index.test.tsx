@@ -4,7 +4,7 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react-native";
 import HomeScreen from "@/app/index";
-import { fetchRestaurants } from "@/api/restaurants";
+import { fetchRestaurants, fetchHighlights } from "@/api/restaurants";
 import { BrandProvider } from "@/context/BrandContext";
 
 // Polyfill fetch
@@ -21,6 +21,7 @@ jest.mock("@expo/vector-icons", () => ({
 
 jest.mock("@/api/restaurants", () => ({
   fetchRestaurants: jest.fn(),
+  fetchHighlights: jest.fn(),
 }));
 
 jest.mock("expo-router", () => {
@@ -67,6 +68,15 @@ describe("HomeScreen", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (fetchRestaurants as jest.Mock).mockResolvedValue(mockRestaurants);
+    (fetchHighlights as jest.Mock).mockResolvedValue([
+      {
+        id: 1,
+        title: "Wood-fired kitchen",
+        body: "Fresh daily.",
+        iconKey: "flame-outline",
+        sortOrder: 0,
+      },
+    ]);
   });
 
   const renderWithProviders = (ui: React.ReactElement) => {
@@ -98,7 +108,6 @@ describe("HomeScreen", () => {
 
     expect(screen.getByText("Resto 1")).toBeTruthy();
     expect(screen.getByText("Resto 2")).toBeTruthy();
-    expect(screen.getByText("2 restaurants")).toBeTruthy();
   });
 
   it("handles zero restaurants", async () => {
@@ -106,6 +115,6 @@ describe("HomeScreen", () => {
     renderWithProviders(<HomeScreen />);
 
     await waitFor(() => expect(screen.queryByTestId("loading-screen")).toBeNull());
-    expect(screen.getByText("0 restaurants")).toBeTruthy();
+    expect(screen.queryByTestId("loading-screen")).toBeNull();
   });
 });

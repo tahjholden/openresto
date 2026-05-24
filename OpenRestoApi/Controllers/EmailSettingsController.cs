@@ -31,6 +31,7 @@ public class EmailSettingsController(EmailSettingsService emailSettings) : Contr
             FromName = settings.FromName,
             FromEmail = settings.FromEmail,
             IsConfigured = true,
+            SendBookingConfirmations = settings.SendBookingConfirmations,
         });
     }
 
@@ -39,7 +40,7 @@ public class EmailSettingsController(EmailSettingsService emailSettings) : Contr
     {
         await _emailSettings.SaveAsync(
             req.Host, req.Port, req.Username, req.Password,
-            req.EnableSsl, req.FromName, req.FromEmail);
+            req.EnableSsl, req.FromName, req.FromEmail, req.SendBookingConfirmations);
         return Ok(new { message = "Email settings saved." });
     }
 
@@ -69,6 +70,7 @@ public class EmailSettingsRequest
     public bool EnableSsl { get; set; } = true;
     public string? FromName { get; set; }
     public string? FromEmail { get; set; }
+    public bool SendBookingConfirmations { get; set; }
 }
 
 public class EmailSettingsResponse
@@ -81,4 +83,5 @@ public class EmailSettingsResponse
     public string? FromName { get; set; }
     public string? FromEmail { get; set; }
     public bool IsConfigured { get; set; }
+    public bool SendBookingConfirmations { get; set; }
 }

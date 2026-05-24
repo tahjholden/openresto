@@ -8,7 +8,6 @@ namespace OpenRestoApi.Core.Application.Services;
 public class BrandService(AppDbContext db)
 {
     private readonly AppDbContext _db = db;
-    private const int _maxLogoBytes = 256 * 1024; // 256 KB
 
     private static bool IsValidHexColor(string color)
     {
@@ -21,7 +20,7 @@ public class BrandService(AppDbContext db)
             ?? new BrandSettings { AppName = "Open Resto", PrimaryColor = "#0a7ea4" };
     }
 
-    public async Task SaveAsync(string? appName, string? primaryColor, string? accentColor, string? logoBase64)
+    public async Task SaveAsync(string? appName, string? primaryColor, string? accentColor)
     {
         if (appName != null && appName.Length > 32)
         {
@@ -38,17 +37,6 @@ public class BrandService(AppDbContext db)
             throw new ArgumentException("Invalid accent color hex code.");
         }
 
-        if (logoBase64 != null)
-        {
-            int commaIdx = logoBase64.IndexOf(',');
-            string base64Part = commaIdx >= 0 ? logoBase64[(commaIdx + 1)..] : logoBase64;
-            int sizeBytes = (int)(base64Part.Length * 0.75);
-            if (sizeBytes > _maxLogoBytes)
-            {
-                throw new ArgumentException($"Logo must be under {_maxLogoBytes / 1024} KB.");
-            }
-        }
-
         BrandSettings? brand = await _db.Set<BrandSettings>().FirstOrDefaultAsync();
         if (brand == null)
         {
@@ -59,11 +47,6 @@ public class BrandService(AppDbContext db)
         brand.AppName = appName ?? brand.AppName;
         brand.PrimaryColor = primaryColor ?? brand.PrimaryColor;
         brand.AccentColor = accentColor;
-
-        if (logoBase64 != null)
-        {
-            brand.LogoBase64 = logoBase64 == "" ? null : logoBase64;
-        }
 
         await _db.SaveChangesAsync();
     }

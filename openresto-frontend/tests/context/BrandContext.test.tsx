@@ -18,7 +18,7 @@ function TestConsumer() {
       <Text testID="name">{brand.appName}</Text>
       <Text testID="color">{brand.primaryColor}</Text>
       <Text testID="accent">{brand.accentColor ?? "none"}</Text>
-      <Text testID="logo">{brand.logoUrl ?? "none"}</Text>
+      <Text testID="logo">{brand.headerImageUrl ?? "none"}</Text>
     </>
   );
 }
@@ -45,7 +45,7 @@ describe("BrandContext", () => {
         appName: "My Custom Resto",
         primaryColor: "#ff5500",
         accentColor: "#00ff00",
-        logoUrl: "https://example.com/logo.png",
+        headerImageUrl: "https://example.com/hero.jpg",
       }),
     });
 
@@ -61,7 +61,7 @@ describe("BrandContext", () => {
 
     expect(screen.getByTestId("color").props.children).toBe("#ff5500");
     expect(screen.getByTestId("accent").props.children).toBe("#00ff00");
-    expect(screen.getByTestId("logo").props.children).toBe("https://example.com/logo.png");
+    expect(screen.getByTestId("logo").props.children).toBe("https://example.com/hero.jpg");
 
     expect(mockFetch.mock.calls[0][0]).toContain("/api/brand");
   });

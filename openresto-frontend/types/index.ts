@@ -8,5 +8,5 @@ export interface Brand {
   appName: string;
   primaryColor: string;
   accentColor?: string;
-  logoUrl?: string;
+  headerImageUrl?: string;
 }

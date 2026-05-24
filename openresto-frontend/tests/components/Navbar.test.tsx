@@ -59,16 +59,15 @@ describe("Navbar", () => {
     expect(screen.getByText("Test App")).toBeTruthy();
   });
 
-  it("renders logo when logoUrl is provided", () => {
+  it("renders brand name as text (no logo image)", () => {
     (useAppTheme as jest.Mock).mockReturnValue({
-      brand: { appName: "Logo App", primaryColor: "#0a7ea4", logoUrl: "http://logo.com" },
+      brand: { appName: "Logo App", primaryColor: "#0a7ea4" },
       colors: { border: "#ccc", muted: "#666" },
       primaryColor: "#0a7ea4",
       isDark: false,
     });
     render(<Navbar />);
-    // The Image component will have accessibilityLabel set to brand.appName
-    expect(screen.getByLabelText("Logo App")).toBeTruthy();
+    expect(screen.getByText("Logo App")).toBeTruthy();
   });
 
   it("renders tiny font size for brand on tiny screens", () => {

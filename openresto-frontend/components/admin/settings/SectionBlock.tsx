@@ -1,12 +1,14 @@
-import { View } from "react-native";
+import { useState } from "react";
+import { View, Pressable } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { SectionDto, TableDto, updateSection, deleteSection, addTable } from "@/api/restaurants";
-import { EditableRow } from "./EditableRow";
 import { TableRow } from "./TableRow";
 import { AddRow } from "./AddRow";
-import { COLORS } from "@/theme/theme";
+import { Ionicons } from "@expo/vector-icons";
+import { COLORS, getThemeColors } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 import { styles } from "./settings.styles";
+import Input from "@/components/common/Input";
 
 export function SectionBlock({
   section,
@@ -35,73 +37,140 @@ export function SectionBlock({
 }) {
   const brand = useBrand();
   const primaryColor = brand.primaryColor || COLORS.primary;
+  const surface2 = isDark ? "#252729" : "#f9fafb";
+  const cardBg = isDark ? "#1e2022" : "#ffffff";
+  const totalSeats = section.tables.reduce((s, t) => s + t.seats, 0);
+  const colors = getThemeColors(isDark);
+
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(section.name);
+  const [saving, setSaving] = useState(false);
 
   return (
     <View
       style={[
         styles.sectionBlock,
         {
-          borderBottomColor: borderColor,
-          borderBottomWidth: 1,
-          marginBottom: 24,
-          paddingBottom: 16,
+          borderWidth: 1,
+          borderColor,
+          borderRadius: 12,
+          overflow: "hidden",
+          backgroundColor: surface2,
+          marginBottom: 8,
         },
       ]}
     >
-      <View style={{ marginBottom: 4 }}>
-        <ThemedText
-          style={{
-            fontSize: 10,
-            fontWeight: "800",
-            letterSpacing: 1.5,
-            color: primaryColor,
-            marginBottom: 4,
-          }}
-        >
-          DINING SECTION
-        </ThemedText>
-        <EditableRow
-          value={section.name}
-          placeholder="e.g. Main Dining Room"
-          isDark={isDark}
-          deleteLabel="Delete section"
-          confirmAction={confirmAction}
-          onSave={async (name) => {
-            const result = await updateSection(restaurantId, section.id, name);
-            if (result) onSectionRenamed(result.name);
-          }}
-          onDelete={async () => {
-            const ok = await confirmAction(`Delete section "${section.name}" and all its tables?`);
-            if (!ok) return;
-            const success = await deleteSection(restaurantId, section.id);
-            if (success) onSectionDeleted();
-          }}
-        />
-      </View>
+      {/* Section header — surface background with border-bottom */}
       <View
-        style={[
-          styles.tableList,
-          {
-            borderLeftColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)",
-            borderLeftWidth: 3,
-            marginLeft: 6,
-            paddingLeft: 16,
-            marginTop: 8,
-          },
-        ]}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          backgroundColor: cardBg,
+          borderBottomWidth: 1,
+          borderBottomColor: borderColor,
+        }}
       >
-        <ThemedText
-          style={{
-            fontSize: 11,
-            fontWeight: "700",
-            color: mutedColor,
-            marginBottom: 4,
-            letterSpacing: 0.8,
-            opacity: 0.8,
-          }}
-        >
-          TABLES IN THIS AREA
-        </ThemedText>
+        {/* Left: icon + name / edit input */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+          <View
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 8,
+              backgroundColor: `${primaryColor}18`,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="layers-outline" size={14} color={primaryColor} />
+          </View>
+          {editing ? (
+            <View style={{ flex: 1 }}>
+              <Input
+                value={draft}
+                onChangeText={setDraft}
+                placeholder="e.g. Indoor, Patio"
+                autoFocus
+              />
+            </View>
+          ) : (
+            <ThemedText style={[styles.editableValue, { flex: 0 }]}>{section.name}</ThemedText>
+          )}
+        </View>
+
+        {/* Right: tables count + edit/save/delete actions */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {!editing && (
+            <ThemedText style={{ fontSize: 12, color: mutedColor }}>
+              {section.tables.length} tables · {totalSeats} seats
+            </ThemedText>
+          )}
+          {editing ? (
+            <>
+              <Pressable
+                style={[styles.actionBtn, { backgroundColor: primaryColor }]}
+                disabled={saving}
+                onPress={async () => {
+                  if (!draft.trim()) return;
+                  setSaving(true);
+                  const result = await updateSection(restaurantId, section.id, draft.trim());
+                  if (result) onSectionRenamed(result.name);
+                  setSaving(false);
+                  setEditing(false);
+                }}
+              >
+                <ThemedText style={[styles.actionBtnText, { color: "#fff" }]}>
+                  {saving ? "…" : "Save"}
+                </ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.smallBtn, { paddingHorizontal: 6 }]}
+                onPress={() => setEditing(false)}
+              >
+                <Ionicons name="close-outline" size={20} color={colors.muted} />
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Pressable
+                style={styles.smallBtn}
+                onPress={() => {
+                  setDraft(section.name);
+                  setEditing(true);
+                }}
+              >
+                <ThemedText style={[styles.smallBtnText, { color: primaryColor }]}>Edit</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.smallBtn, { paddingHorizontal: 6 }]}
+                onPress={async () => {
+                  const ok = await confirmAction(
+                    `Delete section "${section.name}" and all its tables?`
+                  );
+                  if (!ok) return;
+                  const success = await deleteSection(restaurantId, section.id);
+                  if (success) onSectionDeleted();
+                }}
+              >
+                <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+              </Pressable>
+            </>
+          )}
+        </View>
+      </View>
+
+      {/* Table grid — auto-fill, min 160px per card */}
+      <View
+        style={{
+          padding: 12,
+          flexDirection: "row",
+          flexWrap: "wrap",
+          gap: 8,
+        }}
+      >
         {section.tables.map((t) => (
           <TableRow
             key={t.id}
@@ -116,23 +185,25 @@ export function SectionBlock({
           />
         ))}
         {section.tables.length === 0 && (
-          <ThemedText style={styles.emptyNote}>No tables in this section.</ThemedText>
+          <ThemedText style={[styles.emptyNote, { color: mutedColor }]}>No tables yet.</ThemedText>
         )}
-        <View style={{ marginTop: 12, marginLeft: -20 }}>
-          <AddRow
-            label="Add Table"
-            placeholder="Table name (e.g. Table 1)"
-            extraPlaceholder="Guests"
-            onAdd={async (name, extra) => {
-              const seats = parseInt(extra ?? "2", 10);
-              const result = await addTable(restaurantId, section.id, {
-                name,
-                seats: isNaN(seats) ? 2 : seats,
-              });
-              if (result) onTableAdded(result);
-            }}
-          />
-        </View>
+      </View>
+
+      {/* Add table */}
+      <View style={{ paddingHorizontal: 12, paddingBottom: 12 }}>
+        <AddRow
+          label="Add Table"
+          placeholder="Table name (e.g. T1, Booth 1)"
+          extraPlaceholder="Seats"
+          onAdd={async (name, extra) => {
+            const seats = parseInt(extra ?? "2", 10);
+            const result = await addTable(restaurantId, section.id, {
+              name,
+              seats: isNaN(seats) ? 2 : seats,
+            });
+            if (result) onTableAdded(result);
+          }}
+        />
       </View>
     </View>
   );

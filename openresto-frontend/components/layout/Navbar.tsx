@@ -5,7 +5,6 @@ import {
   Platform,
   useWindowDimensions,
   ViewStyle,
-  Image,
 } from "react-native";
 import { Link, usePathname, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -79,20 +78,12 @@ export default function Navbar() {
 
           <Link href="/" asChild>
             <Pressable style={styles.brand}>
-              {brand.logoUrl ? (
-                <Image
-                  source={{ uri: brand.logoUrl }}
-                  style={{ height: 32, width: 120, resizeMode: "contain" }}
-                  accessibilityLabel={brand.appName}
-                />
-              ) : (
-                <ThemedText
-                  style={[styles.brandText, { color: primaryColor }, isTiny && { fontSize: 18 }]}
-                  numberOfLines={1}
-                >
-                  {brand.appName}
-                </ThemedText>
-              )}
+              <ThemedText
+                style={[styles.brandText, { color: primaryColor }, isTiny && { fontSize: 18 }]}
+                numberOfLines={1}
+              >
+                {brand.appName}
+              </ThemedText>
             </Pressable>
           </Link>
         </View>
@@ -164,10 +155,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    maxWidth: 1200,
+    maxWidth: 1320,
     width: "100%",
     alignSelf: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: 28,
     height: "100%",
     overflow: "hidden",
   },

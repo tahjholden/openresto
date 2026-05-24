@@ -11,7 +11,7 @@ namespace OpenRestoApi.Infrastructure.Persistence;
 /// </summary>
 public sealed class SqlitePragmaInterceptor : DbConnectionInterceptor
 {
-    private const string PragmaSql = """
+    private const string _pragmaSql = """
         PRAGMA journal_mode=WAL;
         PRAGMA synchronous=NORMAL;
         PRAGMA busy_timeout=10000;
@@ -41,7 +41,7 @@ public sealed class SqlitePragmaInterceptor : DbConnectionInterceptor
         try
         {
             using DbCommand cmd = connection.CreateCommand();
-            cmd.CommandText = PragmaSql;
+            cmd.CommandText = _pragmaSql;
             cmd.ExecuteNonQuery();
         }
         catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.SqliteErrorCode == 8 || ex.SqliteErrorCode == 14)
@@ -57,7 +57,7 @@ public sealed class SqlitePragmaInterceptor : DbConnectionInterceptor
         try
         {
             await using DbCommand cmd = connection.CreateCommand();
-            cmd.CommandText = PragmaSql;
+            cmd.CommandText = _pragmaSql;
             await cmd.ExecuteNonQueryAsync(ct);
         }
         catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.SqliteErrorCode == 8 || ex.SqliteErrorCode == 14)

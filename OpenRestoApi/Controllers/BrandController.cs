@@ -23,7 +23,7 @@ public class BrandController(BrandService brandService) : ControllerBase
             AppName = brand.AppName ?? "Open Resto",
             PrimaryColor = brand.PrimaryColor ?? "#0a7ea4",
             AccentColor = brand.AccentColor,
-            LogoUrl = brand.LogoBase64,
+            HeaderImageUrl = brand.HeaderImageUrl,
         });
     }
 
@@ -33,7 +33,7 @@ public class BrandController(BrandService brandService) : ControllerBase
     {
         try
         {
-            await _brand.SaveAsync(req.AppName, req.PrimaryColor, req.AccentColor, req.LogoBase64);
+            await _brand.SaveAsync(req.AppName, req.PrimaryColor, req.AccentColor);
             return Ok(new { message = "Brand settings saved." });
         }
         catch (ArgumentException ex)
@@ -49,7 +49,6 @@ public class BrandRequest
     public string? AppName { get; set; }
     public string? PrimaryColor { get; set; }
     public string? AccentColor { get; set; }
-    public string? LogoBase64 { get; set; }
 }
 
 public class BrandResponse
@@ -57,5 +56,5 @@ public class BrandResponse
     public string AppName { get; set; } = "Open Resto";
     public string PrimaryColor { get; set; } = "#0a7ea4";
     public string? AccentColor { get; set; }
-    public string? LogoUrl { get; set; }
+    public string? HeaderImageUrl { get; set; }
 }

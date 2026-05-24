@@ -10,4 +10,5 @@ public class EmailSettings
     public bool EnableSsl { get; set; } = true;
     public string? FromName { get; set; }
     public string? FromEmail { get; set; }
+    public bool SendBookingConfirmations { get; set; }
 }

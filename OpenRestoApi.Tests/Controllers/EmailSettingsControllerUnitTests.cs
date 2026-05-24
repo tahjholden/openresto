@@ -43,4 +43,41 @@ public class EmailSettingsControllerUnitTests
         var result = await _controller.Test();
         Assert.IsType<BadRequestObjectResult>(result);
     }
+
+    [Fact]
+    public async Task Get_ReturnsSendBookingConfirmations_WhenSettingsExist()
+    {
+        _mockService.Setup(s => s.GetAsync()).ReturnsAsync(new EmailSettings
+        {
+            Host = "smtp.test.com",
+            Port = 587,
+            Username = "user@test.com",
+            EncryptedPassword = "enc",
+            SendBookingConfirmations = true,
+        });
+
+        var result = await _controller.Get();
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var resp = Assert.IsType<EmailSettingsResponse>(okResult.Value);
+        Assert.True(resp.SendBookingConfirmations);
+        Assert.True(resp.IsConfigured);
+    }
+
+    [Fact]
+    public async Task Get_ReturnsSendBookingConfirmationsFalse_ByDefault()
+    {
+        _mockService.Setup(s => s.GetAsync()).ReturnsAsync(new EmailSettings
+        {
+            Host = "smtp.test.com",
+            Port = 587,
+            Username = "user@test.com",
+            EncryptedPassword = "enc",
+            SendBookingConfirmations = false,
+        });
+
+        var result = await _controller.Get();
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var resp = Assert.IsType<EmailSettingsResponse>(okResult.Value);
+        Assert.False(resp.SendBookingConfirmations);
+    }
 }

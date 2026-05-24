@@ -79,6 +79,11 @@ public class RestaurantManagementService(AppDbContext db)
             r.Timezone = req.Timezone;
         }
 
+        if (req.Tags != null)
+        {
+            r.Tags = req.Tags;
+        }
+
         await _db.SaveChangesAsync();
 
         return new RestaurantDto
@@ -90,6 +95,10 @@ public class RestaurantManagementService(AppDbContext db)
             CloseTime = r.CloseTime,
             OpenDays = r.OpenDays,
             Timezone = r.Timezone,
+            Tags = string.IsNullOrEmpty(r.Tags)
+                ? []
+                : r.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+            ImageUrl = r.ImageUrl,
             Sections = []
         };
     }
@@ -203,6 +212,10 @@ public class RestaurantManagementService(AppDbContext db)
         CloseTime = r.CloseTime,
         OpenDays = r.OpenDays,
         Timezone = r.Timezone,
+        Tags = string.IsNullOrEmpty(r.Tags)
+            ? []
+            : r.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+        ImageUrl = r.ImageUrl,
         Sections = r.Sections.Select(s => new SectionDto
         {
             Id = s.Id,

@@ -30,33 +30,13 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
             appName: data.appName || DEFAULT_BRAND.appName,
             primaryColor: data.primaryColor || DEFAULT_BRAND.primaryColor,
             accentColor: data.accentColor || undefined,
-            logoUrl: data.logoUrl || undefined,
+            headerImageUrl: data.headerImageUrl || undefined,
           };
           setBrand(newBrand);
 
           if (typeof document !== "undefined") {
-            // Update title
             if (!document.title || document.title === DEFAULT_BRAND.appName) {
               document.title = newBrand.appName;
-            }
-
-            // Update favicon & apple-touch-icon
-            if (newBrand.logoUrl) {
-              const links = document.querySelectorAll("link[rel*='icon']");
-              links.forEach((link) => {
-                (link as HTMLLinkElement).href = newBrand.logoUrl!;
-              });
-
-              // Also update apple-touch-icon specifically if it exists
-              const appleIcon = document.querySelector("link[rel='apple-touch-icon']");
-              if (appleIcon) {
-                (appleIcon as HTMLLinkElement).href = newBrand.logoUrl!;
-              } else {
-                const newAppleIcon = document.createElement("link");
-                newAppleIcon.rel = "apple-touch-icon";
-                newAppleIcon.href = newBrand.logoUrl!;
-                document.head.appendChild(newAppleIcon);
-              }
             }
           }
         }

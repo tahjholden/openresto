@@ -9,10 +9,15 @@ jest.mock("@/hooks/use-color-scheme", () => ({
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
 }));
 
 jest.mock("@expo/vector-icons", () => ({
   Ionicons: () => null,
+}));
+
+jest.mock("@/context/BrandContext", () => ({
+  useBrand: () => ({ primaryColor: "#0a7ea4", appName: "Open Resto" }),
 }));
 
 describe("RestaurantCard", () => {
@@ -53,35 +58,20 @@ describe("RestaurantCard", () => {
     expect(screen.getByText("123 Main St")).toBeTruthy();
   });
 
-  it("calculates and displays total tables", () => {
+  it("renders map links for the address", () => {
     render(<RestaurantCard restaurant={restaurant} />);
-    expect(screen.getByText(/3\s+tables/)).toBeTruthy();
+    expect(screen.getByText("Google")).toBeTruthy();
+    expect(screen.getByText("Apple")).toBeTruthy();
   });
 
-  it("calculates and displays total seats", () => {
-    render(<RestaurantCard restaurant={restaurant} />);
-    expect(screen.getByText(/12\s+seats/)).toBeTruthy();
+  it("renders tags when present", () => {
+    render(<RestaurantCard restaurant={{ ...restaurant, tags: ["Dog friendly", "Terrace"] }} />);
+    expect(screen.getByText("Dog friendly")).toBeTruthy();
+    expect(screen.getByText("Terrace")).toBeTruthy();
   });
 
-  it("shows singular 'table' for single table", () => {
-    const singleTable = {
-      ...restaurant,
-      sections: [
-        {
-          id: 1,
-          name: "Main",
-          restaurantId: 1,
-          tables: [{ id: 1, name: "T1", seats: 2, sectionId: 1 }],
-        },
-      ],
-    } as any;
-    render(<RestaurantCard restaurant={singleTable} />);
-    expect(screen.getByText(/1\s+table/)).toBeTruthy();
-  });
-
-  it("renders the initial letter from name", () => {
-    render(<RestaurantCard restaurant={restaurant} />);
-    // "P" is the initial of "Pasta Place"
-    expect(screen.getByText("P")).toBeTruthy();
+  it("renders no tags when tags is empty", () => {
+    render(<RestaurantCard restaurant={{ ...restaurant, tags: [] }} />);
+    expect(screen.queryByText("Dog friendly")).toBeNull();
   });
 });

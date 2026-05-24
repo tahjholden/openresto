@@ -1,3 +1,6 @@
+volumes:
+  media_data:
+
 services:
   backend:
     build:
@@ -13,6 +16,7 @@ services:
       - CONNECTION_STRING=${CONNECTION_STRING:-Data Source=/data/openresto.db}
     volumes:
       - ./data:/data
+      - media_data:/app/wwwroot/media
     restart: always
 
   frontend:
@@ -49,6 +53,7 @@ services:
     volumes:
       - ${HOST_SSL_CERT_PATH}:/etc/nginx/ssl/server.crt:ro
       - ${HOST_SSL_KEY_PATH}:/etc/nginx/ssl/server.key:ro
+      - media_data:/usr/share/nginx/html/media:ro
     depends_on:
       - backend
       - frontend

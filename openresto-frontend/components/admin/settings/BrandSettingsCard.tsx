@@ -5,11 +5,11 @@ import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/theme/theme";
-import { saveBrandSettings } from "@/api/admin";
+import { saveBrandSettings, uploadHeroImage, deleteHeroImage } from "@/api/admin";
 import { useBrand } from "@/context/BrandContext";
 import { styles } from "./settings.styles";
 
-const MAX_LOGO_KB = 256;
+const MAX_HERO_MB = 5;
 
 export function BrandSettingsCard({
   borderColor,
@@ -21,44 +21,52 @@ export function BrandSettingsCard({
   cardBg: string;
 }) {
   const brand = useBrand();
+  const primaryColor = brand.primaryColor || COLORS.primary;
   const [appName, setAppName] = useState(brand.appName);
-  const [primaryColor, setPrimaryColor] = useState(brand.primaryColor);
-  const [logoPreview, setLogoPreview] = useState<string | null>(brand.logoUrl ?? null);
-  const [logoData, setLogoData] = useState<string | undefined>(undefined); // undefined = no change
+  const [brandPrimaryColor, setBrandPrimaryColor] = useState(brand.primaryColor);
+  const [heroPreview, setHeroPreview] = useState<string | null>(brand.headerImageUrl ?? null);
+  const [heroUploading, setHeroUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     setAppName(brand.appName);
-    setPrimaryColor(brand.primaryColor);
-    setLogoPreview(brand.logoUrl ?? null);
+    setBrandPrimaryColor(brand.primaryColor);
+    setHeroPreview(brand.headerImageUrl ?? null);
   }, [brand]);
 
-  const handlePickLogo = () => {
+  const handlePickHero = () => {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "image/png,image/jpeg,image/svg+xml,image/webp";
-    input.onchange = () => {
+    input.accept = "image/png,image/jpeg,image/webp";
+    input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
-      if (file.size > MAX_LOGO_KB * 1024) {
-        setMsg({
-          text: `Logo must be under ${MAX_LOGO_KB} KB. Yours is ${Math.round(file.size / 1024)} KB.`,
-          ok: false,
-        });
+      if (file.size > MAX_HERO_MB * 1024 * 1024) {
+        setMsg({ text: `Image must be under ${MAX_HERO_MB} MB.`, ok: false });
         return;
       }
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        setLogoPreview(dataUrl);
-        setLogoData(dataUrl);
-        setMsg(null);
-      };
-      reader.readAsDataURL(file);
+      setHeroUploading(true);
+      setMsg(null);
+      const url = await uploadHeroImage(file);
+      setHeroUploading(false);
+      if (url) {
+        setHeroPreview(url);
+        setMsg({ text: "Header image uploaded.", ok: true });
+      } else {
+        setMsg({ text: "Failed to upload image.", ok: false });
+      }
     };
     input.click();
+  };
+
+  const handleDeleteHero = async () => {
+    setHeroUploading(true);
+    await deleteHeroImage();
+    setHeroUploading(false);
+    setHeroPreview(null);
+    setMsg({ text: "Header image removed.", ok: true });
   };
 
   const handleSave = async () => {
@@ -66,8 +74,7 @@ export function BrandSettingsCard({
     setMsg(null);
     const result = await saveBrandSettings({
       appName,
-      primaryColor,
-      logoBase64: logoData,
+      primaryColor: brandPrimaryColor,
     });
     setSaving(false);
     if (result) {
@@ -96,7 +103,7 @@ export function BrandSettingsCard({
         <View style={{ flex: 1 }}>
           <ThemedText style={styles.secTitle}>Brand Identity</ThemedText>
           <ThemedText style={[styles.secSub, { color: mutedColor }]} numberOfLines={1}>
-            {appName} · {primaryColor}
+            {appName} · {brandPrimaryColor}
           </ThemedText>
         </View>
         <Ionicons name={expanded ? "chevron-up" : "chevron-down"} size={18} color={mutedColor} />
@@ -133,24 +140,24 @@ export function BrandSettingsCard({
               {PRESET_COLORS.map((c) => (
                 <Pressable
                   key={c}
-                  onPress={() => setPrimaryColor(c)}
+                  onPress={() => setBrandPrimaryColor(c)}
                   style={{
                     width: 28,
                     height: 28,
                     borderRadius: 14,
                     backgroundColor: c,
-                    borderWidth: primaryColor === c ? 3 : 0,
+                    borderWidth: brandPrimaryColor === c ? 3 : 0,
                     borderColor: "#fff",
                     shadowColor: "#000",
-                    shadowOpacity: primaryColor === c ? 0.3 : 0,
+                    shadowOpacity: brandPrimaryColor === c ? 0.3 : 0,
                     shadowRadius: 4,
                     shadowOffset: { width: 0, height: 2 },
                   }}
                 />
               ))}
               <Input
-                value={primaryColor}
-                onChangeText={setPrimaryColor}
+                value={brandPrimaryColor}
+                onChangeText={setBrandPrimaryColor}
                 placeholder="#0a7ea4"
                 style={{ width: 100 }}
               />
@@ -158,13 +165,15 @@ export function BrandSettingsCard({
           </View>
 
           <View style={styles.field}>
-            <ThemedText style={styles.fieldLabel}>Logo (max {MAX_LOGO_KB} KB)</ThemedText>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              {logoPreview ? (
+            <ThemedText style={styles.fieldLabel}>
+              Homepage Header Image (max {MAX_HERO_MB} MB)
+            </ThemedText>
+            <View style={{ gap: 8 }}>
+              {heroPreview ? (
                 <View
                   style={{
-                    width: 48,
-                    height: 48,
+                    width: "100%",
+                    aspectRatio: 16 / 5,
                     borderRadius: 8,
                     overflow: "hidden",
                     borderWidth: 1,
@@ -172,44 +181,53 @@ export function BrandSettingsCard({
                   }}
                 >
                   <img
-                    src={logoPreview}
-                    alt="Logo"
-                    style={{ width: "48px", height: "48px", objectFit: "contain" }}
+                    src={heroPreview}
+                    alt="Header"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 </View>
               ) : (
                 <View
                   style={{
-                    width: 48,
-                    height: 48,
+                    width: "100%",
+                    aspectRatio: 16 / 5,
                     borderRadius: 8,
                     borderWidth: 1,
+                    borderStyle: "dashed" as const,
                     borderColor,
                     alignItems: "center",
                     justifyContent: "center",
+                    gap: 6,
                   }}
                 >
-                  <Ionicons name="image-outline" size={20} color={mutedColor} />
+                  <Ionicons name="image-outline" size={24} color={mutedColor} />
+                  <ThemedText style={{ fontSize: 12, color: mutedColor }}>
+                    No header image
+                  </ThemedText>
                 </View>
               )}
-              <Pressable style={[styles.secBtn, { borderColor }]} onPress={handlePickLogo}>
-                <ThemedText style={[styles.secBtnText, { color: primaryColor }]}>
-                  {logoPreview ? "Change" : "Upload"}
-                </ThemedText>
-              </Pressable>
-              {logoPreview && (
+              <View style={{ flexDirection: "row", gap: 8 }}>
                 <Pressable
-                  style={[styles.secBtn, { borderColor }]}
-                  onPress={() => {
-                    setLogoPreview(null);
-                    setLogoData("");
-                  }}
+                  style={[styles.secBtn, { borderColor, opacity: heroUploading ? 0.5 : 1 }]}
+                  onPress={handlePickHero}
+                  disabled={heroUploading}
                 >
-                  <ThemedText style={[styles.secBtnText, { color: COLORS.error }]}>
-                    Delete
+                  <ThemedText style={[styles.secBtnText, { color: primaryColor }]}>
+                    {heroUploading ? "Uploading…" : heroPreview ? "Change" : "Upload"}
                   </ThemedText>
                 </Pressable>
-              )}
+                {heroPreview && (
+                  <Pressable
+                    style={[styles.secBtn, { borderColor, opacity: heroUploading ? 0.5 : 1 }]}
+                    onPress={handleDeleteHero}
+                    disabled={heroUploading}
+                  >
+                    <ThemedText style={[styles.secBtnText, { color: COLORS.error }]}>
+                      Remove
+                    </ThemedText>
+                  </Pressable>
+                )}
+              </View>
             </View>
           </View>
 
@@ -224,7 +242,7 @@ export function BrandSettingsCard({
             disabled={saving || !appName.trim()}
             style={{ marginTop: 4 }}
           >
-            {saving ? "Saving…" : "Save Brand Settings"}
+            {saving ? "Saving…" : "Save"}
           </Button>
         </View>
       )}

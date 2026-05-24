@@ -20,7 +20,26 @@ export interface RestaurantDto {
   closeTime: string;
   openDays: string;
   timezone: string;
+  tags?: string[];
+  imageUrl?: string | null;
   sections: SectionDto[];
+}
+
+export async function createRestaurant(name: string): Promise<RestaurantDto | null> {
+  try {
+    const res = await post("/restaurants", {
+      name,
+      openTime: "09:00",
+      closeTime: "22:00",
+      openDays: "Mon,Tue,Wed,Thu,Fri,Sat,Sun",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
+    if (!res.ok) throw new Error("Failed to create restaurant");
+    return await res.json();
+  } catch (err) {
+    console.error("createRestaurant error:", err);
+    return null;
+  }
 }
 
 export async function fetchRestaurants(): Promise<RestaurantDto[]> {
@@ -45,6 +64,25 @@ export async function fetchRestaurantById(id: number): Promise<RestaurantDto | n
   }
 }
 
+export interface HighlightDto {
+  id: number;
+  title: string;
+  body: string;
+  iconKey: string;
+  sortOrder: number;
+}
+
+export async function fetchHighlights(): Promise<HighlightDto[]> {
+  try {
+    const res = await get("/highlights");
+    if (!res.ok) throw new Error("Failed to fetch highlights");
+    return await res.json();
+  } catch (err) {
+    console.error("fetchHighlights error:", err);
+    return [];
+  }
+}
+
 export async function updateRestaurant(
   id: number,
   data: {
@@ -54,6 +92,7 @@ export async function updateRestaurant(
     closeTime?: string;
     openDays?: string;
     timezone?: string;
+    tags?: string | null;
   }
 ): Promise<RestaurantDto | null> {
   try {
@@ -147,5 +186,35 @@ export async function deleteTable(
   } catch (err) {
     console.error("deleteTable error:", err);
     return false;
+  }
+}
+
+export async function uploadLocationImage(
+  restaurantId: number,
+  file: File
+): Promise<string | null> {
+  try {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(
+      `${process.env.EXPO_PUBLIC_API_URL ?? "/api"}/media/location/${restaurantId}`,
+      { method: "POST", credentials: "include", body: form }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.url ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteLocationImage(restaurantId: number): Promise<void> {
+  try {
+    await fetch(`${process.env.EXPO_PUBLIC_API_URL ?? "/api"}/media/location/${restaurantId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+  } catch {
+    // ignore
   }
 }

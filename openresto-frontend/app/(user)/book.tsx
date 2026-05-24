@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { fetchRestaurantById, RestaurantDto } from "@/api/restaurants";
 import { useEffect, useState } from "react";
-import { Platform, ScrollView, StyleSheet } from "react-native";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import BookingForm, { BookingFormData } from "@/components/booking/BookingForm";
 import { createBooking } from "@/api/bookings";
@@ -13,7 +13,19 @@ import { convertLocalToUtc } from "@/utils/date";
 import BookingSkeleton from "@/components/booking/BookingSkeleton";
 
 export default function BookScreen() {
-  const { restaurantId } = useLocalSearchParams<{ restaurantId: string }>();
+  const {
+    restaurantId,
+    time: timeParam,
+    party: partyParam,
+  } = useLocalSearchParams<{
+    restaurantId: string;
+    time?: string;
+    party?: string;
+  }>();
+  const initialTime = timeParam || undefined;
+  const initialSeats = partyParam
+    ? Math.max(1, Math.min(10, parseInt(partyParam, 10))) || undefined
+    : undefined;
   const [restaurant, setRestaurant] = useState<RestaurantDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -92,6 +104,18 @@ export default function BookScreen() {
     <ThemedView style={styles.root}>
       <ScrollView style={styles.scroll}>
         <PageContainer style={styles.page}>
+          {restaurant.imageUrl && Platform.OS === "web" && (
+            <View
+              style={[
+                styles.imageBanner,
+                {
+                  backgroundImage: `url(${restaurant.imageUrl})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                } as object,
+              ]}
+            />
+          )}
           <ThemedText type="title" style={styles.title}>
             Book a table
           </ThemedText>
@@ -109,6 +133,8 @@ export default function BookScreen() {
             restaurant={restaurant}
             onSubmit={handleSubmit}
             onRefresh={() => router.replace(`/book?restaurantId=${restaurantId}`)}
+            initialTime={initialTime}
+            initialSeats={initialSeats}
           />
         </PageContainer>
       </ScrollView>
@@ -130,6 +156,13 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     marginBottom: 24,
+  },
+  imageBanner: {
+    width: "100%",
+    aspectRatio: 16 / 5,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 16,
   },
   errorBanner: {
     backgroundColor: "rgba(220,38,38,0.08)",

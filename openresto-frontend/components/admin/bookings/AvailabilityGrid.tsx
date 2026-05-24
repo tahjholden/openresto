@@ -5,11 +5,15 @@ import { getThemeColors } from "@/theme/theme";
 import { SectionWithTables, BookingDetailDto } from "@/api/admin";
 import { styles } from "./bookings.styles";
 
-export const TIME_SLOTS = Array.from({ length: 12 }, (_, i) => {
-  const h = i + 11;
-  const label = h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`;
-  return { hour: h, label };
-});
+function buildTimeSlots(openTime: string, closeTime: string) {
+  const startHour = parseInt(openTime.split(":")[0], 10);
+  const endHour = parseInt(closeTime.split(":")[0], 10);
+  return Array.from({ length: Math.max(endHour - startHour, 1) }, (_, i) => {
+    const h = startHour + i;
+    const label = h < 12 ? `${h}a` : h === 12 ? "12p" : `${h - 12}p`;
+    return { hour: h, label };
+  });
+}
 
 export const COL_W = 68;
 export const ROW_H = 48;
@@ -22,12 +26,17 @@ export function AvailabilityGrid({
   bookings,
   isDark,
   onBookingPress,
+  openTime = "11:00",
+  closeTime = "23:00",
 }: {
   sections: SectionWithTables[];
   bookings: BookingDetailDto[];
   isDark: boolean;
   onBookingPress: (b: BookingDetailDto) => void;
+  openTime?: string;
+  closeTime?: string;
 }) {
+  const timeSlots = buildTimeSlots(openTime, closeTime);
   const colors = getThemeColors(isDark);
   const borderColor = colors.border;
   const headerBg = isDark ? "#28292b" : "#f4f5f6";
@@ -40,7 +49,7 @@ export function AvailabilityGrid({
     return bookings.find((b) => b.tableId === tableId && new Date(b.date).getHours() === hour);
   }
 
-  const totalW = LABEL_W + TIME_SLOTS.length * COL_W;
+  const totalW = LABEL_W + timeSlots.length * COL_W;
 
   if (sections.length === 0) {
     return (
@@ -82,7 +91,7 @@ export function AvailabilityGrid({
           >
             <ThemedText style={[styles.gridHeaderText, { color: mutedColor }]}>TABLE</ThemedText>
           </View>
-          {TIME_SLOTS.map(({ hour, label }) => (
+          {timeSlots.map(({ hour, label }) => (
             <View
               key={hour}
               style={[
@@ -160,7 +169,7 @@ export function AvailabilityGrid({
                 </View>
 
                 {/* Time slot cells */}
-                {TIME_SLOTS.map(({ hour }) => {
+                {timeSlots.map(({ hour }) => {
                   const booking = bookingForCell(table.id, hour);
                   return (
                     <Pressable

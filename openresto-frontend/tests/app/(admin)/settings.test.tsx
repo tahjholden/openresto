@@ -52,6 +52,7 @@ jest.mock("@/components/admin/settings/EmailSettingsCard", () => ({
   EmailSettingsCard: () => null,
 }));
 jest.mock("@/components/admin/settings/SecurityCard", () => ({ SecurityCard: () => null }));
+jest.mock("@/components/admin/settings/HighlightsCard", () => ({ HighlightsCard: () => null }));
 
 jest.setTimeout(15000);
 
@@ -81,7 +82,7 @@ describe("AdminSettingsScreen", () => {
   it("renders locations after loading", async () => {
     renderWithProviders(<AdminSettingsScreen />);
     // Just wait for loading to finish
-    await waitFor(() => expect(screen.queryByText("1 location configured")).toBeTruthy());
+    await waitFor(() => expect(screen.queryByText(/1 location configured/)).toBeTruthy());
   });
 
   it("handles empty locations list", async () => {

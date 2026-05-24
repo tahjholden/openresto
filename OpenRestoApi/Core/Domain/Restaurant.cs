@@ -27,4 +27,8 @@ public class Restaurant
     /// If set, new bookings are disabled until this time (UTC).
     /// </summary>
     public DateTime? BookingsPausedUntil { get; set; }
+
+    public string? Tags { get; set; }
+
+    public string? ImageUrl { get; set; }
 }

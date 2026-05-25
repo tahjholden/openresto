@@ -20,6 +20,14 @@ jest.mock("@/context/BrandContext", () => ({
   useBrand: () => ({ primaryColor: "#0a7ea4", appName: "Open Resto" }),
 }));
 
+jest.mock("@/api/availability", () => ({
+  fetchAvailability: jest.fn().mockResolvedValue({
+    restaurantId: 1,
+    date: "2026-05-25",
+    slots: [{ time: "19:00", isAvailable: true, availableTableIds: [1], category: "Dinner" }],
+  }),
+}));
+
 describe("RestaurantCard", () => {
   const restaurant = {
     id: 1,

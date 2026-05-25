@@ -109,7 +109,7 @@ export default function RestaurantCard({
     const { totalMins } = getRestaurantNow(tz);
     const date = getRestaurantDate(tz);
     fetchAvailability(restaurant.id, date, party).then((data) => {
-      if (data) {
+      if (data && Array.isArray(data.slots)) {
         const future = data.slots.filter((s) => {
           if (!s.isAvailable) return false;
           const [h, m] = s.time.split(":").map(Number);
@@ -315,7 +315,11 @@ export default function RestaurantCard({
             </ThemedText>
           </View>
           {slotsLoading ? (
-            <ActivityIndicator size="small" color={primaryColor} style={{ alignSelf: "flex-start" }} />
+            <ActivityIndicator
+              size="small"
+              color={primaryColor}
+              style={{ alignSelf: "flex-start" }}
+            />
           ) : slots.length === 0 ? (
             <ThemedText style={[styles.noSlotsText, { color: mutedColor }]}>
               No available slots today

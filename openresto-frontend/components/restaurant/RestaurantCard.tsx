@@ -346,9 +346,9 @@ export default function RestaurantCard({
             </ThemedText>
           </View>
           <Pressable
-            style={({ hovered }: { hovered?: boolean }) => [
+            style={({ pressed }) => [
               styles.viewBtn,
-              hovered && { backgroundColor: surface2 },
+              pressed && { backgroundColor: surface2 },
             ]}
             onPress={() => router.push(`/(user)/book?restaurantId=${restaurant.id}`)}
           >

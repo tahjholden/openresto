@@ -1,23 +1,11 @@
-#!/bin/bash
-
+#!/bin/sh
 set -e
 
+# Named volumes initialise with root ownership at runtime, overriding the
+# build-time chown. Fix both volume mount points on every start so the app
+# user can always write to them, then drop privileges.
+mkdir -p /data /app/wwwroot/media
+chown app:app /data /app/wwwroot/media
+chmod 775 /data /app/wwwroot/media
 
-
-# Fix permissions for the /data directory (where the volume is mounted)
-
-echo "Fixing permissions for /data..."
-
-mkdir -p /data
-
-chown -R app:app /data
-
-chmod 775 /data
-
-
-
-# Execute the application as the 'app' user
-
-echo "Starting application as 'app' user..."
-
-exec gosu app dotnet OpenRestoApi.dll
+exec runuser -u app -- "$@"

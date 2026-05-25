@@ -56,12 +56,12 @@ public class DomainModelTests
     [Fact]
     public void BrandSettings_PropertyAccess()
     {
-        var settings = new BrandSettings { Id = 1, AppName = "A", PrimaryColor = "P", AccentColor = "C", LogoBase64 = "L" };
+        var settings = new BrandSettings { Id = 1, AppName = "A", PrimaryColor = "P", AccentColor = "C", HeaderImageUrl = "L" };
         Assert.Equal(1, settings.Id);
         Assert.Equal("A", settings.AppName);
         Assert.Equal("P", settings.PrimaryColor);
         Assert.Equal("C", settings.AccentColor);
-        Assert.Equal("L", settings.LogoBase64);
+        Assert.Equal("L", settings.HeaderImageUrl);
     }
 
     [Fact]

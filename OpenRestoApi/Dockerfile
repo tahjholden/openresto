@@ -28,18 +28,21 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Copy the published app
 COPY --from=publish /app/publish .
 
-# Create data directory and ensure 'app' user owns everything
-RUN mkdir -p /data && \
+# Copy and prepare entrypoint (runs as root, fixes volume permissions, drops to app)
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Pre-create volume mount points with correct ownership so fresh volumes
+# inherit the right permissions on first initialisation.
+RUN mkdir -p /data /app/wwwroot/media && \
     chown -R app:app /app /data && \
     chmod -R 775 /app /data
-
-# Switch to the non-root 'app' user
-USER app
 
 # ASP.NET defaults
 ENV ASPNETCORE_URLS=http://+:8080
 ENV PORT=8080
 EXPOSE 8080
 
-# Standard entry point
-ENTRYPOINT ["dotnet", "OpenRestoApi.dll"]
+# Entrypoint runs as root, fixes /data + /app/wwwroot/media ownership, then
+# drops to the non-root 'app' user before starting the application.
+ENTRYPOINT ["/entrypoint.sh", "dotnet", "OpenRestoApi.dll"]

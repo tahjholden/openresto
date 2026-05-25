@@ -1,11 +1,13 @@
 import { ThemedText } from "@/components/themed-text";
 import { RestaurantDto } from "@/api/restaurants";
 import { useRouter } from "expo-router";
-import { Linking, Platform, Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Linking, Platform, Pressable, StyleSheet, View } from "react-native";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getThemeColors, COLORS } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
+import { fetchAvailability, TimeSlotDto } from "@/api/availability";
 
 // Predefined gradient pairs for the card image area (brand-agnostic)
 const CARD_GRADIENTS = [
@@ -16,24 +18,22 @@ const CARD_GRADIENTS = [
   ["#1a3a2a", "#3faa70"],
 ];
 
-function generateSlots(openTime: string, closeTime: string, id: number) {
-  const [openH, openM] = openTime.split(":").map(Number);
-  const [closeH] = closeTime.split(":").map(Number);
-  const startH = Math.max(isNaN(openH) ? 18 : openH, 17);
-  const slots: { t: string; avail: boolean }[] = [];
-  let h = startH,
-    m = isNaN(openM) ? 0 : openM;
-  while (slots.length < 5 && h < Math.min(closeH, 23)) {
-    const label = `${h}:${m === 0 ? "00" : m}`;
-    const avail = (h + Math.floor(m / 30) + id) % 4 !== 0;
-    slots.push({ t: label, avail });
-    m += 30;
-    if (m >= 60) {
-      m -= 60;
-      h++;
-    }
+function getRestaurantDate(timezone: string): string {
+  try {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(now);
+    const year = parts.find((p) => p.type === "year")?.value ?? "";
+    const month = parts.find((p) => p.type === "month")?.value ?? "";
+    const day = parts.find((p) => p.type === "day")?.value ?? "";
+    return `${year}-${month}-${day}`;
+  } catch {
+    return new Date().toISOString().split("T")[0];
   }
-  return slots;
 }
 
 function getRestaurantNow(timezone: string): { totalMins: number; isoDay: number } {
@@ -100,6 +100,29 @@ export default function RestaurantCard({
   const primaryColor = brand.primaryColor || COLORS.primary;
   const router = useRouter();
 
+  const [slots, setSlots] = useState<TimeSlotDto[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(true);
+
+  useEffect(() => {
+    setSlotsLoading(true);
+    const tz = restaurant.timezone ?? "UTC";
+    const { totalMins } = getRestaurantNow(tz);
+    const date = getRestaurantDate(tz);
+    fetchAvailability(restaurant.id, date, party).then((data) => {
+      if (data && Array.isArray(data.slots)) {
+        const future = data.slots.filter((s) => {
+          if (!s.isAvailable) return false;
+          const [h, m] = s.time.split(":").map(Number);
+          return h * 60 + (m || 0) > totalMins;
+        });
+        setSlots(future.slice(0, 5));
+      } else {
+        setSlots([]);
+      }
+      setSlotsLoading(false);
+    });
+  }, [restaurant.id, restaurant.timezone, party]);
+
   const gradient = CARD_GRADIENTS[index % CARD_GRADIENTS.length];
   const open = isOpenNow(
     restaurant.openTime,
@@ -107,7 +130,6 @@ export default function RestaurantCard({
     restaurant.timezone ?? "UTC",
     restaurant.openDays
   );
-  const slots = generateSlots(restaurant.openTime, restaurant.closeTime, restaurant.id);
   const tags = restaurant.tags ?? [];
 
   const accentHex = primaryColor.replace("#", "");
@@ -289,51 +311,43 @@ export default function RestaurantCard({
               Available slots
             </ThemedText>
             <ThemedText style={[styles.slotLabelWhen, { color: colors.text }]}>
-              {party} {party === 1 ? "guest" : "guests"} · tonight
+              {party} {party === 1 ? "guest" : "guests"} · today
             </ThemedText>
           </View>
-          <View style={styles.slotRow}>
-            {slots.map((s) => (
-              <Pressable
-                key={s.t}
-                disabled={!s.avail}
-                onPress={(e) => {
-                  e.stopPropagation?.();
-                  router.push(
-                    `/(user)/book?restaurantId=${restaurant.id}&time=${encodeURIComponent(s.t)}&party=${party}`
-                  );
-                }}
-                style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => [
-                  styles.slot,
-                  {
-                    backgroundColor: !s.avail
-                      ? "transparent"
-                      : hovered || pressed
-                        ? primaryColor
-                        : surface2,
-                    borderColor: !s.avail
-                      ? borderColor
-                      : hovered || pressed
-                        ? primaryColor
-                        : borderColor,
-                  },
-                ]}
-              >
-                <ThemedText
-                  style={[
-                    styles.slotText,
-                    !s.avail && {
-                      color: mutedColor,
-                      opacity: 0.5,
-                      textDecorationLine: "line-through",
+          {slotsLoading ? (
+            <ActivityIndicator
+              size="small"
+              color={primaryColor}
+              style={{ alignSelf: "flex-start" }}
+            />
+          ) : slots.length === 0 ? (
+            <ThemedText style={[styles.noSlotsText, { color: mutedColor }]}>
+              No available slots today
+            </ThemedText>
+          ) : (
+            <View style={styles.slotRow}>
+              {slots.map((s) => (
+                <Pressable
+                  key={s.time}
+                  onPress={(e) => {
+                    e.stopPropagation?.();
+                    router.push(
+                      `/(user)/book?restaurantId=${restaurant.id}&time=${encodeURIComponent(s.time)}&party=${party}`
+                    );
+                  }}
+                  style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => [
+                    styles.slot,
+                    {
+                      backgroundColor: hovered || pressed ? primaryColor : surface2,
+                      borderColor: hovered || pressed ? primaryColor : borderColor,
                     },
                   ]}
                 >
-                  {s.t}
-                </ThemedText>
-              </Pressable>
-            ))}
-          </View>
+                  <ThemedText style={styles.slotText}>{s.time}</ThemedText>
+                </Pressable>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Footer */}
@@ -518,6 +532,10 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     fontWeight: "500",
     textAlign: "center",
+  },
+  noSlotsText: {
+    fontSize: 12.5,
+    fontStyle: "italic",
   },
 
   // Footer

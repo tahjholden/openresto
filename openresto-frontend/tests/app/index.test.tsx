@@ -24,6 +24,14 @@ jest.mock("@/api/restaurants", () => ({
   fetchHighlights: jest.fn(),
 }));
 
+jest.mock("@/api/availability", () => ({
+  fetchAvailability: jest.fn().mockResolvedValue({
+    restaurantId: 1,
+    date: "2026-05-25",
+    slots: [{ time: "19:00", isAvailable: true, availableTableIds: [1], category: "Dinner" }],
+  }),
+}));
+
 jest.mock("expo-router", () => {
   const React = require("react");
   return {

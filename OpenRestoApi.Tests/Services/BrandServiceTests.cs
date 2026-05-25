@@ -41,7 +41,7 @@ public class BrandServiceTests
     {
         using AppDbContext db = CreateDb(nameof(SaveAsync_Throws_WhenAppNameTooLong));
         var svc = new BrandService(db);
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.SaveAsync(new string('a', 33), null, null, null));
+        await Assert.ThrowsAsync<ArgumentException>(() => svc.SaveAsync(new string('a', 33), null, null));
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class BrandServiceTests
     {
         using AppDbContext db = CreateDb(nameof(SaveAsync_Throws_WhenInvalidPrimaryColor));
         var svc = new BrandService(db);
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.SaveAsync(null, "invalid", null, null));
+        await Assert.ThrowsAsync<ArgumentException>(() => svc.SaveAsync(null, "invalid", null));
     }
 
     [Fact]
@@ -57,39 +57,42 @@ public class BrandServiceTests
     {
         using AppDbContext db = CreateDb(nameof(SaveAsync_Throws_WhenInvalidAccentColor));
         var svc = new BrandService(db);
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.SaveAsync(null, null, "invalid", null));
+        await Assert.ThrowsAsync<ArgumentException>(() => svc.SaveAsync(null, null, "invalid"));
     }
 
     [Fact]
-    public async Task SaveAsync_Throws_WhenLogoTooLarge()
+    public async Task SaveAsync_Persists_NewBrandSettings()
     {
-        using AppDbContext db = CreateDb(nameof(SaveAsync_Throws_WhenLogoTooLarge));
+        using AppDbContext db = CreateDb(nameof(SaveAsync_Persists_NewBrandSettings));
         var svc = new BrandService(db);
-        string largeBase64 = new string('a', 400000);
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.SaveAsync(null, null, null, largeBase64));
-    }
-
-    [Fact]
-    public async Task SaveAsync_HandlesLogoWithComma()
-    {
-        using AppDbContext db = CreateDb(nameof(SaveAsync_HandlesLogoWithComma));
-        var svc = new BrandService(db);
-        await svc.SaveAsync(null, null, null, "data:image/png;base64,iVBORw0KGgo=");
+        await svc.SaveAsync("MyApp", "#123456", null);
         BrandSettings result = await svc.GetAsync();
-        Assert.Equal("data:image/png;base64,iVBORw0KGgo=", result.LogoBase64);
+        Assert.Equal("MyApp", result.AppName);
+        Assert.Equal("#123456", result.PrimaryColor);
     }
 
     [Fact]
-    public async Task SaveAsync_SetsLogoNull_WhenEmptyString()
+    public async Task SaveAsync_Preserves_ExistingValues_WhenNullPassed()
     {
-        using AppDbContext db = CreateDb(nameof(SaveAsync_SetsLogoNull_WhenEmptyString));
-        db.Set<BrandSettings>().Add(new BrandSettings { AppName = "Test", PrimaryColor = "#123456", LogoBase64 = "existing" });
+        using AppDbContext db = CreateDb(nameof(SaveAsync_Preserves_ExistingValues_WhenNullPassed));
+        var svc = new BrandService(db);
+        await svc.SaveAsync("Initial", "#123456", null);
+        await svc.SaveAsync(null, null, null);
+        BrandSettings result = await svc.GetAsync();
+        Assert.Equal("Initial", result.AppName);
+    }
+
+    [Fact]
+    public async Task SaveAsync_Updates_AccentColor()
+    {
+        using AppDbContext db = CreateDb(nameof(SaveAsync_Updates_AccentColor));
+        db.Set<BrandSettings>().Add(new BrandSettings { AppName = "Test", PrimaryColor = "#123456" });
         await db.SaveChangesAsync();
 
         var svc = new BrandService(db);
-        await svc.SaveAsync(null, null, null, "");
+        await svc.SaveAsync(null, null, "#abcdef");
         BrandSettings result = await svc.GetAsync();
-        Assert.Null(result.LogoBase64);
+        Assert.Equal("#abcdef", result.AccentColor);
     }
 
     [Fact]
@@ -97,7 +100,7 @@ public class BrandServiceTests
     {
         using AppDbContext db = CreateDb(nameof(SaveAsync_ValidatesHexWithAlpha));
         var svc = new BrandService(db);
-        await svc.SaveAsync(null, "#12345678", null, null);
+        await svc.SaveAsync(null, "#12345678", null);
         BrandSettings result = await svc.GetAsync();
         Assert.Equal("#12345678", result.PrimaryColor);
     }

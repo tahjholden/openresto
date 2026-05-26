@@ -59,7 +59,7 @@ export default function AdminBookingsScreen() {
   const [bookings, setBookings] = useState<BookingDetailDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("timetable");
-  const [statusFilter, setStatusFilter] = useState<BookingStatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<BookingStatusFilter>("active");
 
   const [gridDate, setGridDate] = useState(new Date());
   const [gridSections, setGridSections] = useState<SectionWithTables[]>([]);
@@ -373,7 +373,6 @@ export default function AdminBookingsScreen() {
           <View style={[styles.modeToggle, { borderColor, backgroundColor: cardBg }]}>
             {(
               [
-                { key: "all", label: "All", color: colors.text },
                 { key: "active", label: "Active", color: PRIMARY },
                 { key: "past", label: "Past", color: "#7c3aed" },
                 { key: "cancelled", label: "Cancelled", color: "#dc2626" },

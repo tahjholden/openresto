@@ -96,6 +96,7 @@ export default function AdminBookingsScreen() {
   const selectedRestaurant = restaurants.find((r) => r.id === selectedRestaurantId);
   const openTime = selectedRestaurant?.openTime ?? "09:00";
   const closeTime = selectedRestaurant?.closeTime ?? "22:00";
+  const timezone = selectedRestaurant?.timezone ?? "UTC";
 
   const borderColor = colors.border;
   const cardBg = colors.card;
@@ -511,6 +512,7 @@ export default function AdminBookingsScreen() {
               onBookingPress={(b) => setSelectedBookingId(b.id)}
               openTime={openTime}
               closeTime={closeTime}
+              timezone={timezone}
             />
           )}
         </View>

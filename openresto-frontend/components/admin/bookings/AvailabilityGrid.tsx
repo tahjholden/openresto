@@ -25,10 +25,10 @@ function getRestaurantHour(dateStr: string, timezone: string): number {
   try {
     const parts = new Intl.DateTimeFormat("en-US", {
       timeZone: timezone,
-      hour: "numeric",
-      hour12: false,
+      hour: "2-digit",
+      hourCycle: "h23",
     }).formatToParts(new Date(dateStr));
-    return parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10) % 24;
+    return parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
   } catch {
     return new Date(dateStr).getHours();
   }

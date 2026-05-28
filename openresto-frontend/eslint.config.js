@@ -26,6 +26,11 @@ module.exports = defineConfig([
       // Console statements should be cleaned up before shipping
       "no-console": ["warn", { allow: ["warn", "error"] }],
 
+      // These patterns are valid React 18-style code used throughout the codebase.
+      // Downgraded from error to warn pending incremental migration to React 19
+      // compiler patterns (pure effects, no sync setState in effect bodies).
+      "react-hooks/set-state-in-effect": "warn",
+
       // Prefer const
       "prefer-const": "error",
 

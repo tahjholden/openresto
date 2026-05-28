@@ -39,6 +39,7 @@ export function useTableHold({
   const [hold, setHold] = useState<HoldResponse | null>(null);
   const [holdStatus, setHoldStatus] = useState<HoldStatus>("idle");
   const [secondsLeft, setSecondsLeft] = useState(0);
+  const [holdId, setHoldId] = useState<string | null>(null);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentHoldId = useRef<string | null>(null);
@@ -63,6 +64,7 @@ export function useTableHold({
         setHoldStatus("expired");
         setHold(null);
         currentHoldId.current = null;
+        setHoldId(null);
       }
     };
     update();
@@ -73,6 +75,7 @@ export function useTableHold({
     if (currentHoldId.current) {
       releaseHold(currentHoldId.current);
       currentHoldId.current = null;
+      setHoldId(null);
     }
     setHold(null);
     setHoldStatus("idle");
@@ -119,6 +122,7 @@ export function useTableHold({
       if (result) {
         // Backend atomically released previousHoldId and placed the new hold
         currentHoldId.current = result.holdId;
+        setHoldId(result.holdId);
         setHold(result);
         setHoldStatus("held");
         startCountdown(result.expiresAt);
@@ -126,6 +130,7 @@ export function useTableHold({
         // Table is held by someone else — release our previous hold and surface unavailable
         if (previousHoldId) releaseHold(previousHoldId);
         currentHoldId.current = null;
+        setHoldId(null);
         setHold(null);
         clearCountdown();
         setHoldStatus("unavailable");
@@ -157,7 +162,7 @@ export function useTableHold({
     hold,
     holdStatus,
     secondsLeft,
-    holdId: currentHoldId.current,
+    holdId,
     setHoldStatus,
     releaseCurrentHold,
   };

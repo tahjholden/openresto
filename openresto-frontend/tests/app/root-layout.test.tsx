@@ -71,13 +71,6 @@ jest.mock("@/context/BrandContext", () => ({
 
 jest.mock("@/context/ThemeContext", () => ({
   AppThemeProvider: ({ children }: any) => children,
-  useTheme: () => ({ colorScheme: "light" }),
-}));
-
-jest.mock("@react-navigation/native", () => ({
-  DarkTheme: {},
-  DefaultTheme: {},
-  ThemeProvider: ({ children }: any) => children,
 }));
 
 jest.mock("@/hooks/use-color-scheme", () => ({

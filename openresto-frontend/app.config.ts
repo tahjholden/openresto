@@ -32,6 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     "expo-router",
+    "expo-status-bar",
     "expo-asset",
     "expo-font",
     "expo-image",

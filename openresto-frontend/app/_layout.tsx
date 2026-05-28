@@ -1,12 +1,11 @@
 import "@/global.css";
 import { Platform } from "react-native";
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack, usePathname, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 
-import { AppThemeProvider, useTheme } from "@/context/ThemeContext";
+import { AppThemeProvider } from "@/context/ThemeContext";
 import { BrandProvider, useBrand } from "@/context/BrandContext";
 
 // Synchronous theme init — runs at module load, before React mounts.
@@ -32,7 +31,6 @@ if (Platform.OS === "web" && typeof document !== "undefined") {
 }
 
 function AppWithTheme() {
-  const { colorScheme } = useTheme();
   const brand = useBrand();
   const pathname = usePathname();
   const segments = useSegments();
@@ -73,7 +71,7 @@ function AppWithTheme() {
   }, []);
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <>
       <Stack
         screenOptions={{
           headerShown: false,
@@ -86,7 +84,7 @@ function AppWithTheme() {
         <Stack.Screen name="(admin)" />
       </Stack>
       <StatusBar style="auto" />
-    </ThemeProvider>
+    </>
   );
 }
 

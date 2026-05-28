@@ -14,7 +14,7 @@ export default function Skeleton({
   style?: ViewStyle;
 }) {
   const { colors } = useAppTheme();
-  const animatedValue = React.useRef(new Animated.Value(0)).current;
+  const [animatedValue] = React.useState(() => new Animated.Value(0));
 
   React.useEffect(() => {
     if (process.env.NODE_ENV === "test") return;
@@ -34,7 +34,7 @@ export default function Skeleton({
         }),
       ])
     ).start();
-  }, [animatedValue]);
+  }, []);
 
   const opacity = animatedValue.interpolate({
     inputRange: [0, 1],

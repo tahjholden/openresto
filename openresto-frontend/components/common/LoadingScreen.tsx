@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, ActivityIndicator, Animated, Easing, Text } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -17,9 +17,9 @@ export default function LoadingScreen({
   const isDark = useColorScheme() === "dark";
   const colors = getThemeColors(isDark);
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(0));
+  const [scaleAnim] = useState(() => new Animated.Value(0.9));
+  const [rotateAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (process.env.NODE_ENV === "test") return;
@@ -45,7 +45,7 @@ export default function LoadingScreen({
         })
       ),
     ]).start();
-  }, [fadeAnim, scaleAnim, rotateAnim]);
+  }, []);
 
   if (process.env.NODE_ENV === "test") {
     return (

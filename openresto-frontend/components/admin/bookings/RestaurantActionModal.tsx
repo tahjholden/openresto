@@ -39,15 +39,16 @@ export default function RestaurantActionModal({
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState<number | null>(null);
   const [extendedBookings, setExtendedBookings] = useState<BookingDetailDto[] | null>(null);
-
-  useEffect(() => {
-    if (visible) {
-      loadRestaurants();
-      setExtendedBookings(null);
-    }
-  }, [visible]);
+  const [willPauseUntil, setWillPauseUntil] = useState("");
 
   async function loadRestaurants() {
+    setExtendedBookings(null);
+    setWillPauseUntil(
+      new Date(Date.now() + 60 * 60 * 1000).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
     setLoading(true);
     try {
       const data = await adminGetRestaurants();
@@ -58,6 +59,12 @@ export default function RestaurantActionModal({
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (visible) {
+      loadRestaurants();
+    }
+  }, [visible]);
 
   async function handleAction(
     restaurantId: number,
@@ -172,10 +179,6 @@ export default function RestaurantActionModal({
                 const isPaused = r.bookingsPausedUntil
                   ? new Date(r.bookingsPausedUntil) > new Date()
                   : false;
-                const willPauseUntil = new Date(Date.now() + 60 * 60 * 1000).toLocaleTimeString(
-                  [],
-                  { hour: "2-digit", minute: "2-digit" }
-                );
 
                 return (
                   <Pressable

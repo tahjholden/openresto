@@ -289,7 +289,11 @@ export function RestaurantInfoForm({
                   }}
                 >
                   <ThemedText
-                    style={{ fontSize: 12, fontWeight: "500", color: active ? "#fff" : colors.text }}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: "500",
+                      color: active ? "#fff" : colors.text,
+                    }}
                   >
                     {label}
                   </ThemedText>

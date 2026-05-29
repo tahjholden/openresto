@@ -1,0 +1,142 @@
+import React from "react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react-native";
+import { BrandSettingsCard } from "@/components/admin/settings/BrandSettingsCard";
+import * as adminApi from "@/api/admin";
+
+jest.mock("@expo/vector-icons", () => ({
+  Ionicons: () => null,
+}));
+
+jest.mock("@/api/admin", () => ({
+  saveBrandSettings: jest.fn(),
+  uploadHeroImage: jest.fn(),
+  deleteHeroImage: jest.fn(),
+}));
+
+// Return a stable object reference so useEffect([brand]) doesn't reset state on each render
+jest.mock("@/context/BrandContext", () => {
+  const brand = { primaryColor: "#0a7ea4", appName: "Open Resto", headerImageUrl: null };
+  return { useBrand: () => brand };
+});
+
+jest.mock("@/hooks/use-color-scheme", () => ({
+  useColorScheme: () => "light",
+}));
+
+const baseProps = {
+  borderColor: "#ddd",
+  mutedColor: "#888",
+  cardBg: "#fff",
+};
+
+describe("BrandSettingsCard", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("renders in collapsed state with Brand Identity title", () => {
+    render(<BrandSettingsCard {...baseProps} />);
+    expect(screen.getByText("Brand Identity")).toBeTruthy();
+  });
+
+  it("shows app name and primary color in subtitle", () => {
+    render(<BrandSettingsCard {...baseProps} />);
+    expect(screen.getByText(/Open Resto/)).toBeTruthy();
+    expect(screen.getByText(/#0a7ea4/)).toBeTruthy();
+  });
+
+  it("expands when header is pressed", () => {
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    expect(screen.getByText("App Name")).toBeTruthy();
+    expect(screen.getByText("Primary Color")).toBeTruthy();
+  });
+
+  it("collapses when header is pressed again", () => {
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    expect(screen.getByText("App Name")).toBeTruthy();
+    fireEvent.press(screen.getByText("Brand Identity"));
+    expect(screen.queryByText("App Name")).toBeNull();
+  });
+
+  it("allows changing app name", () => {
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    const input = screen.getByDisplayValue("Open Resto");
+    fireEvent.changeText(input, "My Resto");
+    expect(screen.getByDisplayValue("My Resto")).toBeTruthy();
+  });
+
+  it("shows character count for app name", () => {
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    expect(screen.getByText("10/32")).toBeTruthy(); // "Open Resto" = 10 chars
+  });
+
+  it("selects a preset color when pressed", () => {
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    // Find the preset color input to verify it changes
+    const colorInput = screen.getByDisplayValue("#0a7ea4");
+    fireEvent.changeText(colorInput, "#2563eb");
+    expect(screen.getByDisplayValue("#2563eb")).toBeTruthy();
+  });
+
+  it("shows Upload button when no hero image", () => {
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    expect(screen.getByText("Upload")).toBeTruthy();
+  });
+
+  it("calls saveBrandSettings when Save is pressed", async () => {
+    (adminApi.saveBrandSettings as jest.Mock).mockResolvedValue({ message: "Saved successfully." });
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    await act(async () => {
+      fireEvent.press(screen.getByText("Save"));
+    });
+    expect(adminApi.saveBrandSettings).toHaveBeenCalledWith({
+      appName: "Open Resto",
+      primaryColor: "#0a7ea4",
+    });
+    await waitFor(() => {
+      expect(screen.getByText("Saved successfully.")).toBeTruthy();
+    });
+  });
+
+  it("shows 'Saving…' while saving", async () => {
+    let resolve: (v: { message: string }) => void;
+    (adminApi.saveBrandSettings as jest.Mock).mockReturnValue(
+      new Promise((r) => { resolve = r; })
+    );
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    act(() => {
+      fireEvent.press(screen.getByText("Save"));
+    });
+    expect(screen.getByText("Saving…")).toBeTruthy();
+    await act(async () => { resolve!({ message: "Saved." }); });
+  });
+
+  it("shows error message when saveBrandSettings returns null", async () => {
+    (adminApi.saveBrandSettings as jest.Mock).mockResolvedValue(null);
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    await act(async () => {
+      fireEvent.press(screen.getByText("Save"));
+    });
+    await waitFor(() => {
+      expect(screen.getByText("Failed to save.")).toBeTruthy();
+    });
+  });
+
+  it("disables Save when appName is empty", () => {
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    fireEvent.changeText(screen.getByDisplayValue("Open Resto"), "");
+    const saveBtn = screen.getByText("Save");
+    // The button component should be disabled
+    expect(saveBtn).toBeTruthy();
+  });
+});

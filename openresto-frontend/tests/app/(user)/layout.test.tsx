@@ -37,7 +37,7 @@ jest.mock("@/components/layout/Navbar", () => ({
 }));
 
 describe("UserLayout", () => {
-  it("renders without crashing", () => {
+  it("renders without crashing on native", () => {
     const { default: UserLayout } = require("@/app/(user)/_layout");
     expect(() => render(<UserLayout />)).not.toThrow();
   });

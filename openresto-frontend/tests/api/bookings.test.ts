@@ -4,6 +4,7 @@ import {
   getBookingByRef,
   getBookingsByRestaurant,
   deleteBooking,
+  cancelBookingByRef,
 } from "@/api/bookings";
 
 // Mock fetch globally
@@ -165,5 +166,27 @@ describe("deleteBooking", () => {
   it("returns false on network error", async () => {
     mockFetch.mockRejectedValueOnce(new Error("offline"));
     expect(await deleteBooking(10)).toBe(false);
+  });
+});
+
+describe("cancelBookingByRef", () => {
+  it("sends DELETE and returns true on success", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true });
+    const result = await cancelBookingByRef("REF1", "a@b.com");
+    expect(result).toBe(true);
+    const [url, opts] = mockFetch.mock.calls[0];
+    expect(url).toContain("/bookings/ref/REF1");
+    expect(url).toContain("email=");
+    expect(opts.method).toBe("DELETE");
+  });
+
+  it("returns false on failure", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    expect(await cancelBookingByRef("REF1", "a@b.com")).toBe(false);
+  });
+
+  it("returns false on network error", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("offline"));
+    expect(await cancelBookingByRef("REF1", "a@b.com")).toBe(false);
   });
 });

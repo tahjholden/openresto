@@ -55,10 +55,25 @@ describe("CalendarActions", () => {
     expect(buildCalendarUrls).toHaveBeenCalled();
   });
 
-  it("renders full variant", () => {
+  it("renders full variant and handles button presses", () => {
+    const mockDownloadIcs = jest.fn();
+    (buildCalendarUrls as jest.Mock).mockReturnValueOnce({
+      googleUrl: "google-url",
+      outlookUrl: "outlook-url",
+      downloadIcs: mockDownloadIcs,
+    });
     render(<CalendarActions {...props} variant="full" />);
     expect(screen.getByText("Google Calendar")).toBeTruthy();
     expect(screen.getByText("Outlook Calendar")).toBeTruthy();
     expect(screen.getByText("Download .ics")).toBeTruthy();
+
+    fireEvent.press(screen.getByText("Google Calendar"));
+    expect(window.open).toHaveBeenCalledWith("google-url", "_blank");
+
+    fireEvent.press(screen.getByText("Outlook Calendar"));
+    expect(window.open).toHaveBeenCalledWith("outlook-url", "_blank");
+
+    fireEvent.press(screen.getByText("Download .ics"));
+    expect(mockDownloadIcs).toHaveBeenCalled();
   });
 });

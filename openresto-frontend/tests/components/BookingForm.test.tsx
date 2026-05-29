@@ -168,15 +168,37 @@ describe("BookingForm", () => {
     expect(screen.getByText("No tables available for 10 guests.")).toBeTruthy();
   });
 
-  it("shows closed day hint", () => {
-    // mockRestaurant openDays is 1,2,3,4,5 (Mon-Fri)
-    // 2026-04-18 is Saturday (Day 6)
+  it("handles null fetchAvailability response without crashing", async () => {
+    const { fetchAvailability } = require("@/api/availability");
+    (fetchAvailability as jest.Mock).mockResolvedValueOnce(null);
+
     renderWithProviders(<BookingForm restaurant={mockRestaurant} onSubmit={jest.fn()} />);
 
-    // DatePicker onSelect
-    // We need to trigger DatePicker change.
-    // Assuming DatePicker is mocked or we can find its trigger.
-    // Since it's a real component in tests (unless mocked), we'll find its text.
-    // Actually, suggestDate(22) for April 2026 today might pick a weekday.
+    await waitFor(() => {
+      expect(screen.getByText("Confirm Booking")).toBeTruthy();
+    });
+  });
+
+  it("filters tables by availableTableIds from availability slot", async () => {
+    const { fetchAvailability } = require("@/api/availability");
+    (fetchAvailability as jest.Mock).mockResolvedValueOnce({
+      slots: [
+        {
+          time: "09:00",
+          isAvailable: true,
+          category: "Lunch" as const,
+          availableTableIds: [101],
+        },
+      ],
+    });
+
+    renderWithProviders(
+      <BookingForm restaurant={mockRestaurant} onSubmit={jest.fn()} initialTime="09:00" />
+    );
+
+    await waitFor(() => {
+      // Only T2 (id 101) should be shown; T1 (id 100) should be filtered out
+      expect(screen.getByText("T2 (4 seats)")).toBeTruthy();
+    });
   });
 });

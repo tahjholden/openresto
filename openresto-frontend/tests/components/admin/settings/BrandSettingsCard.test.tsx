@@ -108,7 +108,9 @@ describe("BrandSettingsCard", () => {
   it("shows 'Saving…' while saving", async () => {
     let resolve: (v: { message: string }) => void;
     (adminApi.saveBrandSettings as jest.Mock).mockReturnValue(
-      new Promise((r) => { resolve = r; })
+      new Promise((r) => {
+        resolve = r;
+      })
     );
     render(<BrandSettingsCard {...baseProps} />);
     fireEvent.press(screen.getByText("Brand Identity"));
@@ -116,7 +118,9 @@ describe("BrandSettingsCard", () => {
       fireEvent.press(screen.getByText("Save"));
     });
     expect(screen.getByText("Saving…")).toBeTruthy();
-    await act(async () => { resolve!({ message: "Saved." }); });
+    await act(async () => {
+      resolve!({ message: "Saved." });
+    });
   });
 
   it("shows error message when saveBrandSettings returns null", async () => {

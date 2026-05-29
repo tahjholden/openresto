@@ -39,7 +39,9 @@ describe("AddRow", () => {
   });
 
   it("shows extra input when extraPlaceholder is provided", () => {
-    render(<AddRow label="Add Table" placeholder="Table name" extraPlaceholder="Seats" onAdd={onAdd} />);
+    render(
+      <AddRow label="Add Table" placeholder="Table name" extraPlaceholder="Seats" onAdd={onAdd} />
+    );
     fireEvent.press(screen.getByText("Add Table"));
     expect(screen.getByPlaceholderText("Table name")).toBeTruthy();
     expect(screen.getByPlaceholderText("Seats")).toBeTruthy();
@@ -64,7 +66,9 @@ describe("AddRow", () => {
 
   it("calls onAdd with name and extra when both provided", async () => {
     onAdd.mockResolvedValue(undefined);
-    render(<AddRow label="Add Table" placeholder="Table name" extraPlaceholder="Seats" onAdd={onAdd} />);
+    render(
+      <AddRow label="Add Table" placeholder="Table name" extraPlaceholder="Seats" onAdd={onAdd} />
+    );
     fireEvent.press(screen.getByText("Add Table"));
     fireEvent.changeText(screen.getByPlaceholderText("Table name"), "T1");
     fireEvent.changeText(screen.getByPlaceholderText("Seats"), "4");
@@ -107,7 +111,12 @@ describe("AddRow", () => {
 
   it("shows 'Adding…' text while saving", async () => {
     let resolveAdd: () => void;
-    const slowAdd = jest.fn(() => new Promise<void>((resolve) => { resolveAdd = resolve; }));
+    const slowAdd = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveAdd = resolve;
+        })
+    );
     render(<AddRow label="Add Item" placeholder="Item name" onAdd={slowAdd} />);
     fireEvent.press(screen.getByText("Add Item"));
     fireEvent.changeText(screen.getByPlaceholderText("Item name"), "Test");
@@ -115,6 +124,8 @@ describe("AddRow", () => {
       fireEvent.press(screen.getByText("Add"));
     });
     expect(screen.getByText("Adding…")).toBeTruthy();
-    await act(async () => { resolveAdd!(); });
+    await act(async () => {
+      resolveAdd!();
+    });
   });
 });

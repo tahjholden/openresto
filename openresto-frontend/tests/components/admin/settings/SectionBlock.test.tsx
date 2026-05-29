@@ -60,12 +60,7 @@ describe("SectionBlock", () => {
   });
 
   it("renders empty note when no tables", () => {
-    render(
-      <SectionBlock
-        {...baseProps}
-        section={{ ...mockSection, tables: [] }}
-      />
-    );
+    render(<SectionBlock {...baseProps} section={{ ...mockSection, tables: [] }} />);
     expect(screen.getByText("No tables yet.")).toBeTruthy();
   });
 
@@ -82,7 +77,11 @@ describe("SectionBlock", () => {
   });
 
   it("calls updateSection and onSectionRenamed when save is pressed", async () => {
-    (restaurantsApi.updateSection as jest.Mock).mockResolvedValue({ id: 1, name: "Outdoor", tables: [] });
+    (restaurantsApi.updateSection as jest.Mock).mockResolvedValue({
+      id: 1,
+      name: "Outdoor",
+      tables: [],
+    });
     render(<SectionBlock {...baseProps} />);
     fireEvent.press(screen.getByText("Edit"));
     fireEvent.changeText(screen.getByDisplayValue("Indoor"), "Outdoor");
@@ -112,7 +111,9 @@ describe("SectionBlock", () => {
     // The Cancel pressable comes after Save in the tree. Press the last accessible before AddTable.
     // Simplest: press the 3rd accessible (index 2) which is the cancel pressable's first fiber.
     const accessible = screen.UNSAFE_getAllByProps({ accessible: true });
-    act(() => { fireEvent.press(accessible[2]); });
+    act(() => {
+      fireEvent.press(accessible[2]);
+    });
     // Back in view mode — "Indoor" text should be visible
     expect(screen.getByText("Indoor")).toBeTruthy();
   });

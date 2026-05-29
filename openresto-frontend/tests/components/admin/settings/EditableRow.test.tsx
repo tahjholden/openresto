@@ -89,14 +89,21 @@ describe("EditableRow", () => {
 
   it("shows '…' while saving", async () => {
     let resolve: () => void;
-    const slowSave = jest.fn(() => new Promise<void>((r) => { resolve = r; }));
+    const slowSave = jest.fn(
+      () =>
+        new Promise<void>((r) => {
+          resolve = r;
+        })
+    );
     render(<EditableRow {...baseProps} onSave={slowSave} />);
     fireEvent.press(screen.getByText("Edit"));
     act(() => {
       fireEvent.press(screen.getByText("Save"));
     });
     expect(screen.getByText("…")).toBeTruthy();
-    await act(async () => { resolve!(); });
+    await act(async () => {
+      resolve!();
+    });
   });
 
   it("cancels edit mode and returns to view mode", () => {
@@ -112,7 +119,9 @@ describe("EditableRow", () => {
     // Verify cancel button exists and returns to view mode by pressing save with blank text
     // then checking Edit button is gone (still in edit mode). Cancel returns to view.
     fireEvent.changeText(screen.getByDisplayValue("Hello World"), "");
-    act(() => { fireEvent.press(screen.getByText("Save")); }); // Doesn't save (blank)
+    act(() => {
+      fireEvent.press(screen.getByText("Save"));
+    }); // Doesn't save (blank)
     // Still in edit mode — try cancel. Since we have no text on cancel button, use role.
     // Cancel is rendered as a Pressable with no text (only Ionicons null)
     // Pressing "Edit" while in edit mode won't work. Let's directly test this via onSave not called.

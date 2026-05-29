@@ -41,5 +41,4 @@ describe("UserLayout", () => {
     const { default: UserLayout } = require("@/app/(user)/_layout");
     expect(() => render(<UserLayout />)).not.toThrow();
   });
-
 });

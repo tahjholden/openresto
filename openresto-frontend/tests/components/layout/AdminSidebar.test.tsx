@@ -70,9 +70,7 @@ describe("AdminSidebar", () => {
 
   it("shows no upcoming bookings message when empty", async () => {
     render(<AdminSidebar />);
-    await waitFor(() =>
-      expect(screen.getByText("No upcoming bookings today")).toBeTruthy()
-    );
+    await waitFor(() => expect(screen.getByText("No upcoming bookings today")).toBeTruthy());
   });
 
   it("shows upcoming booking when returned from API", async () => {
@@ -166,10 +164,7 @@ describe("AdminSidebar", () => {
     (adminLookupBookings as jest.Mock).mockResolvedValue([{ id: 1 }, { id: 2 }]);
     render(<AdminSidebar />);
     await waitFor(() => expect(screen.getByPlaceholderText("Email or reference…")).toBeTruthy());
-    fireEvent.changeText(
-      screen.getByPlaceholderText("Email or reference…"),
-      "multi@example.com"
-    );
+    fireEvent.changeText(screen.getByPlaceholderText("Email or reference…"), "multi@example.com");
     await act(async () => {
       fireEvent.press(screen.getByText("Search"));
     });

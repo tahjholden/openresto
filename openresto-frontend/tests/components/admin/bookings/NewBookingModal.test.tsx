@@ -2,7 +2,6 @@ import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react-native";
 import { NewBookingModal } from "@/components/admin/bookings/NewBookingModal";
 import * as restaurantsApi from "@/api/restaurants";
-import * as adminApi from "@/api/admin";
 
 jest.mock("@expo/vector-icons", () => ({
   Ionicons: () => null,

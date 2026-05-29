@@ -82,7 +82,11 @@ describe("PopularTimesPicker", () => {
       { time: "18:00", isAvailable: false, availableTableIds: [], category: "Dinner" },
     ];
     render(
-      <PopularTimesPicker slots={slotsWithUnavailableDinner} selectedTime="" onSelectTime={jest.fn()} />
+      <PopularTimesPicker
+        slots={slotsWithUnavailableDinner}
+        selectedTime=""
+        onSelectTime={jest.fn()}
+      />
     );
     fireEvent.press(screen.getByText("Dinner"));
     expect(screen.getByText(/No slots available/i)).toBeTruthy();
@@ -92,17 +96,13 @@ describe("PopularTimesPicker", () => {
     const dinnerOnlySlots: TimeSlotDto[] = [
       { time: "18:00", isAvailable: true, availableTableIds: [2], category: "Dinner" },
     ];
-    render(
-      <PopularTimesPicker slots={dinnerOnlySlots} selectedTime="" onSelectTime={jest.fn()} />
-    );
+    render(<PopularTimesPicker slots={dinnerOnlySlots} selectedTime="" onSelectTime={jest.fn()} />);
     // Default is Lunch but Lunch has no slots, should switch to All
     expect(screen.getByText("18:00")).toBeTruthy();
   });
 
   it("renders selected slot with highlighted style", () => {
-    render(
-      <PopularTimesPicker slots={mockSlots} selectedTime="12:00" onSelectTime={jest.fn()} />
-    );
+    render(<PopularTimesPicker slots={mockSlots} selectedTime="12:00" onSelectTime={jest.fn()} />);
     expect(screen.getByText("12:00")).toBeTruthy();
   });
 
@@ -141,9 +141,7 @@ describe("PopularTimesPicker", () => {
   });
 
   it("renders correctly with a selected time highlighted", () => {
-    render(
-      <PopularTimesPicker slots={mockSlots} selectedTime="12:00" onSelectTime={jest.fn()} />
-    );
+    render(<PopularTimesPicker slots={mockSlots} selectedTime="12:00" onSelectTime={jest.fn()} />);
     // Selected time should be rendered
     expect(screen.getByText("12:00")).toBeTruthy();
   });

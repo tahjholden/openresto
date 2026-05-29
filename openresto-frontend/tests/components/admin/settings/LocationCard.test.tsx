@@ -114,6 +114,7 @@ const baseRestaurant = {
   address: "123 Main St",
   openTime: "09:00",
   closeTime: "22:00",
+  openDays: "Mon,Tue,Wed,Thu,Fri,Sat,Sun",
   timezone: "America/New_York",
   imageUrl: null as string | null,
   sections: [
@@ -544,9 +545,7 @@ describe("LocationCard", () => {
     fireEvent.press(screen.getByTestId("delete-section-10"));
     expect(baseProps.onSaved).toHaveBeenCalledWith(
       expect.objectContaining({
-        sections: expect.not.arrayContaining([
-          expect.objectContaining({ id: 10 }),
-        ]),
+        sections: expect.not.arrayContaining([expect.objectContaining({ id: 10 })]),
       })
     );
   });
@@ -593,9 +592,7 @@ describe("LocationCard", () => {
         sections: expect.arrayContaining([
           expect.objectContaining({
             id: 10,
-            tables: expect.not.arrayContaining([
-              expect.objectContaining({ id: 100 }),
-            ]),
+            tables: expect.not.arrayContaining([expect.objectContaining({ id: 100 })]),
           }),
         ]),
       })

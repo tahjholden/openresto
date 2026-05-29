@@ -292,7 +292,10 @@ describe("EmailSettingsCard", () => {
 
   it("runs test connection when Send test is pressed with host and username", async () => {
     (adminApi.saveEmailSettings as jest.Mock).mockResolvedValue({ message: "Saved." });
-    (adminApi.testEmailConnection as jest.Mock).mockResolvedValue({ ok: true, message: "Connected." });
+    (adminApi.testEmailConnection as jest.Mock).mockResolvedValue({
+      ok: true,
+      message: "Connected.",
+    });
     render(<EmailSettingsCard {...baseProps} />);
     await waitFor(() => expect(screen.getByText("Email (SMTP)")).toBeTruthy());
     fireEvent.press(screen.getByText("Email (SMTP)"));

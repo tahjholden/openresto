@@ -517,9 +517,7 @@ describe("BookingDetailPopup", () => {
   });
 
   it("shows error when handleSaveEdit fails", async () => {
-    (adminApi.adminUpdateBookingFull as jest.Mock).mockRejectedValue(
-      new Error("Update failed.")
-    );
+    (adminApi.adminUpdateBookingFull as jest.Mock).mockRejectedValue(new Error("Update failed."));
     render(<BookingDetailPopup {...baseProps} />);
     await waitFor(() => expect(screen.getByText("Edit")).toBeTruthy());
     fireEvent.press(screen.getByText("Edit"));

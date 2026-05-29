@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react-native";
 import { BrandSettingsCard } from "@/components/admin/settings/BrandSettingsCard";
@@ -140,7 +143,142 @@ describe("BrandSettingsCard", () => {
     fireEvent.press(screen.getByText("Brand Identity"));
     fireEvent.changeText(screen.getByDisplayValue("Open Resto"), "");
     const saveBtn = screen.getByText("Save");
-    // The button component should be disabled
     expect(saveBtn).toBeTruthy();
+  });
+
+  it("calls uploadHeroImage and shows success when file is selected", async () => {
+    const mockFile = new File(["content"], "hero.jpg", { type: "image/jpeg" });
+    const mockInput = {
+      type: "",
+      accept: "",
+      onchange: null as ((e: Event) => void) | null,
+      click: jest.fn(),
+      files: [mockFile],
+    };
+    jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
+    (adminApi.uploadHeroImage as jest.Mock).mockResolvedValue("https://example.com/hero.jpg");
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    act(() => {
+      fireEvent.press(screen.getByText("Upload"));
+    });
+    await act(async () => {
+      mockInput.onchange?.({} as Event);
+    });
+    expect(adminApi.uploadHeroImage).toHaveBeenCalledWith(mockFile);
+    await waitFor(() => {
+      expect(screen.getByText("Header image uploaded.")).toBeTruthy();
+    });
+  });
+
+  it("shows error when uploadHeroImage returns null", async () => {
+    const mockFile = new File(["content"], "hero.jpg", { type: "image/jpeg" });
+    const mockInput = {
+      type: "",
+      accept: "",
+      onchange: null as ((e: Event) => void) | null,
+      click: jest.fn(),
+      files: [mockFile],
+    };
+    jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
+    (adminApi.uploadHeroImage as jest.Mock).mockResolvedValue(null);
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    act(() => {
+      fireEvent.press(screen.getByText("Upload"));
+    });
+    await act(async () => {
+      mockInput.onchange?.({} as Event);
+    });
+    await waitFor(() => {
+      expect(screen.getByText("Failed to upload image.")).toBeTruthy();
+    });
+  });
+
+  it("shows size error when file is too large", async () => {
+    const largeFile = new File(["x".repeat(6 * 1024 * 1024)], "big.jpg", { type: "image/jpeg" });
+    const mockInput = {
+      type: "",
+      accept: "",
+      onchange: null as ((e: Event) => void) | null,
+      click: jest.fn(),
+      files: [largeFile],
+    };
+    jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    act(() => {
+      fireEvent.press(screen.getByText("Upload"));
+    });
+    await act(async () => {
+      mockInput.onchange?.({} as Event);
+    });
+    await waitFor(() => {
+      expect(screen.getByText("Image must be under 5 MB.")).toBeTruthy();
+    });
+    expect(adminApi.uploadHeroImage).not.toHaveBeenCalled();
+  });
+
+  it("does nothing when no file is selected", async () => {
+    const mockInput = {
+      type: "",
+      accept: "",
+      onchange: null as ((e: Event) => void) | null,
+      click: jest.fn(),
+      files: [],
+    };
+    jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+    act(() => {
+      fireEvent.press(screen.getByText("Upload"));
+    });
+    await act(async () => {
+      mockInput.onchange?.({} as Event);
+    });
+    expect(adminApi.uploadHeroImage).not.toHaveBeenCalled();
+  });
+
+  it("calls deleteHeroImage and clears preview", async () => {
+    (adminApi.deleteHeroImage as jest.Mock).mockResolvedValue(undefined);
+    // Render with an existing hero image by providing a preview
+    jest.mock("@/context/BrandContext", () => {
+      const brand = {
+        primaryColor: "#0a7ea4",
+        appName: "Open Resto",
+        headerImageUrl: "https://example.com/hero.jpg",
+      };
+      return { useBrand: () => brand };
+    });
+
+    const mockFile = new File(["content"], "hero.jpg", { type: "image/jpeg" });
+    const mockInput = {
+      type: "",
+      accept: "",
+      onchange: null as ((e: Event) => void) | null,
+      click: jest.fn(),
+      files: [mockFile],
+    };
+    jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
+    (adminApi.uploadHeroImage as jest.Mock).mockResolvedValue("https://example.com/hero.jpg");
+
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Brand Identity"));
+
+    // First upload a hero so Remove button appears
+    act(() => {
+      fireEvent.press(screen.getByText("Upload"));
+    });
+    await act(async () => {
+      mockInput.onchange?.({} as Event);
+    });
+    await waitFor(() => expect(screen.getByText("Remove")).toBeTruthy());
+
+    // Now press Remove
+    await act(async () => {
+      fireEvent.press(screen.getByText("Remove"));
+    });
+    expect(adminApi.deleteHeroImage).toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByText("Header image removed.")).toBeTruthy());
   });
 });

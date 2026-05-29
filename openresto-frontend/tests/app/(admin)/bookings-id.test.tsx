@@ -9,6 +9,9 @@ import {
   adminDeleteBooking,
   adminExtendBooking,
   adminRestoreBooking,
+  adminPurgeBooking,
+  adminUpdateBookingFull,
+  sendBookingEmail,
 } from "@/api/admin";
 import { fetchRestaurants } from "@/api/restaurants";
 import { AppThemeProvider } from "@/context/ThemeContext";
@@ -40,6 +43,7 @@ jest.mock("expo-router", () => ({
 
 jest.mock("@/api/admin");
 jest.mock("@/api/restaurants");
+jest.mock("@/api/availability", () => ({ fetchAvailability: jest.fn() }));
 
 // Mock Modal and window.confirm
 jest.mock("react-native", () => {
@@ -156,11 +160,111 @@ describe("BookingDetailScreen", () => {
     const cancelBtn = await screen.findByText("Cancel Booking");
     fireEvent.press(cancelBtn);
 
-    // Confirmation button in Modal uses "Cancel Booking" label
     const btns = screen.getAllByText("Cancel Booking");
     fireEvent.press(btns[btns.length - 1]);
 
     await waitFor(() => expect(adminDeleteBooking).toHaveBeenCalledWith(10));
     expect(mockBack).toHaveBeenCalled();
+  });
+
+  it("shows error when delete fails", async () => {
+    (adminDeleteBooking as jest.Mock).mockResolvedValue(false);
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Cancel Booking"));
+    const btns = screen.getAllByText("Cancel Booking");
+    fireEvent.press(btns[btns.length - 1]);
+
+    await waitFor(() => expect(screen.getByText("Failed to cancel the booking.")).toBeTruthy());
+  });
+
+  it("shows Booking not found when booking is null", async () => {
+    (getAdminBooking as jest.Mock).mockResolvedValue(null);
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.getByText("Booking not found.")).toBeTruthy());
+  });
+
+  it("enters and cancels edit mode", async () => {
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Edit Booking"));
+    expect(screen.getByText("Save Changes")).toBeTruthy();
+    expect(screen.getByText("Cancel")).toBeTruthy();
+
+    fireEvent.press(screen.getByText("Cancel"));
+    await waitFor(() => expect(screen.queryByText("Save Changes")).toBeNull());
+  });
+
+  it("saves edit successfully", async () => {
+    (adminUpdateBookingFull as jest.Mock).mockResolvedValue({ ...mockBooking, seats: 3 });
+    (fetchRestaurants as jest.Mock).mockResolvedValue(mockRestaurants);
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Edit Booking"));
+    await waitFor(() => expect(screen.getByText("Save Changes")).toBeTruthy());
+
+    fireEvent.press(screen.getByText("Save Changes"));
+    await waitFor(() => expect(adminUpdateBookingFull).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByText("Save Changes")).toBeNull());
+  });
+
+  it("shows error when save edit fails", async () => {
+    (adminUpdateBookingFull as jest.Mock).mockRejectedValue(new Error("Update failed"));
+    (fetchRestaurants as jest.Mock).mockResolvedValue(mockRestaurants);
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Edit Booking"));
+    await waitFor(() => expect(screen.getByText("Save Changes")).toBeTruthy());
+
+    fireEvent.press(screen.getByText("Save Changes"));
+    await waitFor(() => expect(screen.getByText("Update failed")).toBeTruthy());
+  });
+
+  it("handles purge flow successfully", async () => {
+    (adminPurgeBooking as jest.Mock).mockResolvedValue(true);
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Permanently Delete (GDPR)"));
+    fireEvent.press(await screen.findByText("Delete Forever"));
+
+    await waitFor(() => expect(adminPurgeBooking).toHaveBeenCalledWith(10));
+    expect(mockBack).toHaveBeenCalled();
+  });
+
+  it("shows error when purge fails", async () => {
+    (adminPurgeBooking as jest.Mock).mockResolvedValue(false);
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Permanently Delete (GDPR)"));
+    fireEvent.press(await screen.findByText("Delete Forever"));
+
+    await waitFor(() =>
+      expect(screen.getByText("Failed to permanently delete the booking.")).toBeTruthy()
+    );
+  });
+
+  it("renders EmailGuestForm when booking is not cancelled", async () => {
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+    expect(await screen.findByText("Email guest")).toBeTruthy();
+    expect(screen.getByText("Send Email")).toBeTruthy();
+  });
+
+  it("shows error when uncancel throws", async () => {
+    (getAdminBooking as jest.Mock).mockResolvedValue({ ...mockBooking, isCancelled: true });
+    (adminRestoreBooking as jest.Mock).mockRejectedValue(new Error("Restore failed"));
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Restore Booking"));
+    fireEvent.press(screen.getByText("Restore"));
+
+    await waitFor(() => expect(screen.getByText("Restore failed")).toBeTruthy());
   });
 });

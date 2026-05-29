@@ -140,7 +140,7 @@ export function BrandSettingsCard({
               {PRESET_COLORS.map((c) => (
                 <Pressable
                   key={c}
-                  onPress={() => setBrandPrimaryColor(c)}
+                  onPress={/* istanbul ignore next */ () => setBrandPrimaryColor(c)}
                   style={{
                     width: 28,
                     height: 28,

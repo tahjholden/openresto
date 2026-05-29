@@ -118,6 +118,24 @@ describe("auth api", () => {
       expect(res.ok).toBe(false);
       expect(res.message).toBe("Network error.");
     });
+
+    it("returns fallback message when body has no message and ok is false", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.reject(new Error("bad json")),
+      });
+      const res = await changePassword("old", "new");
+      expect(res).toEqual({ ok: false, message: "Request failed." });
+    });
+
+    it("returns Done fallback when ok is true but body has no message", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.reject(new Error("bad json")),
+      });
+      const res = await changePassword("old", "new");
+      expect(res).toEqual({ ok: true, message: "Done." });
+    });
   });
 
   describe("getPvqStatus", () => {
@@ -133,6 +151,11 @@ describe("auth api", () => {
 
     it("returns null on failure", async () => {
       mockFetch.mockResolvedValueOnce({ ok: false });
+      expect(await getPvqStatus()).toBeNull();
+    });
+
+    it("returns null on network error", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("fail"));
       expect(await getPvqStatus()).toBeNull();
     });
   });
@@ -152,6 +175,24 @@ describe("auth api", () => {
       const res = await setupPvq("q", "a");
       expect(res.ok).toBe(false);
     });
+
+    it("returns fallback message when body has no message and ok is false", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.reject(new Error("bad json")),
+      });
+      const res = await setupPvq("q", "a");
+      expect(res).toEqual({ ok: false, message: "Failed." });
+    });
+
+    it("returns Done fallback when ok is true but body has no message", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.reject(new Error("bad json")),
+      });
+      const res = await setupPvq("q", "a");
+      expect(res).toEqual({ ok: true, message: "Done." });
+    });
   });
 
   describe("verifyPvq", () => {
@@ -167,6 +208,11 @@ describe("auth api", () => {
 
     it("returns null on failure", async () => {
       mockFetch.mockResolvedValueOnce({ ok: false });
+      expect(await verifyPvq("e", "a")).toBeNull();
+    });
+
+    it("returns null on network error", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("fail"));
       expect(await verifyPvq("e", "a")).toBeNull();
     });
   });
@@ -185,6 +231,24 @@ describe("auth api", () => {
       mockFetch.mockResolvedValueOnce({ ok: false });
       const res = await resetPassword("tok", "new");
       expect(res.ok).toBe(false);
+    });
+
+    it("returns fallback message when body has no message and ok is false", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.reject(new Error("bad json")),
+      });
+      const res = await resetPassword("tok", "new");
+      expect(res).toEqual({ ok: false, message: "Failed." });
+    });
+
+    it("returns Done fallback when ok is true but body has no message", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.reject(new Error("bad json")),
+      });
+      const res = await resetPassword("tok", "new");
+      expect(res).toEqual({ ok: true, message: "Done." });
     });
   });
 });

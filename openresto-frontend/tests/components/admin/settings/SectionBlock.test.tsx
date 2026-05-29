@@ -152,6 +152,39 @@ describe("SectionBlock", () => {
     expect(screen.getByText("Add Table")).toBeTruthy();
   });
 
+  it("opens AddRow form, submits, and calls onTableAdded", async () => {
+    const newTable = { id: 20, name: "T3", seats: 4 };
+    (restaurantsApi.addTable as jest.Mock).mockResolvedValue(newTable);
+
+    render(<SectionBlock {...baseProps} />);
+    fireEvent.press(screen.getByText("Add Table"));
+
+    fireEvent.changeText(screen.getByPlaceholderText("Table name (e.g. T1, Booth 1)"), "T3");
+    fireEvent.changeText(screen.getByPlaceholderText("Seats"), "4");
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Add"));
+    });
+
+    expect(restaurantsApi.addTable).toHaveBeenCalledWith(42, 1, { name: "T3", seats: 4 });
+    expect(baseProps.onTableAdded).toHaveBeenCalledWith(newTable);
+  });
+
+  it("uses default seats 2 when extra is non-numeric", async () => {
+    const newTable = { id: 21, name: "T4", seats: 2 };
+    (restaurantsApi.addTable as jest.Mock).mockResolvedValue(newTable);
+
+    render(<SectionBlock {...baseProps} />);
+    fireEvent.press(screen.getByText("Add Table"));
+    fireEvent.changeText(screen.getByPlaceholderText("Table name (e.g. T1, Booth 1)"), "T4");
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Add"));
+    });
+
+    expect(restaurantsApi.addTable).toHaveBeenCalledWith(42, 1, { name: "T4", seats: 2 });
+  });
+
   it("renders in dark mode", () => {
     render(<SectionBlock {...baseProps} isDark />);
     expect(screen.getByText("Indoor")).toBeTruthy();

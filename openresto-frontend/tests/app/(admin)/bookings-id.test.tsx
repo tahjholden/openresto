@@ -8,6 +8,7 @@ import {
   getAdminBooking,
   adminDeleteBooking,
   adminExtendBooking,
+  adminRestoreBooking,
   adminPurgeBooking,
   adminUpdateBookingFull,
   sendBookingEmail,

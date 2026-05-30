@@ -46,21 +46,9 @@ public static partial class DatabaseExtensions
 
     private const string ConsolidatedMigrationId = "20260530173531_InitialCreate";
 
-    // Migration IDs that existed before the history was squashed into InitialCreate.
-    private static readonly string[] LegacyMigrationIds =
-    [
-        "20260129132410_AddSectionsAndTables",
-        "20260131215731_AddBookingsTable",
-        "20260503001441_AddRestaurantPauseUntil",
-        "20260518000001_AddBookingSearchIndexes",
-        "20260524000001_AddSendBookingConfirmations",
-        "20260524000002_AddMediaImageUrls",
-        "20260525213129_AddEmailFailures",
-    ];
-
     private static void RemapLegacyMigrationHistory(AppDbContext db, ILogger logger)
     {
-        // Only attempt this if the DB already exists (i.e. the history table exists).
+        // Only attempt this if the DB already exists (i.e. we can connect).
         if (!db.Database.CanConnect())
             return;
 
@@ -75,51 +63,76 @@ public static partial class DatabaseExtensions
 
             try
             {
-                using var checkCmd = connection.CreateCommand();
-                checkCmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='__EFMigrationsHistory'";
-                var tableCount = (long)(checkCmd.ExecuteScalar() ?? 0L);
-                if (tableCount == 0)
-                    return; // fresh install — nothing to remap
+                // Check whether the migrations history table exists at all.
+                using var historyExistsCmd = connection.CreateCommand();
+                historyExistsCmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='__EFMigrationsHistory'";
+                var historyTableExists = (long)(historyExistsCmd.ExecuteScalar() ?? 0L) > 0;
 
-                // Count how many legacy migration IDs are present.
-                var placeholders = string.Join(",", LegacyMigrationIds.Select((_, i) => $"@p{i}"));
-                using var countCmd = connection.CreateCommand();
-                countCmd.CommandText = $"SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId IN ({placeholders})";
-                for (int i = 0; i < LegacyMigrationIds.Length; i++)
+                // Check whether the schema is already in place (tables exist from a previous deployment).
+                using var schemaExistsCmd = connection.CreateCommand();
+                schemaExistsCmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='AdminCredentials'";
+                var schemaExists = (long)(schemaExistsCmd.ExecuteScalar() ?? 0L) > 0;
+
+                if (!schemaExists)
+                    return; // fresh install — Migrate() will build the schema from scratch
+
+                // Schema already exists. Check if InitialCreate is already recorded.
+                bool initialCreateRecorded = false;
+                if (historyTableExists)
                 {
-                    var p = countCmd.CreateParameter();
-                    p.ParameterName = $"@p{i}";
-                    p.Value = LegacyMigrationIds[i];
-                    countCmd.Parameters.Add(p);
+                    using var checkCmd = connection.CreateCommand();
+                    checkCmd.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId = @id";
+                    var p = checkCmd.CreateParameter();
+                    p.ParameterName = "@id";
+                    p.Value = ConsolidatedMigrationId;
+                    checkCmd.Parameters.Add(p);
+                    initialCreateRecorded = (long)(checkCmd.ExecuteScalar() ?? 0L) > 0;
                 }
-                var legacyCount = (long)(countCmd.ExecuteScalar() ?? 0L);
 
-                if (legacyCount == 0)
+                if (initialCreateRecorded)
                 {
                     LogMigrationRemapSkipped(logger);
                     return;
                 }
 
-                LogMigrationRemap(logger, (int)legacyCount);
+                // The schema exists but InitialCreate isn't in the history — stamp it so
+                // Migrate() won't try to re-create tables that are already there.
+                // Count legacy entries for the log message.
+                int legacyCount = 0;
+                if (historyTableExists)
+                {
+                    using var countCmd = connection.CreateCommand();
+                    countCmd.CommandText = "SELECT COUNT(*) FROM __EFMigrationsHistory";
+                    legacyCount = (int)(long)(countCmd.ExecuteScalar() ?? 0L);
+                }
 
-                // Wrap the remap in a transaction for atomicity.
+                LogMigrationRemap(logger, legacyCount);
+
                 using var tx = connection.BeginTransaction();
                 try
                 {
-                    // Remove all legacy entries.
-                    using var deleteCmd = connection.CreateCommand();
-                    deleteCmd.Transaction = tx;
-                    deleteCmd.CommandText = $"DELETE FROM __EFMigrationsHistory WHERE MigrationId IN ({placeholders})";
-                    for (int i = 0; i < LegacyMigrationIds.Length; i++)
+                    if (!historyTableExists)
                     {
-                        var p = deleteCmd.CreateParameter();
-                        p.ParameterName = $"@p{i}";
-                        p.Value = LegacyMigrationIds[i];
-                        deleteCmd.Parameters.Add(p);
+                        // History table never existed — create it so we can insert the entry.
+                        using var createCmd = connection.CreateCommand();
+                        createCmd.Transaction = tx;
+                        createCmd.CommandText = @"
+                            CREATE TABLE IF NOT EXISTS __EFMigrationsHistory (
+                                MigrationId TEXT NOT NULL CONSTRAINT PK___EFMigrationsHistory PRIMARY KEY,
+                                ProductVersion TEXT NOT NULL
+                            )";
+                        createCmd.ExecuteNonQuery();
                     }
-                    deleteCmd.ExecuteNonQuery();
+                    else
+                    {
+                        // Remove all legacy entries so there are no orphan rows that could confuse EF.
+                        using var deleteCmd = connection.CreateCommand();
+                        deleteCmd.Transaction = tx;
+                        deleteCmd.CommandText = "DELETE FROM __EFMigrationsHistory";
+                        deleteCmd.ExecuteNonQuery();
+                    }
 
-                    // Insert the consolidated migration ID if it isn't there yet.
+                    // Record the consolidated migration as already applied.
                     using var insertCmd = connection.CreateCommand();
                     insertCmd.Transaction = tx;
                     insertCmd.CommandText =

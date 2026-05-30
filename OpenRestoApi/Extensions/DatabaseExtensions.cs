@@ -66,80 +66,87 @@ public static partial class DatabaseExtensions
 
         try
         {
-            // Check whether the history table even exists before querying it.
-            var tableExists = db.Database.ExecuteSqlRaw(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='__EFMigrationsHistory'") >= 0;
-
-            // Use raw SQL so we don't depend on the EF migration infrastructure itself.
+            // Use raw ADO.NET so we don't depend on the EF migration infrastructure itself.
+            // Track whether we opened the connection so we can restore its original state.
             var connection = db.Database.GetDbConnection();
-            if (connection.State != System.Data.ConnectionState.Open)
+            bool weOpenedConnection = connection.State != System.Data.ConnectionState.Open;
+            if (weOpenedConnection)
                 connection.Open();
 
-            using var checkCmd = connection.CreateCommand();
-            checkCmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='__EFMigrationsHistory'";
-            var tableCount = (long)(checkCmd.ExecuteScalar() ?? 0L);
-            if (tableCount == 0)
-                return; // fresh install — nothing to remap
-
-            // Count how many legacy migration IDs are present.
-            var placeholders = string.Join(",", LegacyMigrationIds.Select((_, i) => $"@p{i}"));
-            using var countCmd = connection.CreateCommand();
-            countCmd.CommandText = $"SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId IN ({placeholders})";
-            for (int i = 0; i < LegacyMigrationIds.Length; i++)
-            {
-                var p = countCmd.CreateParameter();
-                p.ParameterName = $"@p{i}";
-                p.Value = LegacyMigrationIds[i];
-                countCmd.Parameters.Add(p);
-            }
-            var legacyCount = (long)(countCmd.ExecuteScalar() ?? 0L);
-
-            if (legacyCount == 0)
-            {
-                LogMigrationRemapSkipped(logger);
-                return;
-            }
-
-            LogMigrationRemap(logger, (int)legacyCount);
-
-            // Wrap the remap in a transaction for atomicity.
-            using var tx = connection.BeginTransaction();
             try
             {
-                // Remove all legacy entries.
-                using var deleteCmd = connection.CreateCommand();
-                deleteCmd.Transaction = tx;
-                deleteCmd.CommandText = $"DELETE FROM __EFMigrationsHistory WHERE MigrationId IN ({placeholders})";
+                using var checkCmd = connection.CreateCommand();
+                checkCmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='__EFMigrationsHistory'";
+                var tableCount = (long)(checkCmd.ExecuteScalar() ?? 0L);
+                if (tableCount == 0)
+                    return; // fresh install — nothing to remap
+
+                // Count how many legacy migration IDs are present.
+                var placeholders = string.Join(",", LegacyMigrationIds.Select((_, i) => $"@p{i}"));
+                using var countCmd = connection.CreateCommand();
+                countCmd.CommandText = $"SELECT COUNT(*) FROM __EFMigrationsHistory WHERE MigrationId IN ({placeholders})";
                 for (int i = 0; i < LegacyMigrationIds.Length; i++)
                 {
-                    var p = deleteCmd.CreateParameter();
+                    var p = countCmd.CreateParameter();
                     p.ParameterName = $"@p{i}";
                     p.Value = LegacyMigrationIds[i];
-                    deleteCmd.Parameters.Add(p);
+                    countCmd.Parameters.Add(p);
                 }
-                deleteCmd.ExecuteNonQuery();
+                var legacyCount = (long)(countCmd.ExecuteScalar() ?? 0L);
 
-                // Insert the consolidated migration ID if it isn't there yet.
-                using var insertCmd = connection.CreateCommand();
-                insertCmd.Transaction = tx;
-                insertCmd.CommandText =
-                    "INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES (@id, @ver)";
-                var idParam = insertCmd.CreateParameter();
-                idParam.ParameterName = "@id";
-                idParam.Value = ConsolidatedMigrationId;
-                insertCmd.Parameters.Add(idParam);
-                var verParam = insertCmd.CreateParameter();
-                verParam.ParameterName = "@ver";
-                verParam.Value = "10.0.0";
-                insertCmd.Parameters.Add(verParam);
-                insertCmd.ExecuteNonQuery();
+                if (legacyCount == 0)
+                {
+                    LogMigrationRemapSkipped(logger);
+                    return;
+                }
 
-                tx.Commit();
+                LogMigrationRemap(logger, (int)legacyCount);
+
+                // Wrap the remap in a transaction for atomicity.
+                using var tx = connection.BeginTransaction();
+                try
+                {
+                    // Remove all legacy entries.
+                    using var deleteCmd = connection.CreateCommand();
+                    deleteCmd.Transaction = tx;
+                    deleteCmd.CommandText = $"DELETE FROM __EFMigrationsHistory WHERE MigrationId IN ({placeholders})";
+                    for (int i = 0; i < LegacyMigrationIds.Length; i++)
+                    {
+                        var p = deleteCmd.CreateParameter();
+                        p.ParameterName = $"@p{i}";
+                        p.Value = LegacyMigrationIds[i];
+                        deleteCmd.Parameters.Add(p);
+                    }
+                    deleteCmd.ExecuteNonQuery();
+
+                    // Insert the consolidated migration ID if it isn't there yet.
+                    using var insertCmd = connection.CreateCommand();
+                    insertCmd.Transaction = tx;
+                    insertCmd.CommandText =
+                        "INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES (@id, @ver)";
+                    var idParam = insertCmd.CreateParameter();
+                    idParam.ParameterName = "@id";
+                    idParam.Value = ConsolidatedMigrationId;
+                    insertCmd.Parameters.Add(idParam);
+                    var verParam = insertCmd.CreateParameter();
+                    verParam.ParameterName = "@ver";
+                    verParam.Value = "10.0.0";
+                    insertCmd.Parameters.Add(verParam);
+                    insertCmd.ExecuteNonQuery();
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    tx.Rollback();
+                    throw;
+                }
             }
-            catch
+            finally
             {
-                tx.Rollback();
-                throw;
+                // Restore connection to its original state so EF's Migrate() isn't surprised.
+                if (weOpenedConnection)
+                    connection.Close();
             }
         }
         catch (Exception ex)

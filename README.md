@@ -13,6 +13,8 @@ A self-hosted restaurant booking management system. Customers browse restaurants
 
 <img width="297" height="677" alt="image" src="https://github.com/user-attachments/assets/5ed6b3f5-67e8-4097-8a9c-865e13115b7e" />
 
+<img width="290" height="675" alt="image" src="https://github.com/user-attachments/assets/33978571-c6db-4e53-a374-56c284cabc5f" />
+
 ## Tech Stack
 
 | Layer    | Technology                                                      |

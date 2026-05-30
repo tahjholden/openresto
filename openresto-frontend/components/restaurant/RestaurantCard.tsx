@@ -154,7 +154,6 @@ export default function RestaurantCard({
         { backgroundColor: cardBg, borderColor },
         (hovered || pressed) &&
           Platform.OS === "web" && {
-            transform: [{ translateY: -2 }],
             borderColor: isDark ? "#383d47" : "#cfc6b1",
           },
       ]}
@@ -381,6 +380,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: "hidden",
     flexDirection: "column",
+    flex: 1,
   },
 
   // Image area
@@ -466,6 +466,7 @@ const styles = StyleSheet.create({
   body: {
     padding: 16,
     gap: 12,
+    flex: 1,
   },
   nameRow: {
     flexDirection: "row",
@@ -586,6 +587,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     borderTopWidth: 1,
     borderStyle: "dashed",
+    marginTop: "auto" as unknown as number,
   },
   hoursRow: {
     flexDirection: "row",

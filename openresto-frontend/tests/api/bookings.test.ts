@@ -170,23 +170,65 @@ describe("deleteBooking", () => {
 });
 
 describe("cancelBookingByRef", () => {
-  it("sends DELETE and returns true on success", async () => {
+  it("sends DELETE to ref endpoint and returns true on success", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
-    const result = await cancelBookingByRef("REF1", "a@b.com");
+
+    const result = await cancelBookingByRef("ref-abc", "user@test.com");
+
     expect(result).toBe(true);
     const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toContain("/bookings/ref/REF1");
-    expect(url).toContain("email=");
+    expect(url).toContain("/api/bookings/ref/ref-abc");
+    expect(url).toContain("email=user%40test.com");
     expect(opts.method).toBe("DELETE");
   });
 
   it("returns false on failure", async () => {
     mockFetch.mockResolvedValueOnce({ ok: false });
-    expect(await cancelBookingByRef("REF1", "a@b.com")).toBe(false);
+    expect(await cancelBookingByRef("ref-abc", "u@t.com")).toBe(false);
   });
 
   it("returns false on network error", async () => {
     mockFetch.mockRejectedValueOnce(new Error("offline"));
-    expect(await cancelBookingByRef("REF1", "a@b.com")).toBe(false);
+    expect(await cancelBookingByRef("ref-abc", "u@t.com")).toBe(false);
+  });
+});
+
+describe("normalizeBooking (PascalCase fields)", () => {
+  it("normalizes PascalCase response to camelCase", async () => {
+    const pascalBooking = {
+      Id: 99,
+      TableId: 3,
+      SectionId: 4,
+      RestaurantId: 5,
+      Date: "2026-06-15T19:00:00Z",
+      CustomerEmail: "pascal@test.com",
+      Seats: 3,
+      IsHeld: true,
+      SpecialRequests: "window seat",
+      BookingRef: "sunny-tarragon",
+      TableName: "T3",
+      SectionName: "Patio",
+      TableSeats: 4,
+      IsCancelled: false,
+    };
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => pascalBooking,
+    });
+
+    const result = await getBookingById(99);
+
+    expect(result).toMatchObject({
+      id: 99,
+      tableId: 3,
+      sectionId: 4,
+      restaurantId: 5,
+      customerEmail: "pascal@test.com",
+      seats: 3,
+      isHeld: true,
+      bookingRef: "sunny-tarragon",
+      tableName: "T3",
+      sectionName: "Patio",
+    });
   });
 });

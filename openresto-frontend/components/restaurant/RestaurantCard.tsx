@@ -94,7 +94,6 @@ export default function RestaurantCard({
   const [slotsLoading, setSlotsLoading] = useState(true);
 
   useEffect(() => {
-    setSlotsLoading(true);
     const tz = restaurant.timezone ?? "UTC";
     const { totalMins } = getRestaurantNow(tz);
     const date = getRestaurantDate(tz);

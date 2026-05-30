@@ -45,8 +45,10 @@ function isoDate(d: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function initials(email: string) {
-  const name = email.split("@")[0].replace(/[._-]/g, " ").trim();
+function initials(nameOrEmail: string) {
+  const name = nameOrEmail.includes("@")
+    ? nameOrEmail.split("@")[0].replace(/[._-]/g, " ").trim()
+    : nameOrEmail.trim();
   const parts = name.split(" ");
   return parts.length > 1
     ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
@@ -84,6 +86,7 @@ export default function AdminBookingsScreen() {
   const searchQuery = emailParam || bookingRefParam || null;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (create === "1") setShowNewModal(true);
   }, [create]);
 
@@ -118,6 +121,7 @@ export default function AdminBookingsScreen() {
   useEffect(() => {
     if (searchQuery) {
       let cancelled = false;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(true);
       getAdminBookings(undefined, undefined, "all", emailParam, bookingRefParam).then((b) => {
         if (!cancelled) {
@@ -131,6 +135,7 @@ export default function AdminBookingsScreen() {
     }
     if (!selectedRestaurantId) return;
     let cancelled = false;
+
     setLoading(true);
     getAdminBookings(selectedRestaurantId, undefined, statusFilter).then((b) => {
       if (!cancelled) {
@@ -576,7 +581,7 @@ export default function AdminBookingsScreen() {
                   }}
                 >
                   <ThemedText style={{ fontSize: 11, fontWeight: "700", color: PRIMARY }}>
-                    {initials(b.customerEmail)}
+                    {initials(b.customerName ?? b.customerEmail)}
                   </ThemedText>
                 </View>
                 <View>
@@ -597,7 +602,7 @@ export default function AdminBookingsScreen() {
 
               <View style={styles.colGuest}>
                 <ThemedText style={styles.tdGuest} numberOfLines={1}>
-                  {b.customerEmail}
+                  {b.customerName ?? b.customerEmail}
                 </ThemedText>
                 {b.bookingRef && (
                   <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
@@ -666,12 +671,12 @@ export default function AdminBookingsScreen() {
                   }}
                 >
                   <ThemedText style={{ fontSize: 13, fontWeight: "700", color: PRIMARY }}>
-                    {initials(b.customerEmail)}
+                    {initials(b.customerName ?? b.customerEmail)}
                   </ThemedText>
                 </View>
                 <View style={styles.listCardInfo}>
                   <ThemedText style={styles.tdGuest} numberOfLines={1}>
-                    {b.customerEmail}
+                    {b.customerName ?? b.customerEmail}
                   </ThemedText>
                   <ThemedText style={[styles.tdTime, { fontSize: 13 }]}>
                     {new Date(b.date).toLocaleString(undefined, {

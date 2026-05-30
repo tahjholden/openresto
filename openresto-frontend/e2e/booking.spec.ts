@@ -15,6 +15,10 @@ test.describe("Booking Flow", () => {
     await page.waitForURL(/.*book\?restaurantId=.*/, { timeout: 10000 });
 
     // 3. Fill out the form
+    const nameInput = page.getByPlaceholder("Your full name");
+    await expect(nameInput).toBeVisible();
+    await nameInput.fill("E2E Test User");
+
     const emailInput = page.getByPlaceholder("your@email.com");
     await expect(emailInput).toBeVisible();
     await emailInput.fill("test-e2e@example.com");

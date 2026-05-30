@@ -59,19 +59,32 @@ describe("RestaurantCard", () => {
   });
 
   it("shows available time slot", async () => {
-    (fetchAvailability as jest.Mock).mockResolvedValue({
-      slots: [{ time: "23:30", isAvailable: true }],
-    });
-    render(<RestaurantCard restaurant={mockRestaurant} />);
-    await waitFor(() => expect(screen.getByText("23:30")).toBeTruthy());
+    // Pin clock to noon UTC so the 23:30 slot is always in the future.
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-01-01T12:00:00Z"));
+    try {
+      (fetchAvailability as jest.Mock).mockResolvedValue({
+        slots: [{ time: "23:30", isAvailable: true }],
+      });
+      render(<RestaurantCard restaurant={mockRestaurant} />);
+      await waitFor(() => expect(screen.getByText("23:30")).toBeTruthy());
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it("filters out unavailable slots", async () => {
-    (fetchAvailability as jest.Mock).mockResolvedValue({
-      slots: [{ time: "23:30", isAvailable: false }],
-    });
-    render(<RestaurantCard restaurant={mockRestaurant} />);
-    await waitFor(() => expect(screen.getByText("No available slots today")).toBeTruthy());
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-01-01T12:00:00Z"));
+    try {
+      (fetchAvailability as jest.Mock).mockResolvedValue({
+        slots: [{ time: "23:30", isAvailable: false }],
+      });
+      render(<RestaurantCard restaurant={mockRestaurant} />);
+      await waitFor(() => expect(screen.getByText("No available slots today")).toBeTruthy());
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it("navigates to booking when 'See details' is pressed", async () => {

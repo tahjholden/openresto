@@ -154,6 +154,10 @@ public static partial class DatabaseExtensions
                     tx.Rollback();
                     throw;
                 }
+
+                // Add any columns that were introduced in InitialCreate but never existed in the
+                // old incremental migrations (e.g. CustomerName added to Booking in the squash PR).
+                AddColumnIfMissing(connection, "Bookings", "CustomerName", "TEXT NULL");
             }
             finally
             {
@@ -166,6 +170,19 @@ public static partial class DatabaseExtensions
         {
             // Non-fatal: if the remap fails, Migrate() will surface a clearer error.
             logger.LogWarning(ex, "Could not remap legacy migration history. Proceeding anyway.");
+        }
+    }
+
+    private static void AddColumnIfMissing(System.Data.Common.DbConnection connection, string table, string column, string definition)
+    {
+        using var checkCmd = connection.CreateCommand();
+        checkCmd.CommandText = $"SELECT COUNT(*) FROM pragma_table_info('{table}') WHERE name='{column}'";
+        var exists = (long)(checkCmd.ExecuteScalar() ?? 0L) > 0;
+        if (!exists)
+        {
+            using var alterCmd = connection.CreateCommand();
+            alterCmd.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {definition}";
+            alterCmd.ExecuteNonQuery();
         }
     }
 

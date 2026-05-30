@@ -95,12 +95,16 @@ describe("RestaurantCard", () => {
   });
 
   it("shows Closed badge when restaurant is closed", async () => {
-    render(
-      <RestaurantCard restaurant={{ ...mockRestaurant, openTime: "23:00", closeTime: "23:59" }} />
-    );
-    await waitFor(() =>
-      expect(screen.queryByText("Closed") ?? screen.queryByText("23:00")).toBeTruthy()
-    );
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-01-01T14:00:00Z")); // fixed noon UTC — outside 23:00-23:59 window
+    try {
+      render(
+        <RestaurantCard restaurant={{ ...mockRestaurant, openTime: "23:00", closeTime: "23:59" }} />
+      );
+      await waitFor(() => expect(screen.queryByText("Closed")).toBeTruthy());
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it("shows 'Open till' badge when restaurant is open", async () => {

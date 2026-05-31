@@ -59,6 +59,22 @@ public class BrandController(BrandService brandService) : ControllerBase
         return Content(svg, "image/svg+xml");
     }
 
+    [HttpGet("pwa-icon-{size}.png")]
+    public async Task<IActionResult> GetPwaIconPng(int size)
+    {
+        if (size != 192 && size != 512) return NotFound();
+
+        BrandSettings brand = await _brand.GetAsync();
+        if (string.IsNullOrEmpty(brand.FaviconIcon)) return NotFound();
+
+        string? paths = LucideIconPaths.Get(brand.FaviconIcon);
+        if (paths == null) return NotFound();
+
+        byte[] png = PwaIconGenerator.Generate(size, brand.PrimaryColor ?? "#0a7ea4", paths);
+        Response.Headers.CacheControl = "no-cache";
+        return File(png, "image/png");
+    }
+
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> Save([FromBody] BrandRequest req)

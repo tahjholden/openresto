@@ -1,4 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "path";
+
+const ADMIN_STATE_FILE = path.join(__dirname, "e2e/.auth/admin.json");
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -11,10 +14,15 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Single worker — the Docker container has a 5 req/min auth rate-limit and
+     a 60 req/min global limit, so parallel workers exhaust both quickly. */
+  workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
+
+  /* Login once before ALL tests; saves the cookie for admin test projects. */
+  globalSetup: "./e2e/global-setup.ts",
+
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -23,16 +31,37 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
   },
-  timeout: 30000,
+  timeout: 60000,
   expect: {
-    timeout: 15000,
+    timeout: 20000,
   },
 
   /* Configure projects for major browsers */
   projects: [
+    // ── Public / unauthenticated tests ─────────────────────────────────────
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testIgnore: [
+        "**/admin-pause.spec.ts",
+        "**/admin-extend.spec.ts",
+        "**/brand-colour.spec.ts",
+        "**/lookup.spec.ts",
+      ],
+    },
+    // ── Admin tests — pre-loaded auth cookie ────────────────────────────────
+    {
+      name: "chromium-admin",
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: ADMIN_STATE_FILE,
+      },
+      testMatch: [
+        "**/admin-pause.spec.ts",
+        "**/admin-extend.spec.ts",
+        "**/brand-colour.spec.ts",
+        "**/lookup.spec.ts",
+      ],
     },
   ],
 });

@@ -63,6 +63,8 @@ OpenRestoApi/
 - `OpenDays` is a comma-separated string of ISO 8601 day numbers (`1`=Monday … `7`=Sunday).
 - `HoldService` is a **singleton** in-memory store — appropriate for single-instance deployment. Holds expire after 5 minutes. If you need multi-instance, swap for Redis.
 - The OpenAPI spec (`/openapi/v1.json`) is only exposed when `ASPNETCORE_ENVIRONMENT=Development`. The dev nginx template (`nginx/default.conf.template`) proxies `/openapi/` to the backend for ZAP CI scanning; the prod nginx (`nginx-vps/`) does not.
+- **EF migrations with running dev server**: exe is locked, so use `dotnet ef migrations add <Name> --no-build`. If obj/ DLLs are stale the generated `Up()` will be empty — write it manually.
+- **Cross-platform image generation**: use `Magick.NET-Q8-AnyCPU` (ships Linux x64 native libs, no apt-get needed). Never add `Svg` (SVG.NET) — it uses `System.Drawing.Common` which is Windows-only in .NET 7+.
 
 ### Frontend — Expo Router file-based routing
 
@@ -86,12 +88,24 @@ openresto-frontend/
 - `EXPO_PUBLIC_API_URL` drives all API calls. In Docker it is `/api` (relative, goes through nginx). In standalone dev it is `http://localhost:5062`. The `buildEndpoint` helper in `BrandContext` normalises both forms.
 - Availability is fetched per `(restaurantId, date, seats)`. The API returns 15-minute slots with `{ time, isAvailable, availableTableIds, category }`. `PopularTimesPicker` shows only `isAvailable: true` slots; closed days return an empty slots array from the backend.
 - Table holds flow: frontend calls `POST /api/holds` → backend validates open hours + pause state + conflict-checks → returns a `holdId` + expiry. The `holdId` must be included in the subsequent `POST /api/bookings` request.
+- **Chrome favicon caching**: never update `<link rel="icon">` href in-place — Chrome ignores it. Remove all existing favicon links then append a fresh `<link>` element to force re-read.
+- **PWA manifest URL**: must remain a same-origin HTTP(S) URL. Replacing `<link rel="manifest">` href with a `blob:` URL silently breaks Chrome's PWA installability check.
+- **SW cache versioning**: bump `CACHE_NAME` in `public/sw.js` on every deploy that changes `public/manifest.json`, otherwise browsers serve the stale cached manifest.
+- Tab favicon (SVG data URI via `injectBrandFavicon`) works in standalone dev. PWA install icon requires Docker — nginx must proxy `/api/brand/pwa-icon-*.png` to the backend.
+- `app/+html.tsx` is Expo Router's HTML `<head>` template for static output mode — favicon link, manifest link, and SW registration script all live here.
 
 ### Auth model
 
 Two roles via JWT:
 - **Admin** — obtained by `POST /api/auth/login`. Stored in `AdminCredential` (one row per restaurant, bcrypt password hash). Required for all `/admin/*` endpoints.
 - **Customer bookings** — no auth. Customers identify via `BookingRef` (short random string) or the encrypted recent-bookings cookie.
+
+### Brand / Favicon
+
+- `BrandSettings.FaviconIcon` — nullable string (max 32 chars), validated server-side against `LucideIconPaths.cs` (10 icons: utensils, wine, coffee, pizza, flame, leaf, star, heart, chef-hat, fish).
+- `GET /api/brand/pwa-icon.svg` — SVG with brand-colored rounded-rect background + white Lucide icon; used for the browser tab favicon.
+- `GET /api/brand/pwa-icon-{192|512}.png` — PNG generated via `Magick.NET-Q8-AnyCPU`; used as PWA manifest icons. Both return 404 when no icon is configured; Chrome falls back to static PNGs.
+- Frontend: `utils/injectBrandFavicon.ts` called from `BrandContext` after brand loads; posts `BRAND_UPDATE` to SW to patch manifest `name`/`theme_color`. Icon picker in `components/admin/settings/BrandSettingsCard.tsx`; SVG path data + `buildFaviconDataUri()` in `constants/faviconIcons.ts`.
 
 ### Testing
 

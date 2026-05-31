@@ -1,4 +1,4 @@
-const CACHE_NAME = "openresto-v1";
+const CACHE_NAME = "openresto-v2";
 const STATIC_ASSETS = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {

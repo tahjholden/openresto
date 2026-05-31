@@ -69,7 +69,11 @@ export default function PopularTimesPicker({
     const hasAvailableInCategory = slotsInView.some(
       (s) => s.isAvailable && s.category === activeCategory
     );
-    if (!hasAvailableInCategory && activeCategory !== "All" && slotsInView.some((s) => s.isAvailable)) {
+    if (
+      !hasAvailableInCategory &&
+      activeCategory !== "All" &&
+      slotsInView.some((s) => s.isAvailable)
+    ) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveCategory("All");
     }

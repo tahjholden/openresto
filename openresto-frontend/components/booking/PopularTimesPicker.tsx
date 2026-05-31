@@ -14,11 +14,14 @@ import { COLORS, getThemeColors } from "@/theme/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useBrand } from "@/context/BrandContext";
 import { Ionicons } from "@expo/vector-icons";
+import { getNowInTimezone } from "@/utils/date";
 
 interface PopularTimesPickerProps {
   slots: TimeSlotDto[];
   selectedTime: string;
   onSelectTime: (time: string) => void;
+  selectedDate?: string;
+  timezone?: string;
 }
 
 type Category = "Lunch" | "Dinner" | "All";
@@ -27,6 +30,8 @@ export default function PopularTimesPicker({
   slots,
   selectedTime,
   onSelectTime,
+  selectedDate,
+  timezone,
 }: PopularTimesPickerProps) {
   const isDark = useColorScheme() === "dark";
   const colors = getThemeColors(isDark);
@@ -41,21 +46,34 @@ export default function PopularTimesPicker({
 
   const categories: Category[] = ["Lunch", "Dinner", "All"];
 
-  const filteredSlots = useMemo(() => {
-    if (!slots) return [];
-    const availableSlots = slots.filter((s) => s.isAvailable);
-    if (activeCategory === "All") return availableSlots;
-    return availableSlots.filter((s) => s.category === activeCategory);
-  }, [slots, activeCategory]);
+  // For today's date, strip out slots whose time has already passed.
+  const slotsInView = useMemo(() => {
+    if (!slots?.length || !selectedDate || !timezone) return slots ?? [];
+    const { dateStr: todayStr, hours, minutes } = getNowInTimezone(timezone);
+    if (selectedDate !== todayStr) return slots;
+    const nowMins = hours * 60 + minutes;
+    return slots.filter((s) => {
+      const [h, m] = s.time.split(":").map(Number);
+      return h * 60 + m > nowMins;
+    });
+  }, [slots, selectedDate, timezone]);
 
-  // If active category has no slots, default to 'All'
+  const filteredSlots = useMemo(() => {
+    const available = slotsInView.filter((s) => s.isAvailable);
+    if (activeCategory === "All") return available;
+    return available.filter((s) => s.category === activeCategory);
+  }, [slotsInView, activeCategory]);
+
+  // If the active category has no available slots but others do, fall back to 'All'.
   useEffect(() => {
-    const currentExists = slots?.some((s) => s.category === activeCategory);
-    if (!currentExists && activeCategory !== "All" && slots?.length > 0) {
+    const hasAvailableInCategory = slotsInView.some(
+      (s) => s.isAvailable && s.category === activeCategory
+    );
+    if (!hasAvailableInCategory && activeCategory !== "All" && slotsInView.some((s) => s.isAvailable)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveCategory("All");
     }
-  }, [slots, activeCategory]);
+  }, [slotsInView, activeCategory]);
 
   // Web-specific: Mouse Wheel and Drag-to-scroll — only runs when Platform.OS === "web"
   /* istanbul ignore next */

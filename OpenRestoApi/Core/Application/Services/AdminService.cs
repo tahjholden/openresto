@@ -683,10 +683,14 @@ public class AdminService(AppDbContext db, IHoldService holdService)
             tz = TimeZoneInfo.Utc;
         }
 
-        // referenceDate comes from the client as a date-only query param (e.g. "2026-05-26"),
-        // parsed by ASP.NET as Unspecified midnight. Treat it directly as the restaurant's
-        // local calendar date — converting through UTC first shifts the day for UTC- timezones.
-        DateTime localDay = referenceDate.Date;
+        // When given a UTC timestamp (e.g. from GetOverviewAsync), convert to the restaurant's
+        // local time first so we get the correct local calendar date — a UTC+ restaurant may
+        // already be on the next calendar day while UTC is still "yesterday".
+        // When given an Unspecified value (a client date-only param like "2026-05-26"), treat
+        // it directly as the restaurant's local date without conversion.
+        DateTime localDay = referenceDate.Kind == DateTimeKind.Utc
+            ? TimeZoneInfo.ConvertTimeFromUtc(referenceDate, tz).Date
+            : referenceDate.Date;
 
         DateTime localStart = DateTime.SpecifyKind(localDay, DateTimeKind.Unspecified);
         DateTime localEnd = DateTime.SpecifyKind(localDay.AddDays(1), DateTimeKind.Unspecified);

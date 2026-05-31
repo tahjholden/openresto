@@ -745,7 +745,11 @@ export default function AdminBookingsScreen() {
       <ConfirmModal
         visible={!!cancelTarget}
         title="Cancel Booking"
-        message={cancelTarget ? `Cancel booking for ${cancelTarget.customerName ?? cancelTarget.customerEmail}?` : ""}
+        message={
+          cancelTarget
+            ? `Cancel booking for ${cancelTarget.customerName ?? cancelTarget.customerEmail}?`
+            : ""
+        }
         confirmLabel="Cancel Booking"
         cancelLabel="Keep"
         destructive

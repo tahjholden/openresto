@@ -227,13 +227,23 @@ export function RestaurantInfoForm({
             <ThemedText style={{ fontSize: 12, color: mutedColor, fontWeight: "500" }}>
               Opens
             </ThemedText>
-            <TimePicker selectedTime={openTime} onSelect={setOpenTime} minTime="00:00" maxTime="23:45" />
+            <TimePicker
+              selectedTime={openTime}
+              onSelect={setOpenTime}
+              minTime="00:00"
+              maxTime="23:45"
+            />
           </View>
           <View style={{ flex: 1, gap: 6 }}>
             <ThemedText style={{ fontSize: 12, color: mutedColor, fontWeight: "500" }}>
               Closes
             </ThemedText>
-            <TimePicker selectedTime={closeTime} onSelect={setCloseTime} minTime="00:00" maxTime="23:45" />
+            <TimePicker
+              selectedTime={closeTime}
+              onSelect={setCloseTime}
+              minTime="00:00"
+              maxTime="23:45"
+            />
           </View>
           <View style={{ flex: 1, gap: 6 }}>
             <ThemedText style={{ fontSize: 12, color: mutedColor, fontWeight: "500" }}>

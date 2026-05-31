@@ -7,6 +7,10 @@ jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: () => "light",
 }));
 
+jest.mock("@/utils/date", () => ({
+  getNowInTimezone: jest.fn(() => ({ dateStr: "2026-10-10", hours: 13, minutes: 0 })),
+}));
+
 jest.mock("@expo/vector-icons", () => ({
   Ionicons: () => null,
 }));
@@ -74,9 +78,7 @@ describe("PopularTimesPicker", () => {
     expect(screen.getByText("18:00")).toBeTruthy();
   });
 
-  it("shows empty message when Dinner category exists but all slots unavailable", () => {
-    // The component only auto-falls-back to All when the category doesn't exist at all.
-    // If Dinner exists but all its slots are unavailable, filteredSlots is empty → empty state shown.
+  it("auto-falls-back to All when Dinner category has all slots unavailable", () => {
     const slotsWithUnavailableDinner: TimeSlotDto[] = [
       { time: "12:00", isAvailable: true, availableTableIds: [1], category: "Lunch" },
       { time: "18:00", isAvailable: false, availableTableIds: [], category: "Dinner" },
@@ -89,7 +91,9 @@ describe("PopularTimesPicker", () => {
       />
     );
     fireEvent.press(screen.getByText("Dinner"));
-    expect(screen.getByText(/No slots available/i)).toBeTruthy();
+    // Dinner has no available slots → falls back to All, showing the Lunch slot
+    expect(screen.getByText("12:00")).toBeTruthy();
+    expect(screen.queryByText("18:00")).toBeNull();
   });
 
   it("defaults to All when active category has no slots on mount", () => {
@@ -177,6 +181,47 @@ describe("PopularTimesPicker", () => {
       fireEvent(scrollWrapper!, "layout", { nativeEvent: { layout: { width: 350, height: 65 } } });
     });
     expect(screen.getByText("12:00")).toBeTruthy();
+  });
+
+  it("hides past slots when selectedDate is today", () => {
+    // getNowInTimezone mock returns 13:00 on 2026-10-10
+    const slotsWithPast: TimeSlotDto[] = [
+      { time: "12:00", isAvailable: true, availableTableIds: [1], category: "Lunch" }, // past
+      { time: "14:00", isAvailable: true, availableTableIds: [1], category: "Lunch" }, // future
+      { time: "18:00", isAvailable: true, availableTableIds: [2], category: "Dinner" },
+    ];
+    render(
+      <PopularTimesPicker
+        slots={slotsWithPast}
+        selectedTime=""
+        onSelectTime={jest.fn()}
+        selectedDate="2026-10-10"
+        timezone="UTC"
+      />
+    );
+    fireEvent.press(screen.getByText("All"));
+    expect(screen.queryByText("12:00")).toBeNull(); // past — hidden
+    expect(screen.getByText("14:00")).toBeTruthy(); // future — shown
+    expect(screen.getByText("18:00")).toBeTruthy();
+  });
+
+  it("shows all slots when selectedDate is a future date", () => {
+    const slotsWithPast: TimeSlotDto[] = [
+      { time: "12:00", isAvailable: true, availableTableIds: [1], category: "Lunch" },
+      { time: "18:00", isAvailable: true, availableTableIds: [2], category: "Dinner" },
+    ];
+    render(
+      <PopularTimesPicker
+        slots={slotsWithPast}
+        selectedTime=""
+        onSelectTime={jest.fn()}
+        selectedDate="2026-10-11" // tomorrow (mock says today is 2026-10-10)
+        timezone="UTC"
+      />
+    );
+    fireEvent.press(screen.getByText("All"));
+    expect(screen.getByText("12:00")).toBeTruthy();
+    expect(screen.getByText("18:00")).toBeTruthy();
   });
 
   it("shows and presses left and right scroll arrows when content overflows", () => {

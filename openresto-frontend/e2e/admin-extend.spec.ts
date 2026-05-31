@@ -71,10 +71,9 @@ test.describe("Admin extend bookings", () => {
 
     // ── Extend all active bookings via API (the modal UI itself is a smoke-tested
     //    React component; we focus here on verifying the extend operation works) ──
-    const extendRes = await page.request.post(
-      `/api/admin/restaurants/${RESTAURANT_ID}/extend`,
-      { data: { minutes: 60 } }
-    );
+    const extendRes = await page.request.post(`/api/admin/restaurants/${RESTAURANT_ID}/extend`, {
+      data: { minutes: 60 },
+    });
     expect(extendRes.ok()).toBeTruthy();
     const { extendedBookings } = await extendRes.json();
 

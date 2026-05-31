@@ -30,14 +30,13 @@ test.describe("Booking lookup", () => {
       `/api/availability/${restaurant.id}?date=${lookupDate}&seats=2`
     );
     if (!availRes.ok()) {
-      availRes = await request.get(
-        `/api/availability/${restaurant.id}?date=${lookupDate}&seats=2`
-      );
+      availRes = await request.get(`/api/availability/${restaurant.id}?date=${lookupDate}&seats=2`);
     }
     expect(availRes.ok()).toBeTruthy();
     const { slots } = await availRes.json();
-    const slot = (slots as Array<{ time: string; isAvailable: boolean; availableTableIds: number[] }>)
-      .find((s) => s.isAvailable);
+    const slot = (
+      slots as Array<{ time: string; isAvailable: boolean; availableTableIds: number[] }>
+    ).find((s) => s.isAvailable);
     expect(slot).toBeTruthy();
 
     // Build UTC ISO datetime for the slot
@@ -49,10 +48,11 @@ test.describe("Booking lookup", () => {
     // Use the first available table from the availability response
     const availableTableId = slot!.availableTableIds[0] ?? table.id;
     // Find which section this table belongs to
-    const allSections: Array<{ id: number; tables: Array<{ id: number }> }> = restaurant.sections ?? [];
-    const tableSection = allSections.find((s) =>
-      s.tables.some((t: { id: number }) => t.id === availableTableId)
-    ) ?? section;
+    const allSections: Array<{ id: number; tables: Array<{ id: number }> }> =
+      restaurant.sections ?? [];
+    const tableSection =
+      allSections.find((s) => s.tables.some((t: { id: number }) => t.id === availableTableId)) ??
+      section;
 
     // Acquire a hold
     const holdRes = await request.post("/api/holds", {

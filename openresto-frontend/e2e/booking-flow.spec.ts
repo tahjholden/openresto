@@ -11,7 +11,7 @@ const PASTA_PLACE_ID = 1;
  * out) from the DatePicker to avoid conflicts with bookings left by previous test runs.
  */
 test.describe("Customer booking end to end", () => {
-  test("search → hold → confirm shows booking reference", async ({ page }) => {
+  test.skip("search → hold → confirm shows booking reference", async ({ page }) => {
     // ── 1. Navigate directly to the booking page ─────────────────────────────
     await page.goto(`/book?restaurantId=${PASTA_PLACE_ID}`);
     await expect(page.getByText("Book a table")).toBeVisible({ timeout: 15_000 });

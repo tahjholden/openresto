@@ -23,10 +23,7 @@ export function pastUtcISO(minutesAgo: number): string {
  * fresh session (e.g. beforeAll hooks that create new browser contexts) call
  * this with `loginFirst = true` to hit the API once.
  */
-export async function gotoAdminDashboard(
-  page: Page,
-  loginFirst = false
-): Promise<void> {
+export async function gotoAdminDashboard(page: Page, loginFirst = false): Promise<void> {
   if (loginFirst) {
     const res = await page.request.post("/api/admin/auth/login", {
       data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },

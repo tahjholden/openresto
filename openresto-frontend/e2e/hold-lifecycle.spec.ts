@@ -68,14 +68,10 @@ test.describe("Hold lifecycle", () => {
     expect(hold.secondsRemaining).toBeGreaterThan(0);
 
     // The slot should now be unavailable when checking from a different session
-    let availRes2 = await request.get(
-      `/api/availability/${restaurantId}?date=${testDate}&seats=2`
-    );
+    let availRes2 = await request.get(`/api/availability/${restaurantId}?date=${testDate}&seats=2`);
     if (!availRes2.ok()) {
       // Retry once on rate-limit
-      availRes2 = await request.get(
-        `/api/availability/${restaurantId}?date=${testDate}&seats=2`
-      );
+      availRes2 = await request.get(`/api/availability/${restaurantId}?date=${testDate}&seats=2`);
     }
     // If the retry still fails, proceed with an empty slot list (test will still
     // pass if the hold was released — the next test checks that path)

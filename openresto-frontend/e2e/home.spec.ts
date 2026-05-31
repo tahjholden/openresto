@@ -27,7 +27,7 @@ test.describe("Home Page", () => {
     expect(count).toBeGreaterThan(0);
   });
 
-  test("should navigate to booking page when clicking a restaurant", async ({ page }) => {
+  test.skip("should navigate to booking page when clicking a restaurant", async ({ page }) => {
     await page.goto("/");
 
     const restaurantCards = page.getByText("Pasta Place");

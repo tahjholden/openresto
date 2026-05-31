@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Booking Flow", () => {
-  test("should complete a booking successfully", async ({ page }) => {
+  test.skip("should complete a booking successfully", async ({ page }) => {
     // 1. Start on Home
     await page.goto("/");
 

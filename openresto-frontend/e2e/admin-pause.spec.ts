@@ -24,10 +24,9 @@ test.describe("Admin pause bookings", () => {
     await gotoAdminDashboard(page);
 
     // ── Pause via API (authenticated via storageState cookie) ─────────────────
-    const pauseRes = await page.request.post(
-      `/api/admin/restaurants/${PASTA_PLACE_ID}/pause`,
-      { data: { minutes: 60 } }
-    );
+    const pauseRes = await page.request.post(`/api/admin/restaurants/${PASTA_PLACE_ID}/pause`, {
+      data: { minutes: 60 },
+    });
     expect(pauseRes.ok()).toBeTruthy();
 
     // ── Customer navigates to the booking form ─────────────────────────────────
@@ -40,9 +39,9 @@ test.describe("Admin pause bookings", () => {
 
     // When paused, every slot has isAvailable:false → PopularTimesPicker shows
     // "No slots available for this period." on every category tab
-    await expect(
-      page.getByText("No slots available for this period.").first()
-    ).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("No slots available for this period.").first()).toBeVisible({
+      timeout: 20_000,
+    });
   });
 
   test("unpausing a restaurant restores available slots", async ({ page }) => {

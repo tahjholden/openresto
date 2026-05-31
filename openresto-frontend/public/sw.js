@@ -17,18 +17,18 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Page sends this after brand loads; we patch /manifest.json in the cache so the
-// PWA install prompt picks up the right name, theme colour, and icon.
+// Page sends this after brand loads; patch name and theme_color in the cached
+// manifest so the PWA install prompt reflects the current brand.
+// The branded icon (/api/brand/pwa-icon.svg) is already in the static manifest
+// so Chrome fetches it directly — no icon patching needed here.
 self.addEventListener("message", (event) => {
   if (event.data?.type !== "BRAND_UPDATE") return;
-  const { name, themeColor, hasIcon } = event.data.brand;
+  const { name, themeColor } = event.data.brand;
 
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
 
-      // Fetch the canonical manifest directly from the network (SW fetch() calls
-      // bypass this SW's own fetch handler, so no circular interception).
       let baseManifest;
       try {
         baseManifest = await fetch("/manifest.json").then((r) => r.json());
@@ -41,18 +41,6 @@ self.addEventListener("message", (event) => {
       baseManifest.name = name;
       baseManifest.short_name = name.length > 12 ? name.slice(0, 12) : name;
       baseManifest.theme_color = themeColor;
-
-      if (hasIcon) {
-        baseManifest.icons = [
-          { src: "/api/brand/pwa-icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
-          {
-            src: "/api/brand/pwa-icon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-            purpose: "maskable",
-          },
-        ];
-      }
 
       await cache.put(
         "/manifest.json",
@@ -74,7 +62,9 @@ self.addEventListener("fetch", (event) => {
   // Manifest is managed by the BRAND_UPDATE handler above; serve cache-first so
   // the patched version is always used rather than being overwritten by the network.
   if (url.pathname === "/manifest.json") {
-    event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
+    event.respondWith(
+      caches.match(event.request).then((cached) => cached || fetch(event.request))
+    );
     return;
   }
 

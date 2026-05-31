@@ -37,6 +37,6 @@ export function injectBrandFavicon(brand: Brand): void {
   // that Chrome can fetch, unlike blob: or data: URIs.
   navigator.serviceWorker?.controller?.postMessage({
     type: "BRAND_UPDATE",
-    brand: { name: appName, themeColor: primaryColor, hasIcon: true },
+    brand: { name: appName, themeColor: primaryColor },
   });
 }

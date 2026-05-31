@@ -127,6 +127,51 @@ export default function BookingConfirmationScreen() {
           </ThemedText>
         </View>
 
+        {/* Booking reference — above detail rows on mobile, inside right col on wide */}
+        {!isWide && (
+          <View
+            style={[styles.refCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
+            <ThemedText style={[styles.refLabel, { color: colors.muted }]}>
+              Booking Reference
+            </ThemedText>
+            <View style={styles.refRow}>
+              <View
+                style={[
+                  styles.refBadge,
+                  { backgroundColor: isDark ? `${primaryColor}22` : `${primaryColor}14` },
+                ]}
+              >
+                <ThemedText style={[styles.refValue, { color: primaryColor }]}>{ref}</ThemedText>
+              </View>
+              {Platform.OS === "web" && (
+                <Pressable
+                  style={[styles.copyBtn, { borderColor: colors.border }]}
+                  onPress={() => {
+                    navigator.clipboard.writeText(ref);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                >
+                  <Ionicons
+                    name={copied ? "checkmark" : "copy-outline"}
+                    size={14}
+                    color={copied ? COLORS.success : primaryColor}
+                  />
+                  <ThemedText
+                    style={[styles.copyBtnText, { color: copied ? COLORS.success : primaryColor }]}
+                  >
+                    {copied ? "Copied" : "Copy"}
+                  </ThemedText>
+                </Pressable>
+              )}
+            </View>
+            <ThemedText style={[styles.refHint, { color: colors.muted }]}>
+              Use this reference and your email to look up your booking
+            </ThemedText>
+          </View>
+        )}
+
         {/* Two-column on wide: [details] | [ref card + calendar] */}
         <View style={isWide ? styles.wideRow : styles.narrowGap}>
           {/* Left / top on narrow: detail rows */}
@@ -145,52 +190,54 @@ export default function BookingConfirmationScreen() {
             />
           </View>
 
-          {/* Right / bottom on narrow: ref card + calendar + directions stacked */}
+          {/* Right col on wide: ref card + calendar + directions stacked */}
           <View style={[isWide && styles.wideCol, styles.rightCol]}>
-            <View
-              style={[styles.refCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-            >
-              <ThemedText style={[styles.refLabel, { color: colors.muted }]}>
-                Booking Reference
-              </ThemedText>
-              <View style={styles.refRow}>
-                <View
-                  style={[
-                    styles.refBadge,
-                    { backgroundColor: isDark ? `${primaryColor}22` : `${primaryColor}14` },
-                  ]}
-                >
-                  <ThemedText style={[styles.refValue, { color: primaryColor }]}>{ref}</ThemedText>
-                </View>
-                {Platform.OS === "web" && (
-                  <Pressable
-                    style={[styles.copyBtn, { borderColor: colors.border }]}
-                    onPress={() => {
-                      navigator.clipboard.writeText(ref);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    }}
+            {isWide && (
+              <View
+                style={[styles.refCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                <ThemedText style={[styles.refLabel, { color: colors.muted }]}>
+                  Booking Reference
+                </ThemedText>
+                <View style={styles.refRow}>
+                  <View
+                    style={[
+                      styles.refBadge,
+                      { backgroundColor: isDark ? `${primaryColor}22` : `${primaryColor}14` },
+                    ]}
                   >
-                    <Ionicons
-                      name={copied ? "checkmark" : "copy-outline"}
-                      size={14}
-                      color={copied ? COLORS.success : primaryColor}
-                    />
-                    <ThemedText
-                      style={[
-                        styles.copyBtnText,
-                        { color: copied ? COLORS.success : primaryColor },
-                      ]}
+                    <ThemedText style={[styles.refValue, { color: primaryColor }]}>{ref}</ThemedText>
+                  </View>
+                  {Platform.OS === "web" && (
+                    <Pressable
+                      style={[styles.copyBtn, { borderColor: colors.border }]}
+                      onPress={() => {
+                        navigator.clipboard.writeText(ref);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
                     >
-                      {copied ? "Copied" : "Copy"}
-                    </ThemedText>
-                  </Pressable>
-                )}
+                      <Ionicons
+                        name={copied ? "checkmark" : "copy-outline"}
+                        size={14}
+                        color={copied ? COLORS.success : primaryColor}
+                      />
+                      <ThemedText
+                        style={[
+                          styles.copyBtnText,
+                          { color: copied ? COLORS.success : primaryColor },
+                        ]}
+                      >
+                        {copied ? "Copied" : "Copy"}
+                      </ThemedText>
+                    </Pressable>
+                  )}
+                </View>
+                <ThemedText style={[styles.refHint, { color: colors.muted }]}>
+                  Use this reference and your email to look up your booking
+                </ThemedText>
               </View>
-              <ThemedText style={[styles.refHint, { color: colors.muted }]}>
-                Use this reference and your email to look up your booking
-              </ThemedText>
-            </View>
+            )}
 
             {Platform.OS === "web" && ref && (
               <View

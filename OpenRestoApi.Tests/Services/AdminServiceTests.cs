@@ -143,7 +143,7 @@ public class AdminServiceTests : IDisposable
         AdminService svc = CreateService();
         SeedBase(1);
         DateTime nowUtc = DateTime.UtcNow;
-        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.AddMinutes(30), BookingRef = "TODAY", IsCancelled = false });
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddHours(12), BookingRef = "TODAY", IsCancelled = false });
         await _db.SaveChangesAsync();
 
         AdminOverviewDto overview = await svc.GetOverviewAsync();
@@ -159,8 +159,8 @@ public class AdminServiceTests : IDisposable
         AdminService svc = CreateService();
         SeedBase(1);
         DateTime nowUtc = DateTime.UtcNow;
-        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.AddMinutes(30), BookingRef = "ACTIVE", IsCancelled = false });
-        _db.Bookings.Add(new Booking { Id = 2, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.AddMinutes(60), BookingRef = "CANCELLED", IsCancelled = true });
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddHours(12), BookingRef = "ACTIVE", IsCancelled = false });
+        _db.Bookings.Add(new Booking { Id = 2, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddHours(13), BookingRef = "CANCELLED", IsCancelled = true });
         await _db.SaveChangesAsync();
 
         AdminOverviewDto overview = await svc.GetOverviewAsync();
@@ -189,8 +189,8 @@ public class AdminServiceTests : IDisposable
         AdminService svc = CreateService();
         SeedBase(1);
         DateTime nowUtc = DateTime.UtcNow;
-        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.AddMinutes(30), BookingRef = "B1" });
-        _db.Bookings.Add(new Booking { Id = 2, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.AddMinutes(90), BookingRef = "B2" });
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddHours(12), BookingRef = "B1" });
+        _db.Bookings.Add(new Booking { Id = 2, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.Date.AddHours(13), BookingRef = "B2" });
         await _db.SaveChangesAsync();
 
         AdminOverviewDto overview = await svc.GetOverviewAsync();

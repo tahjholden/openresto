@@ -604,6 +604,11 @@ export default function AdminBookingsScreen() {
                 <ThemedText style={styles.tdGuest} numberOfLines={1}>
                   {b.customerName ?? b.customerEmail}
                 </ThemedText>
+                {b.customerName ? (
+                  <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
+                    {b.customerEmail}
+                  </ThemedText>
+                ) : null}
                 {b.bookingRef && (
                   <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
                     {b.bookingRef}
@@ -678,6 +683,11 @@ export default function AdminBookingsScreen() {
                   <ThemedText style={styles.tdGuest} numberOfLines={1}>
                     {b.customerName ?? b.customerEmail}
                   </ThemedText>
+                  {b.customerName ? (
+                    <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
+                      {b.customerEmail}
+                    </ThemedText>
+                  ) : null}
                   <ThemedText style={[styles.tdTime, { fontSize: 13 }]}>
                     {new Date(b.date).toLocaleString(undefined, {
                       weekday: "short",
@@ -735,7 +745,7 @@ export default function AdminBookingsScreen() {
       <ConfirmModal
         visible={!!cancelTarget}
         title="Cancel Booking"
-        message={cancelTarget ? `Cancel booking for ${cancelTarget.customerEmail}?` : ""}
+        message={cancelTarget ? `Cancel booking for ${cancelTarget.customerName ?? cancelTarget.customerEmail}?` : ""}
         confirmLabel="Cancel Booking"
         cancelLabel="Keep"
         destructive

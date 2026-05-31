@@ -62,9 +62,7 @@ self.addEventListener("fetch", (event) => {
   // Manifest is managed by the BRAND_UPDATE handler above; serve cache-first so
   // the patched version is always used rather than being overwritten by the network.
   if (url.pathname === "/manifest.json") {
-    event.respondWith(
-      caches.match(event.request).then((cached) => cached || fetch(event.request))
-    );
+    event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
     return;
   }
 

@@ -194,7 +194,10 @@ export default function BookingConfirmationScreen() {
           <View style={[isWide && styles.wideCol, styles.rightCol]}>
             {isWide && (
               <View
-                style={[styles.refCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                style={[
+                  styles.refCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
               >
                 <ThemedText style={[styles.refLabel, { color: colors.muted }]}>
                   Booking Reference
@@ -206,7 +209,9 @@ export default function BookingConfirmationScreen() {
                       { backgroundColor: isDark ? `${primaryColor}22` : `${primaryColor}14` },
                     ]}
                   >
-                    <ThemedText style={[styles.refValue, { color: primaryColor }]}>{ref}</ThemedText>
+                    <ThemedText style={[styles.refValue, { color: primaryColor }]}>
+                      {ref}
+                    </ThemedText>
                   </View>
                   {Platform.OS === "web" && (
                     <Pressable

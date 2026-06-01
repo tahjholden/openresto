@@ -5,13 +5,12 @@ import { useEffect, useState, type ComponentProps } from "react";
 import {
   ActivityIndicator,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
 } from "react-native";
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import Navbar from "@/components/layout/Navbar";
 import RestaurantCard from "@/components/restaurant/RestaurantCard";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -23,7 +22,6 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const { width } = useWindowDimensions();
   const { brand, colors, primaryColor, isDark } = useAppTheme();
-  const router = useRouter();
 
   const isMobile = width < 700;
   const party = 2;

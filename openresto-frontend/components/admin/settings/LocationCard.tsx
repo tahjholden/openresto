@@ -83,8 +83,6 @@ export function LocationCard({
   const brand = useBrand();
   const primaryColor = brand.primaryColor || COLORS.primary;
   const accentSoft = `${primaryColor}18`;
-  const okColor = COLORS.success;
-  const okSoft = isDark ? `${okColor}22` : "#dcfce7";
 
   const [imgUploading, setImgUploading] = useState(false);
   const [imgMsg, setImgMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -197,7 +195,7 @@ export function LocationCard({
           </View>
         </View>
 
-        {/* Right: stats + active badge */}
+        {/* Right: stats */}
         <View style={{ alignItems: "flex-end", gap: 10, flexShrink: 0 }}>
           <View style={{ flexDirection: "row", gap: 6 }}>
             <StatChip
@@ -221,23 +219,6 @@ export function LocationCard({
               borderColor={borderColor}
               mutedColor={mutedColor}
             />
-          </View>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 5,
-              backgroundColor: okSoft,
-              paddingLeft: 8,
-              paddingRight: 10,
-              paddingVertical: 4,
-              borderRadius: 999,
-            }}
-          >
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: okColor }} />
-            <ThemedText style={{ fontSize: 12, fontWeight: "500", color: okColor }}>
-              Active
-            </ThemedText>
           </View>
         </View>
       </View>

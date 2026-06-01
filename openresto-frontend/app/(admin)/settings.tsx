@@ -119,14 +119,6 @@ function LocationPills({
             >
               {r.name}
             </ThemedText>
-            <View
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: active ? "rgba(255,255,255,0.65)" : COLORS.success,
-              }}
-            />
           </Pressable>
         );
       })}

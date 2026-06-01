@@ -151,12 +151,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Create backend env file
+      - name: Patch backend env file for CI
+        # .env.docker is committed with local-dev defaults (credentials, JWT key, etc.).
+        # We only need to override CONNECTION_STRING so the DB lives in a writable CI path.
         run: |
-          cat > ./OpenRestoApi/.env.docker << EOF
-          CORS_ORIGINS=http://localhost:5062,http://localhost:8081,http://frontend:8081
-          CONNECTION_STRING=Data Source=/tmp/openresto.db
-          EOF
+          sed -i 's|CONNECTION_STRING=.*|CONNECTION_STRING=Data Source=/tmp/openresto.db|' \
+            ./OpenRestoApi/.env.docker
 
       - name: Build all containers
         run: docker compose build
@@ -274,6 +274,12 @@ jobs:
 
       - name: Run Playwright Tests
         working-directory: openresto-frontend
+        # These must match the values in OpenRestoApi/.env.docker so that global-setup
+        # can authenticate.  The helpers.ts defaults already match, so these env vars
+        # are redundant in the normal case but make the contract explicit.
+        env:
+          ADMIN_EMAIL: admin@openresto.com
+          ADMIN_PASSWORD: change-me-before-use
         run: npm run test:e2e
 
       - name: Upload Playwright Report

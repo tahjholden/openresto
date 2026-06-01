@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 
-export const ADMIN_EMAIL = "admin@openresto.com";
-export const ADMIN_PASSWORD = "change-me-before-use";
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@openresto.com";
+export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "change-me-before-use";
 
 /** Returns a YYYY-MM-DD string N days in the future (UTC). */
 export function futureDateStr(daysAhead = 7): string {

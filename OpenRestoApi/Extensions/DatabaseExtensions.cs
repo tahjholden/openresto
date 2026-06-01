@@ -179,7 +179,9 @@ public static partial class DatabaseExtensions
         catch (Exception ex)
         {
             // Non-fatal: if the remap fails, Migrate() will surface a clearer error.
+#pragma warning disable CA1848 // One-off log call, LoggerMessage not needed here
             logger.LogWarning(ex, "Could not remap legacy migration history. Proceeding anyway.");
+#pragma warning restore CA1848
         }
     }
 

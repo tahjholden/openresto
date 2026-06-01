@@ -63,3 +63,15 @@ dotnet_diagnostic.CA1826.severity = warning
 dotnet_diagnostic.CA1827.severity = warning
 dotnet_diagnostic.CA1829.severity = warning
 dotnet_diagnostic.CA2208.severity = warning
+
+# ── Ignored warnings (style/low impact) ───────────────────────────────────────
+
+# IDE0011: Add braces - purely stylistic preference
+dotnet_diagnostic.IDE0011.severity = none
+
+# CA1848: Use LoggerMessage delegates - only matters for hot paths, single calls are fine
+dotnet_diagnostic.CA1848.severity = none
+
+# CA1311/CA1304: Specify culture for string operations - false positives for LINQ-to-EF
+dotnet_diagnostic.CA1311.severity = none
+dotnet_diagnostic.CA1304.severity = none

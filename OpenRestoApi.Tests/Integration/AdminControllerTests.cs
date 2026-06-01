@@ -614,7 +614,7 @@ public class AdminControllerTests(TestWebAppFactory factory) : IClassFixture<Tes
         if (!response.IsSuccessStatusCode)
         {
             var errBody = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Extend failed with {response.StatusCode}: {errBody}");
+            throw new HttpRequestException($"Extend failed with {response.StatusCode}: {errBody}");
         }
         Assert.True(response.IsSuccessStatusCode);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

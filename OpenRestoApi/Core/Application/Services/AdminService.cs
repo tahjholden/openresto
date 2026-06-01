@@ -164,17 +164,17 @@ public class AdminService(AppDbContext db, IHoldService holdService)
             // SQLite EF Core cannot translate StringComparison overloads — use ToLower for case-insensitive LIKE
             string normalizedEmail = email.Trim().ToLowerInvariant();
             // EF Core maps ToLower() → SQLite lower(), which is locale-independent at the DB level
-#pragma warning disable CA1862 // ToLower in LINQ-to-EF is intentional (ToLowerInvariant is not translatable)
+#pragma warning disable CA1862, CA1311, CA1304 // ToLower in LINQ-to-EF is intentional (ToLowerInvariant is not translatable)
             q = q.Where(b => b.CustomerEmail != null && b.CustomerEmail.ToLower().Contains(normalizedEmail));
-#pragma warning restore CA1862
+#pragma warning restore CA1862, CA1311, CA1304
         }
 
         if (!string.IsNullOrWhiteSpace(bookingRef))
         {
             string normalizedRef = bookingRef.Trim().ToLowerInvariant();
-#pragma warning disable CA1862
+#pragma warning disable CA1862, CA1311, CA1304
             q = q.Where(b => b.BookingRef != null && b.BookingRef.ToLower().Contains(normalizedRef));
-#pragma warning restore CA1862
+#pragma warning restore CA1862, CA1311, CA1304
         }
 
         return await q

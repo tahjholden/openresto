@@ -24,7 +24,11 @@ public class EmailSettingsControllerUnitTests : IDisposable
         _controller = new EmailSettingsController(_mockService.Object, _db);
     }
 
-    public void Dispose() => _db.Dispose();
+    public void Dispose()
+    {
+        _db.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     [Fact]
     public async Task Get_ReturnsEmptyResponse_WhenSettingsNull()

@@ -40,7 +40,7 @@ public class HoldsControllerTests(TestWebAppFactory factory) : IClassFixture<Tes
         if (response.StatusCode != HttpStatusCode.OK)
         {
             var err = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Failed with {response.StatusCode}: {err}");
+            throw new HttpRequestException($"Failed with {response.StatusCode}: {err}");
         }
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

@@ -172,6 +172,61 @@ public class AvailabilityServiceTests
     }
 
     [Fact]
+    public async Task GetAvailabilityAsync_HandlesDayNames_InOpenDays()
+    {
+        // This test ensures frontend format "Mon,Tue,Wed..." works correctly
+        using AppDbContext db = CreateDb(nameof(GetAvailabilityAsync_HandlesDayNames_InOpenDays));
+        db.Restaurants.Add(new Restaurant
+        {
+            Id = 1,
+            Name = "T",
+            OpenTime = "09:00",
+            CloseTime = "22:00",
+            Timezone = "UTC",
+            OpenDays = "Mon,Tue,Wed,Thu,Fri,Sat,Sun"  // Frontend format
+        });
+        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 2, SectionId = 1 });
+        db.SaveChanges();
+
+        var svc = new AvailabilityService(new BookingRepository(db), new RestaurantRepository(db), new Mock<IHoldService>().Object);
+
+        // Monday Jan 5, 2026
+        var monday = new DateTime(2026, 1, 5, 0, 0, 0, DateTimeKind.Utc);
+        var result = await svc.GetAvailabilityAsync(1, monday, 2);
+
+        Assert.NotEmpty(result.Slots);
+        Assert.All(result.Slots, s => Assert.True(s.IsAvailable));
+    }
+
+    [Fact]
+    public async Task GetAvailabilityAsync_ReturnsNoSlots_WhenClosedDay()
+    {
+        // Weekend-only restaurant
+        using AppDbContext db = CreateDb(nameof(GetAvailabilityAsync_ReturnsNoSlots_WhenClosedDay));
+        db.Restaurants.Add(new Restaurant
+        {
+            Id = 1,
+            Name = "T",
+            OpenTime = "09:00",
+            CloseTime = "22:00",
+            Timezone = "UTC",
+            OpenDays = "Sat,Sun"  // Weekend only
+        });
+        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 2, SectionId = 1 });
+        db.SaveChanges();
+
+        var svc = new AvailabilityService(new BookingRepository(db), new RestaurantRepository(db), new Mock<IHoldService>().Object);
+
+        // Monday Jan 5, 2026 - should have no slots
+        var monday = new DateTime(2026, 1, 5, 0, 0, 0, DateTimeKind.Utc);
+        var result = await svc.GetAvailabilityAsync(1, monday, 2);
+
+        Assert.Empty(result.Slots);
+    }
+
+    [Fact]
     public async Task GetAvailabilityAsync_PopulatesAvailableTableIds()
     {
         using AppDbContext db = CreateDb(nameof(GetAvailabilityAsync_PopulatesAvailableTableIds));

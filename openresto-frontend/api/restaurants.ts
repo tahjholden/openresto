@@ -31,7 +31,7 @@ export async function createRestaurant(name: string): Promise<RestaurantDto | nu
       name,
       openTime: "09:00",
       closeTime: "22:00",
-      openDays: "Mon,Tue,Wed,Thu,Fri,Sat,Sun",
+      openDays: "1,2,3,4,5,6,7",
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
     if (!res.ok) throw new Error("Failed to create restaurant");

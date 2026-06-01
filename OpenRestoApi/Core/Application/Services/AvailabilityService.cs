@@ -37,10 +37,11 @@ public class AvailabilityService(
             int jsDay = (int)localDate.DayOfWeek; // 0=Sun…6=Sat
             int isoDay = jsDay == 0 ? 7 : jsDay;  // 1=Mon…7=Sun
             var openDaysList = restaurant.OpenDays
-                .Split(',')
-                .Select(d => int.TryParse(d.Trim(), out int x) ? x : 0)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(d => ParseDayOfWeek(d.Trim()))
+                .Where(d => d > 0)
                 .ToHashSet();
-            if (!openDaysList.Contains(isoDay))
+            if (openDaysList.Count > 0 && !openDaysList.Contains(isoDay))
             {
                 return new AvailabilityResponseDto
                 {
@@ -163,5 +164,23 @@ public class AvailabilityService(
             return false;
         }
         return int.TryParse(parts[0], out h) && int.TryParse(parts[1], out m);
+    }
+
+    private static int ParseDayOfWeek(string day)
+    {
+        if (int.TryParse(day, out int dayNum) && dayNum >= 1 && dayNum <= 7)
+            return dayNum;
+
+        return day.ToLowerInvariant() switch
+        {
+            "mon" or "monday" => 1,
+            "tue" or "tues" or "tuesday" => 2,
+            "wed" or "wednesday" => 3,
+            "thu" or "thurs" or "thursday" => 4,
+            "fri" or "friday" => 5,
+            "sat" or "saturday" => 6,
+            "sun" or "sunday" => 7,
+            _ => 0
+        };
     }
 }

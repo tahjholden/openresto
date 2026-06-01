@@ -73,10 +73,15 @@ public class AvailabilityService(
         DateTime current = localStart;
 
         // Fetch all tables for the restaurant to check capacity
+        int totalTables = restaurant.Sections?.Sum(s => s.Tables?.Count ?? 0) ?? 0;
+        Console.WriteLine($"[Availability] Restaurant {restaurantId}: {restaurant.Sections?.Count ?? 0} sections, {totalTables} total tables, requested {seats} seats");
+
         var eligibleTables = restaurant.Sections
-            .SelectMany(s => s.Tables)
-            .Where(t => t.Seats >= seats)
-            .ToList();
+            ?.SelectMany(s => s.Tables ?? new List<Table>())
+            .Where(t => t != null && t.Seats >= seats)
+            .ToList() ?? new List<Table>();
+
+        Console.WriteLine($"[Availability] Restaurant {restaurantId}: {eligibleTables.Count} eligible tables");
 
         // Optimize: Group bookings by table ID for faster lookup in the loop
         var bookingsByTable = activeBookings
@@ -128,6 +133,9 @@ public class AvailabilityService(
 
             current = current.AddMinutes(15);
         }
+
+        int availableCount = slots.Count(s => s.IsAvailable);
+        Console.WriteLine($"[Availability] Restaurant {restaurantId}: Generated {slots.Count} slots, {availableCount} available");
 
         return new AvailabilityResponseDto
         {

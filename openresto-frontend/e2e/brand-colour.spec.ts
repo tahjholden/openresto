@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { gotoAdminDashboard } from "./helpers";
+import { gotoAdminDashboard, delay } from "./helpers";
 import { ADMIN_STATE_FILE } from "./global-setup";
 
 const TEST_COLOR = "#dc2626"; // Tailwind red-600 — distinct enough to detect reliably
@@ -42,8 +42,8 @@ test.describe("Brand colour", () => {
 
     await ctx.close();
 
-    // Small delay to avoid hitting rate limits between test groups
-    await new Promise((r) => setTimeout(r, 1000));
+    // Delay to let rate limits reset between test groups
+    await delay(3000);
   });
 
   test.afterAll(async ({ browser }) => {

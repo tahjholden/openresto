@@ -167,7 +167,8 @@ jobs:
       - name: Wait for services to be ready
         run: |
           echo "Waiting for services to start..."
-          for i in $(seq 1 90); do
+          # Use 5s intervals to stay under the 60 req/min global rate limit
+          for i in $(seq 1 36); do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5062/api/health || echo "000")
             if [ "$STATUS" = "200" ]; then
               echo "Backend is ready (HTTP 200)!"
@@ -182,11 +183,11 @@ jobs:
               exit 1
             fi
 
-            echo "Attempt $i/90: Backend not ready yet (HTTP $STATUS)..."
-            if [ $((i % 5)) -eq 0 ]; then
+            echo "Attempt $i/36: Backend not ready yet (HTTP $STATUS)..."
+            if [ $((i % 3)) -eq 0 ]; then
               docker compose ps
             fi
-            sleep 2
+            sleep 5
           done
           echo "Error: Services failed to become ready after 180 seconds."
           docker compose ps
@@ -217,6 +218,15 @@ jobs:
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5062/openapi/v1.json)
           echo "GET /openapi/v1.json -> $STATUS"
           [ "$STATUS" = "200" ] || exit 1
+
+      - name: Wait for rate limit bucket to reset
+        # The global rate limit is 60 req/min per IP. All the health checks and
+        # verification steps above can exhaust this limit. Wait 30s to let the
+        # bucket replenish before starting the E2E tests.
+        run: |
+          echo "Waiting 30 seconds for rate limit bucket to reset..."
+          sleep 30
+          echo "Rate limit bucket should be reset. Proceeding with E2E tests."
 
       - name: Setup Node.js (for E2E)
         uses: actions/setup-node@v4

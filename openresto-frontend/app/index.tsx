@@ -216,25 +216,6 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
-
-        {/* ── Footer ── */}
-        <View style={[styles.footer, { borderTopColor: border }]}>
-          <ThemedText style={[styles.footerText, { color: mutedColor }]}>
-            © {new Date().getFullYear()} {brand.appName}
-          </ThemedText>
-          <View style={styles.footerLinks}>
-            <Pressable onPress={() => router.push("/(user)/lookup")}>
-              <ThemedText style={[styles.footerLink, { color: mutedColor }]}>
-                My Bookings
-              </ThemedText>
-            </Pressable>
-            <Pressable onPress={() => router.push("/(admin)/login")}>
-              <ThemedText style={[styles.footerLink, { color: mutedColor }]}>
-                Staff sign-in
-              </ThemedText>
-            </Pressable>
-          </View>
-        </View>
       </ScrollView>
     </ThemedView>
   );

@@ -6,6 +6,13 @@ export function injectBrandFavicon(brand: Brand): void {
 
   const { faviconIcon, primaryColor, appName } = brand;
 
+  // Always patch the SW-cached manifest so the PWA install prompt and installed
+  // app title reflect the brand name and theme color, even when no icon is set.
+  navigator.serviceWorker?.controller?.postMessage({
+    type: "BRAND_UPDATE",
+    brand: { name: appName, themeColor: primaryColor },
+  });
+
   if (!faviconIcon) return;
 
   const coloredSvg = buildFaviconDataUri(faviconIcon, primaryColor);
@@ -31,12 +38,4 @@ export function injectBrandFavicon(brand: Brand): void {
     document.head.appendChild(themeMeta);
   }
   themeMeta.content = primaryColor;
-
-  // Tell the service worker to patch /manifest.json so the PWA install prompt uses
-  // the backend SVG endpoint (/api/brand/pwa-icon.svg) as the icon — a real HTTP URL
-  // that Chrome can fetch, unlike blob: or data: URIs.
-  navigator.serviceWorker?.controller?.postMessage({
-    type: "BRAND_UPDATE",
-    brand: { name: appName, themeColor: primaryColor },
-  });
 }

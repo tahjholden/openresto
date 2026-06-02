@@ -5,7 +5,7 @@
 [![Backend Coverage](https://img.shields.io/coveralls/github/karanshukla/openresto/main?flag=backend&label=backend%20coverage)](https://coveralls.io/github/karanshukla/openresto)
 [![OWASP ZAP](https://img.shields.io/badge/OWASP%20ZAP-scanned-5C2D91?logo=owasp&logoColor=white)](https://www.zaproxy.org/)
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PWA](https://img.shields.io/badge/Expo%20Router-PWA%20ready-000020?logo=expo&logoColor=white)](https://expo.dev/router)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Zero external services](https://img.shields.io/badge/external%20services-zero-22c55e)](https://github.com/karanshukla/openresto)
 [![License: MIT](https://img.shields.io/badge/License-MIT-f59e0b.svg)](https://opensource.org/licenses/MIT)

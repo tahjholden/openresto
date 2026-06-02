@@ -13,7 +13,9 @@
 [![Made in Australia](https://img.shields.io/badge/Made%20in-Australia%20🦘-00843d)](https://github.com/karanshukla/openresto)
 [![Assisted by Claude Code](https://img.shields.io/badge/Assisted%20by-Claude%20Code-CC785C?logo=anthropic)](https://claude.ai/code)
 
-A self-hosted, zero-dependency restaurant booking system. Customers browse restaurants, hold tables in real-time, and book instantly. Admins manage reservations, tables, floor sections, branding, and booking pauses from a dedicated dashboard — all from a single Docker Compose command with no external services required beyond optional SMTP.
+A self-hosted, zero-dependency restaurant booking system. Customers browse restaurants, hold tables in real-time, and book instantly. Admins manage reservations, tables, floor sections, branding, and booking pauses from a dedicated dashboard - all from a single Docker Compose command with no external services required beyond optional SMTP.
+
+[Live Demo of the Application running on a VPS](https://openres.to)
 
 <img width="1008" height="872" alt="image" src="https://github.com/user-attachments/assets/5e6d1099-8c4b-4163-b037-d71816726136" />
 

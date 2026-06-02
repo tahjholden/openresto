@@ -1,9 +1,17 @@
 # OpenResto
 
+[![CI](https://github.com/karanshukla/openresto/actions/workflows/ci.yml/badge.svg)](https://github.com/karanshukla/openresto/actions/workflows/ci.yml)
 [![Frontend Coverage](https://img.shields.io/coveralls/github/karanshukla/openresto/main?flag=frontend&label=frontend%20coverage)](https://coveralls.io/github/karanshukla/openresto)
 [![Backend Coverage](https://img.shields.io/coveralls/github/karanshukla/openresto/main?flag=backend&label=backend%20coverage)](https://coveralls.io/github/karanshukla/openresto)
-[![CI](https://github.com/karanshukla/openresto/actions/workflows/ci.yml/badge.svg)](https://github.com/karanshukla/openresto/actions/workflows/ci.yml)
-
+[![OWASP ZAP](https://img.shields.io/badge/OWASP%20ZAP-scanned-5C2D91?logo=owasp&logoColor=white)](https://www.zaproxy.org/)
+[![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Zero external services](https://img.shields.io/badge/external%20services-zero-22c55e)](https://github.com/karanshukla/openresto)
+[![License: MIT](https://img.shields.io/badge/License-MIT-f59e0b.svg)](https://opensource.org/licenses/MIT)
+[![Made in Canada](https://img.shields.io/badge/Made%20in-Canada%20🍁-d52b1e)](https://github.com/karanshukla/openresto)
+[![Made in Australia](https://img.shields.io/badge/Made%20in-Australia%20🦘-00843d)](https://github.com/karanshukla/openresto)
+[![Assisted by Claude Code](https://img.shields.io/badge/Assisted%20by-Claude%20Code-CC785C?logo=anthropic)](https://claude.ai/code)
 
 A self-hosted, zero-dependency restaurant booking system. Customers browse restaurants, hold tables in real-time, and book instantly. Admins manage reservations, tables, floor sections, branding, and booking pauses from a dedicated dashboard — all from a single Docker Compose command with no external services required beyond optional SMTP.
 
@@ -17,16 +25,16 @@ A self-hosted, zero-dependency restaurant booking system. Customers browse resta
 
 ## Tech Stack
 
-| Layer        | Technology                                                        |
-| ------------ | ----------------------------------------------------------------- |
-| Backend      | ASP.NET Core 10, C#, Entity Framework Core, SQLite                |
-| Frontend     | React Native (Expo Router) — web + mobile from one codebase       |
-| Auth         | JWT Bearer Tokens (HS256), encrypted HttpOnly cookies             |
-| Image gen    | Magick.NET-Q8-AnyCPU (cross-platform, no native deps)             |
-| Email        | MailKit (SMTP)                                                    |
-| Infra        | Docker Compose, Nginx reverse proxy                               |
+| Layer        | Technology                                                                   |
+| ------------ | ---------------------------------------------------------------------------- |
+| Backend      | ASP.NET Core 10, C#, Entity Framework Core, SQLite                           |
+| Frontend     | React Native (Expo Router) — web + mobile from one codebase                  |
+| Auth         | JWT Bearer Tokens (HS256), encrypted HttpOnly cookies                        |
+| Image gen    | Magick.NET-Q8-AnyCPU (cross-platform, no native deps)                        |
+| Email        | MailKit (SMTP)                                                               |
+| Infra        | Docker Compose, Nginx reverse proxy                                          |
 | Security CI  | OWASP ZAP API scan on every push (OpenAPI-driven, rules in `.zap-rules.tsv`) |
-| Code mappers | Mapperly (source-gen, zero reflection)                            |
+| Code mappers | Mapperly (source-gen, zero reflection)                                       |
 
 ## Architecture
 
@@ -161,23 +169,27 @@ cd openresto-frontend && npm test -- --coverage
 ## Key Features
 
 ### Booking flow
+
 - **Real-time table holds** — when a customer selects a time slot, a 5-minute hold is placed on the specific table via a thread-safe in-memory `ConcurrentDictionary`. The `holdId` must be echoed back at booking time, preventing any other customer from snatching the same table during checkout. Holds auto-expire and are released atomically if the customer changes their selection.
 - **Popular-times categorisation** — every 30-minute slot is tagged `Lunch`, `Dinner`, or `Off-Peak` using restaurant industry data (Toast/Square/Yelp benchmarks). The frontend groups available slots into labelled pill tabs so customers can quickly jump to the time period they want.
 - **Paused bookings** — admins can halt new reservations until a specific date/time (e.g. during a private event) without touching any configuration files. The availability API checks `BookingsPausedUntil` before returning slots.
 - **IANA timezone awareness** — all `DateTime` values are stored in UTC. Restaurant-local open/close hours and slot generation are computed using the restaurant's IANA timezone (`America/New_York`, `Europe/London`, …), so the availability calendar is always correct regardless of where the server runs.
 
 ### Admin & management
+
 - **Multi-restaurant support** — manage multiple locations from one instance; each has its own tables, sections, hours, timezone, and branding.
 - **Floor sections** — tables are grouped into named sections (e.g. "Patio", "Bar", "Main") so admins can organize seating and customers see which section they're booking.
 - **Admin dashboard** — live bookings list with status filtering (active / past / cancelled), extend or cancel reservations, and a customer-name field for front-of-house use.
 - **Booking pause** — temporarily suspend new reservations for a restaurant without taking it offline or editing config.
 
 ### Branding & UI
+
 - **Full white-label branding** — app name, primary color, favicon icon, and PWA identity are all stored in the database and configurable from the admin settings panel. Choose from 10 Lucide icons (utensils, wine, coffee, pizza, flame, leaf, star, heart, chef-hat, fish); the favicon updates live in the browser tab without a page reload. The frontend fetches brand settings on boot and applies them globally via `BrandContext`.
 - **Dynamic PWA icons** — `GET /api/brand/pwa-icon.svg` returns an SVG with the brand-colored background and white icon on the fly. `GET /api/brand/pwa-icon-{192|512}.png` rasterizes it with Magick.NET (cross-platform, no ImageMagick apt package needed) for PWA manifest compliance.
 - **Skeleton loaders & splash screens** — branded loading states throughout the app; no blank white flashes.
 
 ### Security & privacy
+
 - **OWASP ZAP API scan in CI** — every push runs a ZAP API scan against the full Docker stack, using the OpenAPI spec (`/openapi/v1.json`) to discover all endpoints automatically. Ignored rules are tracked in `.zap-rules.tsv`.
 - **Rate limiting** — ASP.NET Core built-in rate limiting on sensitive endpoints.
 - **Encrypted recent-bookings cookie** — HttpOnly cookie using ASP.NET Core Data Protection so customers can look up their recent reservations without an account.
@@ -185,6 +197,7 @@ cd openresto-frontend && npm test -- --coverage
 - **No accounts needed** — customers identify via a short `BookingRef` code; no email verification loop.
 
 ### Developer experience
+
 - **Single command dev** — `npm run dev` starts the .NET backend (hot reload) and Expo frontend concurrently.
 - **100% frontend coverage target** — Jest + React Native Testing Library; Playwright E2E tests against the live Docker stack.
 - **Mapperly source-gen mappers** — zero runtime reflection, compile-time DTO mappings.

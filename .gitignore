@@ -48,17 +48,10 @@ coverage/
 **/TestResults/
 **/coverage-report*/
 .claude/settings.json
-.playwright-mcp/console-2026-05-24T23-20-28-043Z.log
-.playwright-mcp/console-2026-05-24T23-21-30-512Z.log
-.playwright-mcp/page-2026-05-24T23-20-28-912Z.yml
-.playwright-mcp/page-2026-05-24T23-21-34-445Z.yml
 docs/superpowers/plans/2026-05-24-highlights-tags.md
 # Uploaded media files
 OpenRestoApi/wwwroot/media/
-.playwright-mcp/console-2026-05-31T22-43-45-030Z.log
-.playwright-mcp/console-2026-05-31T22-50-41-174Z.log
-.playwright-mcp/console-2026-05-31T22-56-25-244Z.log
-.playwright-mcp/page-2026-05-31T22-43-45-296Z.yml
-.playwright-mcp/page-2026-05-31T22-50-41-315Z.yml
-.playwright-mcp/page-2026-05-31T22-51-16-919Z.yml
-.playwright-mcp/page-2026-05-31T22-56-25-365Z.yml
+# Playwright MCP plugin snapshots
+.playwright-mcp/
+# Session handoff notes
+.remember/

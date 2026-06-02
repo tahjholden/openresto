@@ -3,7 +3,6 @@ using System.Threading.RateLimiting;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Application.Services;
@@ -48,38 +47,43 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddCustomRateLimiting(this IServiceCollection services, IWebHostEnvironment env)
     {
         bool isTesting = env.EnvironmentName == "Testing";
-        int authLimit = isTesting ? 10000 : 5;
-        int publicLimit = isTesting ? 10000 : 30;
-        int globalLimit = isTesting ? 10000 : 60;
+        int authLimit = isTesting ? 10000 : 10;   // per IP: brute-force protection on /login
+        int publicLimit = isTesting ? 10000 : 120;  // per IP: ~2 req/s, covers normal browsing
+        int globalLimit = isTesting ? 10000 : 300;  // per IP: overall ceiling
+
+        static string IpKey(HttpContext ctx) =>
+            ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-            options.AddFixedWindowLimiter("auth", limiter =>
-            {
-                limiter.PermitLimit = authLimit;
-                limiter.Window = TimeSpan.FromMinutes(1);
-                limiter.QueueLimit = 0;
-            });
+            options.AddPolicy("auth", ctx =>
+                RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = authLimit,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                }));
 
-            options.AddFixedWindowLimiter("public", limiter =>
-            {
-                limiter.PermitLimit = publicLimit;
-                limiter.Window = TimeSpan.FromMinutes(1);
-                limiter.QueueLimit = 0;
-            });
+            options.AddPolicy("public", ctx =>
+                RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = publicLimit,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0,
+                }));
 
-            options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    factory: _ => new FixedWindowRateLimiterOptions
-                    {
-                        AutoReplenishment = true,
-                        PermitLimit = globalLimit,
-                        QueueLimit = 0,
-                        Window = TimeSpan.FromMinutes(1)
-                    }));
+            options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+                RateLimitPartition.GetFixedWindowLimiter(IpKey(ctx), _ => new FixedWindowRateLimiterOptions
+                {
+                    AutoReplenishment = true,
+                    PermitLimit = globalLimit,
+                    QueueLimit = 0,
+                    Window = TimeSpan.FromMinutes(1),
+                }));
         });
 
         return services;

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { futureDateStr } from "./helpers";
+import { futureDateStr, postWithRetry, getWithRetry } from "./helpers";
 
 /**
  * Hold lifecycle: creating a hold marks the slot unavailable; releasing it (or letting it expire)
@@ -36,8 +36,10 @@ test.describe("Hold lifecycle", () => {
 
   test("creating a hold makes the slot unavailable to other sessions", async ({ request }) => {
     // Get a slot that is currently available
-    const availRes = await request.get(
-      `/api/availability/${restaurantId}?date=${testDate}&seats=2`
+    const availRes = await getWithRetry(
+      request,
+      `/api/availability/${restaurantId}?date=${testDate}&seats=2`,
+      5
     );
     expect(availRes.ok()).toBeTruthy();
     const { slots } = await availRes.json();
@@ -53,14 +55,12 @@ test.describe("Hold lifecycle", () => {
     );
 
     // Place a hold
-    const holdRes = await request.post("/api/holds", {
-      data: {
-        restaurantId,
-        tableId,
-        sectionId,
-        date: slotUtc.toISOString(),
-      },
-    });
+    const holdRes = await postWithRetry(
+      request,
+      "/api/holds",
+      { data: { restaurantId, tableId, sectionId, date: slotUtc.toISOString() } },
+      5
+    );
     expect(holdRes.ok()).toBeTruthy();
     const hold = await holdRes.json();
     holdId = hold.holdId;
@@ -68,13 +68,11 @@ test.describe("Hold lifecycle", () => {
     expect(hold.secondsRemaining).toBeGreaterThan(0);
 
     // The slot should now be unavailable when checking from a different session
-    let availRes2 = await request.get(`/api/availability/${restaurantId}?date=${testDate}&seats=2`);
-    if (!availRes2.ok()) {
-      // Retry once on rate-limit
-      availRes2 = await request.get(`/api/availability/${restaurantId}?date=${testDate}&seats=2`);
-    }
-    // If the retry still fails, proceed with an empty slot list (test will still
-    // pass if the hold was released — the next test checks that path)
+    const availRes2 = await getWithRetry(
+      request,
+      `/api/availability/${restaurantId}?date=${testDate}&seats=2`,
+      5
+    );
     const body2 = availRes2.ok() ? await availRes2.json() : { slots: [] };
     const slots2: Array<{ time: string; isAvailable: boolean; availableTableIds: number[] }> =
       body2.slots ?? body2.Slots ?? [];

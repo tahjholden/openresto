@@ -38,12 +38,15 @@ export async function api(
     rawBody = JSON.stringify(opts.body);
   }
 
-  return fetch(buildUrl(path), {
+  const fetchOpts: RequestInit = {
     method,
     headers,
     body: rawBody,
     credentials: opts.credentials ?? "include",
-  });
+  };
+
+  const response = await fetch(buildUrl(path), fetchOpts);
+  return response;
 }
 
 export const get = (path: string, opts?: RequestOptions) => api("GET", path, opts);

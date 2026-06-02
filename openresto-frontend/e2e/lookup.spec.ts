@@ -18,11 +18,11 @@ test.describe("Booking lookup", () => {
 
   // ── Create the test booking via API ──────────────────────────────────────
   test("setup: create a booking via API to obtain a booking reference", async ({ request }) => {
-    // Small delay to avoid rate limits from previous tests
-    await delay(500);
+    // After the booking tests exhaust the rate limit, give the window time to recover.
+    await delay(10_000);
 
     // Get the first restaurant and a table — fall back to seeded IDs on rate-limit
-    const restRes = await getWithRetry(request, "/api/restaurants");
+    const restRes = await getWithRetry(request, "/api/restaurants", 5);
     if (!restRes.ok()) {
       console.error(`Restaurant fetch failed: HTTP ${restRes.status()}`);
     }
@@ -42,14 +42,19 @@ test.describe("Booking lookup", () => {
     const tableSection = section;
 
     // Acquire a hold with rate limit retry
-    const holdRes = await postWithRetry(request, "/api/holds", {
-      data: {
-        restaurantId: restaurant.id,
-        tableId: availableTableId,
-        sectionId: tableSection.id,
-        date: slotUtc.toISOString(),
+    const holdRes = await postWithRetry(
+      request,
+      "/api/holds",
+      {
+        data: {
+          restaurantId: restaurant.id,
+          tableId: availableTableId,
+          sectionId: tableSection.id,
+          date: slotUtc.toISOString(),
+        },
       },
-    });
+      5
+    );
     if (!holdRes.ok()) {
       const body = await holdRes.text();
       console.error(`Hold creation failed: HTTP ${holdRes.status()}`, body);
@@ -58,18 +63,23 @@ test.describe("Booking lookup", () => {
     const { holdId } = (await holdRes.json()) as { holdId: string };
 
     // Create the booking with rate limit retry
-    const bookingRes = await postWithRetry(request, "/api/bookings", {
-      data: {
-        restaurantId: restaurant.id,
-        tableId: availableTableId,
-        sectionId: tableSection.id,
-        customerEmail: lookupEmail,
-        customerName: "Lookup Test User",
-        seats: 2,
-        date: slotUtc.toISOString(),
-        holdId,
+    const bookingRes = await postWithRetry(
+      request,
+      "/api/bookings",
+      {
+        data: {
+          restaurantId: restaurant.id,
+          tableId: availableTableId,
+          sectionId: tableSection.id,
+          customerEmail: lookupEmail,
+          customerName: "Lookup Test User",
+          seats: 2,
+          date: slotUtc.toISOString(),
+          holdId,
+        },
       },
-    });
+      5
+    );
     expect(bookingRes.ok()).toBeTruthy();
     const booking = (await bookingRes.json()) as { bookingRef?: string; BookingRef?: string };
     bookingRef = booking.bookingRef ?? booking.BookingRef ?? "";

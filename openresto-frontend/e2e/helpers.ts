@@ -38,7 +38,7 @@ export async function postWithRetry(
 
     const status = response.status();
     if (status === 429 && attempt < maxRetries) {
-      const waitMs = Math.min(1000 * Math.pow(2, attempt), 10000); // Exponential backoff, max 10s
+      const waitMs = Math.min(1000 * Math.pow(2, attempt), 20000); // Exponential backoff, max 20s
       console.log(
         `Rate limited (429) on ${url}, retrying in ${waitMs}ms... (attempt ${attempt + 1}/${maxRetries})`
       );
@@ -84,7 +84,7 @@ export async function getWithRetry(
 
     const status = response.status();
     if (status === 429 && attempt < maxRetries) {
-      const waitMs = Math.min(1000 * Math.pow(2, attempt), 10000); // Exponential backoff, max 10s
+      const waitMs = Math.min(1000 * Math.pow(2, attempt), 20000); // Exponential backoff, max 20s
       console.log(
         `Rate limited (429) on ${url}, retrying in ${waitMs}ms... (attempt ${attempt + 1}/${maxRetries})`
       );

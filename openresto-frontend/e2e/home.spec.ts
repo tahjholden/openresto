@@ -27,20 +27,32 @@ test.describe("Home Page", () => {
     expect(count).toBeGreaterThan(0);
   });
 
-  test.skip("should navigate to booking page when clicking a restaurant", async ({ page }) => {
+  test("should navigate to booking page when clicking a restaurant", async ({ page }) => {
+    // Booking specs that run first can exhaust the 60 req/min Docker rate limit.
+    // Poll with reloads (up to 4×) to give the window time to recover.
+    test.setTimeout(120_000);
+
     await page.goto("/");
 
-    const restaurantCards = page.getByText("Pasta Place");
+    const restaurantCard = page.getByText("Pasta Place").first();
+    let visible = false;
+    for (let i = 0; i < 4; i++) {
+      if (i > 0) {
+        await page.waitForTimeout(20_000);
+        await page.reload();
+      }
+      try {
+        await expect(restaurantCard).toBeVisible({ timeout: 10_000 });
+        visible = true;
+        break;
+      } catch {
+        // rate-limit window hasn't cleared yet — loop and wait
+      }
+    }
+    if (!visible) throw new Error("Restaurant cards never appeared — rate limit did not recover");
 
-    await expect(restaurantCards.first()).toBeVisible({ timeout: 15000 });
-
-    // Click the card
-    await restaurantCards.first().click({ force: true });
-
-    // Wait for URL change
-    await page.waitForURL(/.*book\?restaurantId=.*/, { timeout: 10000 });
-
-    // Check if the booking form is present
-    expect(page.getByText("Book a Table"));
+    await restaurantCard.click({ force: true });
+    await page.waitForURL(/.*book\?restaurantId=.*/, { timeout: 10_000 });
+    await expect(page.getByText("Book a table")).toBeVisible({ timeout: 20_000 });
   });
 });

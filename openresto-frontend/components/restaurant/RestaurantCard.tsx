@@ -120,7 +120,7 @@ export default function RestaurantCard({
       .filter((d) => d > 0) ?? [1, 2, 3, 4, 5, 6, 7];
     if (openDaysList.length > 0 && !openDaysList.includes(isoDay)) {
       setSlots([]);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setSlotsLoading(false);
       return;
     }
@@ -236,7 +236,7 @@ export default function RestaurantCard({
                 : styles.badgeClosed,
             ]}
           >
-            <View style={styles.badgeDot} />
+            {open && <View style={styles.badgeDot} />}
             <ThemedText style={styles.badgeText}>
               {open ? `Open till ${restaurant.closeTime}` : "Closed"}
             </ThemedText>

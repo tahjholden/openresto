@@ -71,7 +71,7 @@ public class AvailabilityService(
             localEnd = localEnd.AddDays(1);
         }
 
-        // 3. Generate 15-minute slots
+        // 3. Generate 30-minute slots
         var slots = new List<TimeSlotDto>();
         DateTime current = localStart;
 
@@ -129,7 +129,7 @@ public class AvailabilityService(
                 Category = GetCategory(current)
             });
 
-            current = current.AddMinutes(15);
+            current = current.AddMinutes(30);
         }
 
         return new AvailabilityResponseDto
@@ -140,14 +140,17 @@ public class AvailabilityService(
         };
     }
 
+    // Category windows are calibrated to North American restaurant data (Toast/Square/Yelp):
+    // Lunch peak is 12–1 PM; 2 PM begins the afternoon dead zone.
+    // Dinner now peaks at 6 PM (22% at 5 PM, 37% at 6 PM, drops sharply after 9 PM).
     private static string GetCategory(DateTime time)
     {
         TimeSpan t = time.TimeOfDay;
-        if (t >= new TimeSpan(11, 30, 0) && t < new TimeSpan(14, 30, 0))
+        if (t >= new TimeSpan(11, 30, 0) && t < new TimeSpan(14, 0, 0))
         {
             return "Lunch";
         }
-        if (t >= new TimeSpan(17, 30, 0) && t < new TimeSpan(21, 30, 0))
+        if (t >= new TimeSpan(17, 0, 0) && t < new TimeSpan(21, 0, 0))
         {
             return "Dinner";
         }

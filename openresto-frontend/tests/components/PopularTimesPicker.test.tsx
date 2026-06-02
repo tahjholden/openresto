@@ -205,6 +205,47 @@ describe("PopularTimesPicker", () => {
     expect(screen.getByText("18:00")).toBeTruthy();
   });
 
+  it("disables Lunch tab when all lunch slots are past today", () => {
+    // getNowInTimezone mock returns 13:00 on 2026-10-10 — lunch is over
+    const slots: TimeSlotDto[] = [
+      { time: "12:00", isAvailable: true, availableTableIds: [1], category: "Lunch" }, // past
+      { time: "18:00", isAvailable: true, availableTableIds: [2], category: "Dinner" },
+    ];
+    render(
+      <PopularTimesPicker
+        slots={slots}
+        selectedTime=""
+        onSelectTime={jest.fn()}
+        selectedDate="2026-10-10"
+        timezone="UTC"
+      />
+    );
+    const lunchTab = screen.getByText("Lunch");
+    expect(lunchTab.props.style).toBeTruthy();
+    // Press on it — should NOT change category (disabled)
+    fireEvent.press(lunchTab);
+    // Dinner is available so auto-fallback switches to All, not Lunch
+    expect(screen.queryByText("12:00")).toBeNull();
+  });
+
+  it("does not disable Lunch tab on a future date", () => {
+    const slots: TimeSlotDto[] = [
+      { time: "12:00", isAvailable: true, availableTableIds: [1], category: "Lunch" },
+      { time: "18:00", isAvailable: true, availableTableIds: [2], category: "Dinner" },
+    ];
+    render(
+      <PopularTimesPicker
+        slots={slots}
+        selectedTime=""
+        onSelectTime={jest.fn()}
+        selectedDate="2026-10-11" // tomorrow — no slots are past
+        timezone="UTC"
+      />
+    );
+    fireEvent.press(screen.getByText("Lunch"));
+    expect(screen.getByText("12:00")).toBeTruthy();
+  });
+
   it("shows all slots when selectedDate is a future date", () => {
     const slotsWithPast: TimeSlotDto[] = [
       { time: "12:00", isAvailable: true, availableTableIds: [1], category: "Lunch" },

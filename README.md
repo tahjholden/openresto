@@ -160,7 +160,7 @@ cd openresto-frontend && npm test -- --coverage
 
 ### Booking flow
 - **Real-time table holds** — when a customer selects a time slot, a 5-minute hold is placed on the specific table via a thread-safe in-memory `ConcurrentDictionary`. The `holdId` must be echoed back at booking time, preventing any other customer from snatching the same table during checkout. Holds auto-expire and are released atomically if the customer changes their selection.
-- **Popular-times categorisation** — every 30-minute slot is tagged `Lunch`, `Dinner`, or `Off-Peak` using restaurant industry data (Toast/Square/Yelp benchmarks), letting the frontend render a Google Maps-style busyness picker rather than a plain dropdown.
+- **Popular-times categorisation** — every 30-minute slot is tagged `Lunch`, `Dinner`, or `Off-Peak` using restaurant industry data (Toast/Square/Yelp benchmarks). The frontend groups available slots into labelled pill tabs so customers can quickly jump to the time period they want.
 - **Paused bookings** — admins can halt new reservations until a specific date/time (e.g. during a private event) without touching any configuration files. The availability API checks `BookingsPausedUntil` before returning slots.
 - **IANA timezone awareness** — all `DateTime` values are stored in UTC. Restaurant-local open/close hours and slot generation are computed using the restaurant's IANA timezone (`America/New_York`, `Europe/London`, …), so the availability calendar is always correct regardless of where the server runs.
 

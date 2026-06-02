@@ -64,6 +64,15 @@ export default function PopularTimesPicker({
     return available.filter((s) => s.category === activeCategory);
   }, [slotsInView, activeCategory]);
 
+  // A category tab is disabled when it's today and the entire meal period has already passed.
+  const isCategoryDisabled = (cat: Category): boolean => {
+    if (cat === "All") return false;
+    if (!selectedDate || !timezone) return false;
+    const { dateStr: todayStr } = getNowInTimezone(timezone);
+    if (selectedDate !== todayStr) return false;
+    return !slotsInView.some((s) => s.category === cat);
+  };
+
   // If the active category has no available slots but others do, fall back to 'All'.
   useEffect(() => {
     const hasAvailableInCategory = slotsInView.some(
@@ -159,17 +168,20 @@ export default function PopularTimesPicker({
       <View style={styles.tabs}>
         {categories.map((cat) => {
           const isActive = activeCategory === cat;
+          const disabled = isCategoryDisabled(cat);
           return (
             <Pressable
               key={cat}
-              onPress={() => setActiveCategory(cat)}
+              onPress={() => !disabled && setActiveCategory(cat)}
+              disabled={disabled}
               style={[
                 styles.tab,
                 { borderColor: colors.border },
                 isActive && { backgroundColor: PRIMARY, borderColor: PRIMARY },
+                disabled && styles.tabDisabled,
               ]}
             >
-              <ThemedText style={[styles.tabText, isActive && { color: "#fff" }]}>{cat}</ThemedText>
+              <ThemedText style={[styles.tabText, isActive && { color: "#fff" }, disabled && styles.tabTextDisabled]}>{cat}</ThemedText>
             </Pressable>
           );
         })}
@@ -283,9 +295,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
+  tabDisabled: {
+    opacity: 0.35,
+  },
   tabText: {
     fontSize: 14,
     fontWeight: "600",
+  },
+  tabTextDisabled: {
+    opacity: 0.6,
   },
   scrollWrapper: {
     position: "relative",

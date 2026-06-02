@@ -45,8 +45,8 @@ public class AvailabilityServiceTests
         var date = new DateTime(2026, 10, 10, 0, 0, 0, DateTimeKind.Utc);
         AvailabilityResponseDto result = await svc.GetAvailabilityAsync(1, date, 2);
 
-        // 11:00 to 13:00 with 15 min slots = 8 slots
-        Assert.Equal(8, result.Slots.Count);
+        // 11:00 to 13:00 with 30 min slots = 4 slots
+        Assert.Equal(4, result.Slots.Count);
         Assert.All(result.Slots, s => Assert.True(s.IsAvailable));
     }
 
@@ -167,8 +167,8 @@ public class AvailabilityServiceTests
         var svc = new AvailabilityService(new BookingRepository(db), new RestaurantRepository(db), new Mock<IHoldService>().Object);
 
         var result = await svc.GetAvailabilityAsync(1, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), 2);
-        // Default is 09:00 to 22:00 -> 13 hours * 4 slots/hour = 52 slots
-        Assert.Equal(52, result.Slots.Count);
+        // Default is 09:00 to 22:00 -> 13 hours * 2 slots/hour = 26 slots
+        Assert.Equal(26, result.Slots.Count);
     }
 
     [Fact]

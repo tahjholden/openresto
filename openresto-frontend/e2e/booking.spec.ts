@@ -70,10 +70,13 @@ test.describe("Booking Flow", () => {
 
     // 4. Wait for availability then click a lunchtime slot
     await expect(page.getByText("Lunch").first()).toBeVisible({ timeout: 20_000 });
-    await page
-      .getByText(/^1[1-4]:\d{2}$/)
-      .first()
-      .click({ force: true });
+    const slot = page.getByText(/^1[1-4]:\d{2}$/).first();
+    await slot.waitFor({ state: "attached", timeout: 10_000 });
+    // Slots live inside a horizontal ScrollView whose wrapper has overflow:hidden.
+    // Scroll the chip into view, then dispatch a native click so it bubbles to
+    // the Pressable's onClick regardless of Playwright's clip detection.
+    await slot.evaluate((el) => el.scrollIntoView({ block: "nearest", inline: "nearest" }));
+    await slot.dispatchEvent("click");
 
     // 5. Fill out the form
     const nameInput = page.getByPlaceholder("Your full name");

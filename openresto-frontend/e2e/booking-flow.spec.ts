@@ -64,10 +64,13 @@ test.describe("Customer booking end to end", () => {
     // ── 3. Wait for availability to load, then pick a midday slot ────────────
     // Waiting for the "Lunch" tab confirms availability has loaded.
     await expect(page.getByText("Lunch").first()).toBeVisible({ timeout: 20_000 });
-    await page
-      .getByText(/^1[1-4]:\d{2}$/)
-      .first()
-      .click();
+    const slot = page.getByText(/^1[1-4]:\d{2}$/).first();
+    await slot.waitFor({ state: "attached", timeout: 10_000 });
+    // Slots live inside a horizontal ScrollView whose wrapper has overflow:hidden.
+    // Scroll the chip into view, then dispatch a native click so it bubbles to
+    // the Pressable's onClick regardless of Playwright's clip detection.
+    await slot.evaluate((el) => el.scrollIntoView({ block: "nearest", inline: "nearest" }));
+    await slot.dispatchEvent("click");
 
     // ── 4. Fill customer details to trigger the hold (debounce = 2 s) ────────
     await page.getByPlaceholder("Your full name").fill("E2E Booking Flow");

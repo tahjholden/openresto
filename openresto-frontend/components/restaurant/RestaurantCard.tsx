@@ -120,7 +120,7 @@ export default function RestaurantCard({
       .filter((d) => d > 0) ?? [1, 2, 3, 4, 5, 6, 7];
     if (openDaysList.length > 0 && !openDaysList.includes(isoDay)) {
       setSlots([]);
-       
+
       setSlotsLoading(false);
       return;
     }

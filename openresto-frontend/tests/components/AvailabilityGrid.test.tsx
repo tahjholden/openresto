@@ -6,6 +6,14 @@ jest.mock("@expo/vector-icons", () => ({
   Ionicons: () => null,
 }));
 
+jest.mock("@/context/BrandContext", () => ({
+  useBrand: () => ({ primaryColor: "#0a7ea4", appName: "Open Resto" }),
+}));
+
+jest.mock("@/utils/colors", () => ({
+  hexToRgba: (_h: string, _a: number) => "rgba(0,0,0,0.1)",
+}));
+
 describe("AvailabilityGrid", () => {
   const mockSections = [
     {

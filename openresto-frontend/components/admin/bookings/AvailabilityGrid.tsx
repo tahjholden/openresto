@@ -1,9 +1,11 @@
 import { ScrollView, View, Pressable } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { Ionicons } from "@expo/vector-icons";
-import { getThemeColors } from "@/theme/theme";
+import { getThemeColors, COLORS } from "@/theme/theme";
 import { SectionWithTables, BookingDetailDto } from "@/api/admin";
 import { styles } from "./bookings.styles";
+import { useBrand } from "@/context/BrandContext";
+import { hexToRgba } from "@/utils/colors";
 
 function buildTimeSlots(openTime: string, closeTime: string) {
   const startHour = parseInt(openTime.split(":")[0], 10);
@@ -57,7 +59,9 @@ export function AvailabilityGrid({
   const headerBg = isDark ? "#28292b" : "#f4f5f6";
   const sectionBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";
   const availBg = isDark ? "#18191b" : "#fafafa";
-  const bookedBg = isDark ? `rgba(220,38,38,0.22)` : `rgba(220,38,38,0.1)`;
+  const brand = useBrand();
+  const PRIMARY = brand.primaryColor || COLORS.primary;
+  const bookedBg = isDark ? hexToRgba(PRIMARY, 0.22) : hexToRgba(PRIMARY, 0.1);
   const mutedColor = colors.muted;
 
   function bookingForCell(tableId: number, hour: number): BookingDetailDto | undefined {
@@ -204,7 +208,7 @@ export function AvailabilityGrid({
                         booking
                           ? {
                               backgroundColor: bookedBg,
-                              borderLeftColor: "#dc2626",
+                              borderLeftColor: PRIMARY,
                               borderLeftWidth: 2,
                             }
                           : { backgroundColor: availBg },
@@ -214,7 +218,7 @@ export function AvailabilityGrid({
                     >
                       {booking ? (
                         <View style={{ alignItems: "center", gap: 1 }}>
-                          <Ionicons name="person" size={10} color="#dc2626" />
+                          <Ionicons name="person" size={10} color={PRIMARY} />
                           <ThemedText style={styles.gridCellEmail} numberOfLines={1}>
                             {booking.customerEmail?.split("@")[0]}
                           </ThemedText>

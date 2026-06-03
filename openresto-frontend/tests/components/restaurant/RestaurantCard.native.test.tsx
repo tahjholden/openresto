@@ -8,7 +8,14 @@ import { fetchAvailability } from "@/api/availability";
 
 jest.mock("react-native", () => {
   const rn = jest.requireActual("react-native");
-  return { ...rn, Platform: { ...rn.Platform, OS: "ios", select: (spec: any) => spec.ios ?? spec.default } };
+  return {
+    ...rn,
+    Platform: {
+      ...rn.Platform,
+      OS: "ios",
+      select: (spec: any) => spec.ios ?? spec.default,
+    },
+  };
 });
 
 jest.mock("expo-image", () => ({

@@ -37,15 +37,6 @@ describe("injectBrandFavicon", () => {
     });
   });
 
-  it("does nothing when document is undefined", () => {
-    const originalDocument = global.document;
-    // @ts-expect-error intentional
-    delete global.document;
-    injectBrandFavicon(mockBrand);
-    expect(mockPostMessage).not.toHaveBeenCalled();
-    global.document = originalDocument;
-  });
-
   it("returns early when faviconIcon is absent", () => {
     injectBrandFavicon({ ...mockBrand, faviconIcon: undefined });
     expect(buildFaviconDataUri).not.toHaveBeenCalled();

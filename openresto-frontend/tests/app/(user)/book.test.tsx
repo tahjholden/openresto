@@ -18,6 +18,11 @@ jest.mock("@expo/vector-icons", () => ({
   Ionicons: () => null,
 }));
 
+jest.mock("expo-image", () => ({
+  Image: ({ testID, onError }: any) =>
+    require("react").createElement("Image", { testID: testID ?? "expo-image-banner", onError }),
+}));
+
 // Polyfill fetch
 global.fetch = jest.fn(() =>
   Promise.resolve({
@@ -162,5 +167,25 @@ describe("BookScreen", () => {
     await waitFor(() => {
       expect(screen.getByText("Restaurant not found.")).toBeTruthy();
     });
+  });
+
+  it("renders image banner when restaurant has imageUrl", async () => {
+    (fetchRestaurantById as jest.Mock).mockResolvedValue({
+      ...mockRestaurant,
+      imageUrl: "/media/photo.jpg",
+    });
+    renderWithProviders(<BookScreen />);
+    await waitFor(() => expect(screen.getByTestId("expo-image-banner")).toBeTruthy());
+  });
+
+  it("hides image banner after image load error", async () => {
+    (fetchRestaurantById as jest.Mock).mockResolvedValue({
+      ...mockRestaurant,
+      imageUrl: "/media/photo.jpg",
+    });
+    renderWithProviders(<BookScreen />);
+    const img = await screen.findByTestId("expo-image-banner");
+    fireEvent(img, "error");
+    await waitFor(() => expect(screen.queryByTestId("expo-image-banner")).toBeNull());
   });
 });

@@ -14,7 +14,7 @@ async function purgeTestBookings(browser: Browser) {
   if (res.ok()) {
     const bookings = (await res.json()) as Array<{ id: number }>;
     for (const b of bookings) {
-      await page.request.delete(`/api/admin/bookings/${b.id}/purge`);
+      await page.request.delete(`/api/admin/bookings/${b.id}`);
     }
   }
   await ctx.close();
@@ -46,7 +46,7 @@ test.describe("Booking Flow", () => {
     // Wait for navigation and booking form to load.
     // If the restaurant data is rate-limited after the preceding API-heavy tests,
     // reload once — the client's 429 retry will then succeed.
-    await page.waitForURL(/.*book\?restaurantId=.*/, { timeout: 10000 });
+    await page.waitForURL(/.*\/book\/\d+/, { timeout: 10000 });
     try {
       await expect(page.getByText("Book a table")).toBeVisible({ timeout: 15_000 });
     } catch {

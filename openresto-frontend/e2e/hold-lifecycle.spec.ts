@@ -37,7 +37,7 @@ test.describe("Hold lifecycle", () => {
   test("creating a hold makes the slot unavailable to other sessions", async ({ request }) => {
     // Get a slot that is currently available
     const availRes = await request.get(
-      `/api/availability/${restaurantId}?date=${testDate}&seats=2`
+      `/api/restaurants/${restaurantId}/availability?date=${testDate}&seats=2`
     );
     expect(availRes.ok()).toBeTruthy();
     const { slots } = (await availRes.json()) as {
@@ -70,10 +70,14 @@ test.describe("Hold lifecycle", () => {
     expect(hold.secondsRemaining).toBeGreaterThan(0);
 
     // The slot should now be unavailable when checking from a different session
-    let availRes2 = await request.get(`/api/availability/${restaurantId}?date=${testDate}&seats=2`);
+    let availRes2 = await request.get(
+      `/api/restaurants/${restaurantId}/availability?date=${testDate}&seats=2`
+    );
     if (!availRes2.ok()) {
       // Retry once on rate-limit
-      availRes2 = await request.get(`/api/availability/${restaurantId}?date=${testDate}&seats=2`);
+      availRes2 = await request.get(
+        `/api/restaurants/${restaurantId}/availability?date=${testDate}&seats=2`
+      );
     }
     // If the retry still fails, proceed with an empty slot list (test will still
     // pass if the hold was released — the next test checks that path)
@@ -98,7 +102,7 @@ test.describe("Hold lifecycle", () => {
 
     // The table should appear in the available IDs again
     const availRes = await request.get(
-      `/api/availability/${restaurantId}?date=${testDate}&seats=2`
+      `/api/restaurants/${restaurantId}/availability?date=${testDate}&seats=2`
     );
     const { slots } = (await availRes.json()) as {
       slots: Array<{ time: string; isAvailable: boolean; availableTableIds: number[] }>;

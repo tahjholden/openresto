@@ -14,7 +14,7 @@ async function purgeTestBookings(browser: Browser) {
   if (res.ok()) {
     const bookings = (await res.json()) as Array<{ id: number }>;
     for (const b of bookings) {
-      await page.request.delete(`/api/admin/bookings/${b.id}/purge`);
+      await page.request.delete(`/api/admin/bookings/${b.id}`);
     }
   }
   await ctx.close();

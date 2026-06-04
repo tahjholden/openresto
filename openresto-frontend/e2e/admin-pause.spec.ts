@@ -56,7 +56,7 @@ test.describe("Admin pause bookings", () => {
     // Verify availability via the API — at least one slot must be available
     const tomorrow = futureDateStr(1);
     const res = await page.request.get(
-      `/api/availability/${PASTA_PLACE_ID}?date=${tomorrow}&seats=2`
+      `/api/restaurants/${PASTA_PLACE_ID}/availability?date=${tomorrow}&seats=2`
     );
     expect(res.ok()).toBeTruthy();
     const { slots } = await res.json();

@@ -62,7 +62,7 @@ test.describe("Admin extend bookings", () => {
     const ctx = await browser.newContext({ storageState: ADMIN_STATE_FILE });
     const page = await ctx.newPage();
     await gotoAdminDashboard(page);
-    await page.request.delete(`/api/admin/bookings/${createdBookingId}/purge`);
+    await page.request.delete(`/api/admin/bookings/${createdBookingId}`);
     await ctx.close();
   });
 

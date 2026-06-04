@@ -1,5 +1,6 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Browser } from "@playwright/test";
 import { gotoAdminDashboard, futureDateStr, getWithRetry, postWithRetry, delay } from "./helpers";
+import { ADMIN_STATE_FILE } from "./global-setup";
 
 /**
  * Booking lookup:
@@ -15,6 +16,29 @@ test.describe("Booking lookup", () => {
   const lookupEmail = "e2e-lookup@example.com";
   const lookupDate = futureDateStr(21); // 3 weeks out — no conflict with other tests
   let bookingRef = "";
+
+  async function purgeLookupBookings(browser: Browser) {
+    const ctx = await browser.newContext({ storageState: ADMIN_STATE_FILE });
+    const page = await ctx.newPage();
+    const res = await page.request.get(
+      `/api/admin/bookings?restaurantId=1&email=${encodeURIComponent(lookupEmail)}&status=all`
+    );
+    if (res.ok()) {
+      const bookings = (await res.json()) as Array<{ id: number }>;
+      for (const b of bookings) {
+        await page.request.delete(`/api/admin/bookings/${b.id}`);
+      }
+    }
+    await ctx.close();
+  }
+
+  test.beforeAll(async ({ browser }) => {
+    await purgeLookupBookings(browser);
+  });
+
+  test.afterAll(async ({ browser }) => {
+    await purgeLookupBookings(browser);
+  });
 
   // ── Create the test booking via API ──────────────────────────────────────
   test("setup: create a booking via API to obtain a booking reference", async ({ request }) => {

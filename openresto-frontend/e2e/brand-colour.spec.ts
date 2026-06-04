@@ -52,7 +52,7 @@ test.describe("Brand colour", () => {
     const page = await ctx.newPage();
     await gotoAdminDashboard(page);
 
-    await page.request.post("/api/brand", { data: originalBrand });
+    await page.request.patch("/api/brand", { data: originalBrand });
     await ctx.close();
   });
 
@@ -60,7 +60,7 @@ test.describe("Brand colour", () => {
     await gotoAdminDashboard(page);
 
     // ── Write the new colour via admin API ────────────────────────────────────
-    const saveRes = await page.request.post("/api/brand", {
+    const saveRes = await page.request.patch("/api/brand", {
       data: { ...originalBrand, primaryColor: TEST_COLOR },
     });
     if (!saveRes.ok()) {

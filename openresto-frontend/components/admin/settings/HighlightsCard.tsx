@@ -13,6 +13,7 @@ import {
   adminDeleteHighlight,
   AdminHighlightDto,
 } from "@/api/admin";
+import { styles } from "./settings.styles";
 
 const ICON_OPTIONS = [
   "flame-outline",
@@ -80,6 +81,7 @@ export function HighlightsCard({
   const [editingId, setEditingId] = useState<number | "new" | null>(null);
   const [editState, setEditState] = useState<EditState>(emptyEdit());
   const [saving, setSaving] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     adminGetHighlights().then((data) => {
@@ -140,77 +142,132 @@ export function HighlightsCard({
   };
 
   return (
-    <View
-      style={{
-        backgroundColor: cardBg,
-        borderWidth: 1,
-        borderColor,
-        borderRadius: 14,
-        padding: 22,
-        marginTop: 12,
-      }}
-    >
-      {/* Header */}
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
+    <View style={[styles.secCard, { backgroundColor: cardBg, borderColor }]}>
+      <Pressable style={styles.secHeader} onPress={() => setExpanded((v) => !v)}>
+        <View style={[styles.secIcon, { backgroundColor: `${primaryColor}20` }]}>
+          <Ionicons name="sparkles-outline" size={20} color={primaryColor} />
+        </View>
         <View style={{ flex: 1 }}>
-          <ThemedText
-            style={{ fontSize: 16, fontWeight: "600", letterSpacing: -0.2, marginBottom: 4 }}
-          >
-            Highlights
-          </ThemedText>
-          <ThemedText style={{ fontSize: 13, color: mutedColor }}>
-            Shown on the home page. Up to 4 recommended.
+          <ThemedText style={styles.secTitle}>Highlights</ThemedText>
+          <ThemedText style={[styles.secSub, { color: mutedColor }]}>
+            {loading
+              ? "Loading…"
+              : highlights.length > 0
+                ? `${highlights.length} highlight${highlights.length !== 1 ? "s" : ""} · Home page`
+                : "None configured · Home page"}
           </ThemedText>
         </View>
-        <Pressable
-          onPress={startNew}
-          style={{
-            backgroundColor: primaryColor,
-            borderRadius: 10,
-            paddingHorizontal: 14,
-            paddingVertical: 8,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <Ionicons name="add" size={16} color="#fff" />
-          <ThemedText style={{ fontSize: 13, fontWeight: "600", color: "#fff" }}>Add</ThemedText>
-        </Pressable>
-      </View>
+        <Ionicons name={expanded ? "chevron-up" : "chevron-down"} size={18} color={mutedColor} />
+      </Pressable>
 
-      {loading ? (
-        <ActivityIndicator color={primaryColor} />
-      ) : (
-        <View style={{ gap: 8 }}>
-          {highlights.length === 0 && editingId !== "new" && (
-            <View
-              style={{
-                padding: 20,
-                alignItems: "center",
-                gap: 6,
-                borderWidth: 1,
-                borderColor,
-                borderRadius: 10,
-                borderStyle: "dashed" as const,
-              }}
-            >
-              <Ionicons name="sparkles-outline" size={22} color={mutedColor} />
-              <ThemedText style={{ fontSize: 13, color: mutedColor, textAlign: "center" }}>
-                No highlights yet. Press Add to create your first one.
-              </ThemedText>
-            </View>
-          )}
-          {highlights.map((h) => (
-            <View key={h.id}>
-              {editingId === h.id ? (
+      {expanded && (
+        <View style={[styles.secForm, { borderTopColor: borderColor, gap: 12 }]}>
+          <Pressable
+            onPress={startNew}
+            style={{
+              backgroundColor: primaryColor,
+              borderRadius: 10,
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              alignSelf: "flex-start",
+            }}
+          >
+            <Ionicons name="add" size={16} color="#fff" />
+            <ThemedText style={{ fontSize: 13, fontWeight: "600", color: "#fff" }}>Add</ThemedText>
+          </Pressable>
+
+          {loading ? (
+            <ActivityIndicator color={primaryColor} />
+          ) : (
+            <View style={{ gap: 8 }}>
+              {highlights.length === 0 && editingId !== "new" && (
+                <View
+                  style={{
+                    padding: 20,
+                    alignItems: "center",
+                    gap: 6,
+                    borderWidth: 1,
+                    borderColor,
+                    borderRadius: 10,
+                    borderStyle: "dashed" as const,
+                  }}
+                >
+                  <Ionicons name="sparkles-outline" size={22} color={mutedColor} />
+                  <ThemedText style={{ fontSize: 13, color: mutedColor, textAlign: "center" }}>
+                    No highlights yet. Press Add to create your first one.
+                  </ThemedText>
+                </View>
+              )}
+              {highlights.map((h) => (
+                <View key={h.id}>
+                  {editingId === h.id ? (
+                    <HighlightEditForm
+                      state={editState}
+                      onChange={setEditState}
+                      onSave={save}
+                      onCancel={cancelEdit}
+                      saving={saving}
+                      primaryColor={primaryColor}
+                      surface2={surface2}
+                      borderColor={borderColor}
+                      mutedColor={mutedColor}
+                      colors={colors}
+                    />
+                  ) : (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "flex-start",
+                        gap: 12,
+                        padding: 12,
+                        backgroundColor: surface2,
+                        borderWidth: 1,
+                        borderColor,
+                        borderRadius: 10,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 10,
+                          backgroundColor: cardBg,
+                          borderWidth: 1,
+                          borderColor,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Ionicons
+                          name={h.iconKey as ComponentProps<typeof Ionicons>["name"]}
+                          size={18}
+                          color={primaryColor}
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <ThemedText style={{ fontSize: 14, fontWeight: "600" }}>{h.title}</ThemedText>
+                        <ThemedText style={{ fontSize: 12, color: mutedColor, marginTop: 2 }}>
+                          {h.body}
+                        </ThemedText>
+                      </View>
+                      <View style={{ flexDirection: "row", gap: 6 }}>
+                        <Pressable onPress={() => startEdit(h)} style={{ padding: 6 }}>
+                          <Ionicons name="pencil-outline" size={16} color={mutedColor} />
+                        </Pressable>
+                        <Pressable onPress={() => remove(h.id)} style={{ padding: 6 }}>
+                          <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                        </Pressable>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              ))}
+
+              {editingId === "new" && (
                 <HighlightEditForm
                   state={editState}
                   onChange={setEditState}
@@ -223,70 +280,8 @@ export function HighlightsCard({
                   mutedColor={mutedColor}
                   colors={colors}
                 />
-              ) : (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "flex-start",
-                    gap: 12,
-                    padding: 12,
-                    backgroundColor: surface2,
-                    borderWidth: 1,
-                    borderColor,
-                    borderRadius: 10,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      backgroundColor: cardBg,
-                      borderWidth: 1,
-                      borderColor,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Ionicons
-                      name={h.iconKey as ComponentProps<typeof Ionicons>["name"]}
-                      size={18}
-                      color={primaryColor}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <ThemedText style={{ fontSize: 14, fontWeight: "600" }}>{h.title}</ThemedText>
-                    <ThemedText style={{ fontSize: 12, color: mutedColor, marginTop: 2 }}>
-                      {h.body}
-                    </ThemedText>
-                  </View>
-                  <View style={{ flexDirection: "row", gap: 6 }}>
-                    <Pressable onPress={() => startEdit(h)} style={{ padding: 6 }}>
-                      <Ionicons name="pencil-outline" size={16} color={mutedColor} />
-                    </Pressable>
-                    <Pressable onPress={() => remove(h.id)} style={{ padding: 6 }}>
-                      <Ionicons name="trash-outline" size={16} color="#ef4444" />
-                    </Pressable>
-                  </View>
-                </View>
               )}
             </View>
-          ))}
-
-          {editingId === "new" && (
-            <HighlightEditForm
-              state={editState}
-              onChange={setEditState}
-              onSave={save}
-              onCancel={cancelEdit}
-              saving={saving}
-              primaryColor={primaryColor}
-              surface2={surface2}
-              borderColor={borderColor}
-              mutedColor={mutedColor}
-              colors={colors}
-            />
           )}
         </View>
       )}

@@ -151,6 +151,7 @@ export default function AdminSettingsScreen() {
   const [addingLocation, setAddingLocation] = useState(false);
   const [newLocationName, setNewLocationName] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
+  const [locationExpanded, setLocationExpanded] = useState(true);
   const isDark = useColorScheme() === "dark";
   const {
     state: confirmState,
@@ -198,143 +199,149 @@ export default function AdminSettingsScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       {Platform.OS !== "web" && <Stack.Screen options={{ title: "Settings" }} />}
 
-      {/* Page header */}
-      <View style={styles.pageHeader}>
-        <View>
-          <ThemedText
-            style={{
-              fontSize: 12,
-              color: mutedColor,
-              textTransform: "uppercase",
-              letterSpacing: 1,
-              marginBottom: 4,
-            }}
-          >
-            Settings · Locations
-          </ThemedText>
-          <ThemedText style={styles.pageTitle}>Location Manager</ThemedText>
-          <ThemedText style={[styles.pageSub, { color: mutedColor }]}>
-            {restaurants.length} location{restaurants.length !== 1 ? "s" : ""} configured
-            {restaurants.length > 0 ? " · all active" : ""}
-          </ThemedText>
+      {/* Locations Section */}
+      <View style={styles.section}>
+        <ThemedText style={[styles.sectionHeading, { color: mutedColor }]}>LOCATIONS</ThemedText>
+        <View style={[styles.secCard, { backgroundColor: cardBg, borderColor }]}>
+          <Pressable style={styles.secHeader} onPress={() => setLocationExpanded((v) => !v)}>
+            <View style={[styles.secIcon, { backgroundColor: `${primaryColor}20` }]}>
+              <Ionicons name="storefront-outline" size={20} color={primaryColor} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <ThemedText style={styles.secTitle}>Location Manager</ThemedText>
+              <ThemedText style={[styles.secSub, { color: mutedColor }]}>
+                {restaurants.length === 0
+                  ? "0 locations configured"
+                  : `${restaurants.length} location${restaurants.length !== 1 ? "s" : ""} configured · all active`}
+              </ThemedText>
+            </View>
+            <Ionicons
+              name={locationExpanded ? "chevron-up" : "chevron-down"}
+              size={18}
+              color={mutedColor}
+            />
+          </Pressable>
+
+          {locationExpanded && (
+            <View style={[styles.secForm, { borderTopColor: borderColor, gap: 12 }]}>
+              {restaurants.length > 0 ? (
+                <View style={{ gap: 12 }}>
+                  <LocationPills
+                    restaurants={restaurants}
+                    selectedId={selectedId}
+                    onSelect={setSelectedId}
+                    onAdd={() => setAddingLocation(true)}
+                    primaryColor={primaryColor}
+                    borderColor={borderColor}
+                    mutedColor={mutedColor}
+                    isDark={isDark}
+                  />
+                  {addingLocation && (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: 14,
+                        borderWidth: 1,
+                        borderColor,
+                        borderRadius: 14,
+                        backgroundColor: cardBg,
+                      }}
+                    >
+                      <TextInput
+                        value={newLocationName}
+                        onChangeText={setNewLocationName}
+                        placeholder="Location name (e.g. Downtown, Westside)"
+                        placeholderTextColor={mutedColor}
+                        autoFocus
+                        style={{
+                          flex: 1,
+                          fontSize: 14,
+                          color: isDark ? "#fff" : "#000",
+                          borderWidth: 1,
+                          borderColor,
+                          borderRadius: 8,
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                        }}
+                      />
+                      <Pressable
+                        disabled={savingLocation || !newLocationName.trim()}
+                        onPress={async () => {
+                          if (!newLocationName.trim()) return;
+                          setSavingLocation(true);
+                          const created = await createRestaurant(newLocationName.trim());
+                          setSavingLocation(false);
+                          if (created) {
+                            setRestaurants((prev) => [...prev, { ...created, sections: [] }]);
+                            setSelectedId(created.id);
+                          }
+                          setNewLocationName("");
+                          setAddingLocation(false);
+                        }}
+                        style={{
+                          backgroundColor: primaryColor,
+                          borderRadius: 8,
+                          paddingHorizontal: 14,
+                          paddingVertical: 8,
+                        }}
+                      >
+                        <ThemedText style={{ color: "#fff", fontSize: 14, fontWeight: "600" }}>
+                          {savingLocation ? "Adding…" : "Add"}
+                        </ThemedText>
+                      </Pressable>
+                      <Pressable
+                        onPress={
+                          /* istanbul ignore next */ () => {
+                            setAddingLocation(false);
+                            setNewLocationName("");
+                          }
+                        }
+                        style={{ padding: 8 }}
+                      >
+                        <Ionicons name="close-outline" size={20} color={mutedColor} />
+                      </Pressable>
+                    </View>
+                  )}
+                  {selectedRestaurant && (
+                    <View
+                      style={{
+                        borderWidth: 1,
+                        borderColor,
+                        borderRadius: 14,
+                        backgroundColor: cardBg,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <LocationCard
+                        key={selectedRestaurant.id}
+                        restaurant={selectedRestaurant}
+                        onSaved={(patch) => patchRestaurant(selectedRestaurant.id, patch)}
+                        isDark={isDark}
+                        borderColor={borderColor}
+                        mutedColor={mutedColor}
+                        cardBg={cardBg}
+                        confirmAction={confirmAction}
+                      />
+                    </View>
+                  )}
+                </View>
+              ) : (
+                <View style={[styles.emptyCard, { borderColor, backgroundColor: cardBg }]}>
+                  <Ionicons name="storefront-outline" size={32} color={mutedColor} />
+                  <ThemedText style={[styles.emptyText, { color: mutedColor }]}>
+                    No locations found
+                  </ThemedText>
+                </View>
+              )}
+            </View>
+          )}
         </View>
       </View>
 
-      {/* Location pills + content */}
-      {restaurants.length > 0 ? (
-        <View style={{ gap: 12 }}>
-          <LocationPills
-            restaurants={restaurants}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onAdd={() => setAddingLocation(true)}
-            primaryColor={primaryColor}
-            borderColor={borderColor}
-            mutedColor={mutedColor}
-            isDark={isDark}
-          />
-          {addingLocation && (
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                padding: 14,
-                borderWidth: 1,
-                borderColor,
-                borderRadius: 14,
-                backgroundColor: cardBg,
-              }}
-            >
-              <TextInput
-                value={newLocationName}
-                onChangeText={setNewLocationName}
-                placeholder="Location name (e.g. Downtown, Westside)"
-                placeholderTextColor={mutedColor}
-                autoFocus
-                style={{
-                  flex: 1,
-                  fontSize: 14,
-                  color: isDark ? "#fff" : "#000",
-                  borderWidth: 1,
-                  borderColor,
-                  borderRadius: 8,
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                }}
-              />
-              <Pressable
-                disabled={savingLocation || !newLocationName.trim()}
-                onPress={async () => {
-                  if (!newLocationName.trim()) return;
-                  setSavingLocation(true);
-                  const created = await createRestaurant(newLocationName.trim());
-                  setSavingLocation(false);
-                  if (created) {
-                    setRestaurants((prev) => [...prev, { ...created, sections: [] }]);
-                    setSelectedId(created.id);
-                  }
-                  setNewLocationName("");
-                  setAddingLocation(false);
-                }}
-                style={{
-                  backgroundColor: primaryColor,
-                  borderRadius: 8,
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                }}
-              >
-                <ThemedText style={{ color: "#fff", fontSize: 14, fontWeight: "600" }}>
-                  {savingLocation ? "Adding…" : "Add"}
-                </ThemedText>
-              </Pressable>
-              <Pressable
-                onPress={
-                  /* istanbul ignore next */ () => {
-                    setAddingLocation(false);
-                    setNewLocationName("");
-                  }
-                }
-                style={{ padding: 8 }}
-              >
-                <Ionicons name="close-outline" size={20} color={mutedColor} />
-              </Pressable>
-            </View>
-          )}
-          {selectedRestaurant && (
-            <View
-              style={{
-                borderWidth: 1,
-                borderColor,
-                borderRadius: 14,
-                backgroundColor: cardBg,
-                overflow: "hidden",
-              }}
-            >
-              <LocationCard
-                key={selectedRestaurant.id}
-                restaurant={selectedRestaurant}
-                onSaved={(patch) => patchRestaurant(selectedRestaurant.id, patch)}
-                isDark={isDark}
-                borderColor={borderColor}
-                mutedColor={mutedColor}
-                cardBg={cardBg}
-                confirmAction={confirmAction}
-              />
-            </View>
-          )}
-        </View>
-      ) : (
-        <View style={[styles.emptyCard, { borderColor, backgroundColor: cardBg }]}>
-          <Ionicons name="storefront-outline" size={32} color={mutedColor} />
-          <ThemedText style={[styles.emptyText, { color: mutedColor }]}>
-            No locations found
-          </ThemedText>
-        </View>
-      )}
-
       {/* Global Settings */}
-      <View style={[styles.section, { marginTop: 8 }]}>
+      <View style={styles.section}>
         <ThemedText style={[styles.sectionHeading, { color: mutedColor }]}>
           GLOBAL SETTINGS
         </ThemedText>

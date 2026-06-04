@@ -254,6 +254,7 @@ const styles = StyleSheet.create({
   },
   heroSub: {
     fontSize: 17,
+    fontWeight: "500",
     lineHeight: 26,
     maxWidth: 500,
   },
@@ -281,6 +282,7 @@ const styles = StyleSheet.create({
   },
   highlightsBy: {
     fontSize: 12,
+    fontWeight: "500",
   },
   highlightsGrid: {
     gap: 12,

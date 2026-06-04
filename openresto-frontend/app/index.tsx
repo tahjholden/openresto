@@ -97,13 +97,17 @@ export default function HomeScreen() {
               style={[
                 styles.heroTitle,
                 isMobile && { fontSize: 40, lineHeight: 44 },
-                hasHero && { color: "#ffffff" },
+                hasHero && ({ color: "#ffffff", textShadow: "0 1px 3px rgba(0,0,0,0.55), 0 2px 14px rgba(0,0,0,0.35)" } as object),
               ]}
             >
               {brand.appName}
             </ThemedText>
             <ThemedText
-              style={[styles.heroSub, { color: hasHero ? "rgba(255,255,255,0.82)" : mutedColor }]}
+              style={[
+                styles.heroSub,
+                { color: hasHero ? "rgba(255,255,255,0.82)" : mutedColor },
+                hasHero && ({ textShadow: "0 1px 3px rgba(0,0,0,0.55), 0 2px 14px rgba(0,0,0,0.35)" } as object),
+              ]}
             >
               Scroll down to pick a location below, choose a time, enter your email address, and
               you're booked!

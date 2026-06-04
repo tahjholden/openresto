@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react-native";
+import { Platform } from "react-native";
 import RestaurantCard from "@/components/restaurant/RestaurantCard";
 import { fetchAvailability } from "@/api/availability";
 
@@ -161,9 +162,15 @@ describe("RestaurantCard", () => {
     }
   });
 
-  it("renders expo-image when imageUrl is present", async () => {
-    render(<RestaurantCard restaurant={{ ...mockRestaurant, imageUrl: "/media/photo.jpg" }} />);
-    await waitFor(() => expect(screen.getByTestId("expo-image")).toBeTruthy());
+  it("renders expo-image when imageUrl is present on native", async () => {
+    const originalOS = Platform.OS;
+    (Platform as unknown as { OS: string }).OS = "ios";
+    try {
+      render(<RestaurantCard restaurant={{ ...mockRestaurant, imageUrl: "/media/photo.jpg" }} />);
+      await waitFor(() => expect(screen.getByTestId("expo-image")).toBeTruthy());
+    } finally {
+      (Platform as unknown as { OS: string }).OS = originalOS;
+    }
   });
 
   it("does not render expo-image when imageUrl is absent", async () => {

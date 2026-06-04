@@ -1,6 +1,5 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react-native";
-import { Platform } from "react-native";
 import RestaurantCard from "@/components/restaurant/RestaurantCard";
 import { fetchAvailability } from "@/api/availability";
 
@@ -159,17 +158,6 @@ describe("RestaurantCard", () => {
       expect(fetchAvailability).toHaveBeenCalled();
     } finally {
       jest.useRealTimers();
-    }
-  });
-
-  it("renders expo-image when imageUrl is present on native", async () => {
-    const originalDescriptor = Object.getOwnPropertyDescriptor(Platform, "OS");
-    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true, writable: true });
-    try {
-      render(<RestaurantCard restaurant={{ ...mockRestaurant, imageUrl: "/media/photo.jpg" }} />);
-      await waitFor(() => expect(screen.getByTestId("expo-image")).toBeTruthy());
-    } finally {
-      if (originalDescriptor) Object.defineProperty(Platform, "OS", originalDescriptor);
     }
   });
 

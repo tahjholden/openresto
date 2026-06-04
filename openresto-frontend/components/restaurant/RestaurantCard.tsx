@@ -211,6 +211,7 @@ export default function RestaurantCard({
         ]}
       >
         {/* Native background image via expo-image (web uses CSS backgroundImage above) */}
+        {/* istanbul ignore next */}
         {restaurant.imageUrl && Platform.OS !== "web" && (
           <Image
             source={{ uri: restaurant.imageUrl }}

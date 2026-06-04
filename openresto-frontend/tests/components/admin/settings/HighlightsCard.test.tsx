@@ -59,8 +59,33 @@ describe("HighlightsCard", () => {
     });
   });
 
-  it("shows Add button", async () => {
+  it("renders collapsed by default (no Add button visible)", async () => {
     render(<HighlightsCard {...baseProps} />);
+    await waitFor(() => expect(screen.getByText("Highlights")).toBeTruthy());
+    expect(screen.queryByText("Add")).toBeNull();
+  });
+
+  it("expands when header is pressed", async () => {
+    render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
+    await waitFor(() => {
+      expect(screen.getByText("Add")).toBeTruthy();
+    });
+  });
+
+  it("collapses when header is pressed again", async () => {
+    render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
+    await waitFor(() => expect(screen.getByText("Add")).toBeTruthy());
+    fireEvent.press(screen.getByText("Highlights"));
+    await waitFor(() => {
+      expect(screen.queryByText("Add")).toBeNull();
+    });
+  });
+
+  it("shows Add button when expanded", async () => {
+    render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => {
       expect(screen.getByText("Add")).toBeTruthy();
     });
@@ -68,6 +93,7 @@ describe("HighlightsCard", () => {
 
   it("shows empty state when no highlights", async () => {
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => {
       expect(screen.getByText(/No highlights yet/)).toBeTruthy();
     });
@@ -76,14 +102,24 @@ describe("HighlightsCard", () => {
   it("shows highlights list when highlights are loaded", async () => {
     (adminApi.adminGetHighlights as jest.Mock).mockResolvedValue(mockHighlights);
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => {
       expect(screen.getByText("Great Food")).toBeTruthy();
       expect(screen.getByText("Live Music")).toBeTruthy();
     });
   });
 
+  it("shows highlight count in subtitle when loaded", async () => {
+    (adminApi.adminGetHighlights as jest.Mock).mockResolvedValue(mockHighlights);
+    render(<HighlightsCard {...baseProps} />);
+    await waitFor(() => {
+      expect(screen.getByText(/2 highlights · Home page/)).toBeTruthy();
+    });
+  });
+
   it("opens new highlight form when Add is pressed", async () => {
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => expect(screen.getByText("Add")).toBeTruthy());
     fireEvent.press(screen.getByText("Add"));
     await waitFor(() => {
@@ -93,6 +129,7 @@ describe("HighlightsCard", () => {
 
   it("cancels new form when Cancel is pressed", async () => {
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => expect(screen.getByText("Add")).toBeTruthy());
     fireEvent.press(screen.getByText("Add"));
     await waitFor(() => expect(screen.getByText("Cancel")).toBeTruthy());
@@ -106,6 +143,7 @@ describe("HighlightsCard", () => {
     const created = { id: 3, title: "New", body: "", iconKey: "star-outline", sortOrder: 0 };
     (adminApi.adminCreateHighlight as jest.Mock).mockResolvedValue(created);
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => expect(screen.getByText("Add")).toBeTruthy());
     fireEvent.press(screen.getByText("Add"));
     await waitFor(() =>
@@ -122,6 +160,7 @@ describe("HighlightsCard", () => {
 
   it("does not call adminCreateHighlight when title is empty", async () => {
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => expect(screen.getByText("Add")).toBeTruthy());
     fireEvent.press(screen.getByText("Add"));
     await waitFor(() => expect(screen.getByText("Save")).toBeTruthy());
@@ -135,11 +174,12 @@ describe("HighlightsCard", () => {
     (adminApi.adminGetHighlights as jest.Mock).mockResolvedValue(mockHighlights);
     (adminApi.adminDeleteHighlight as jest.Mock).mockResolvedValue(true);
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => expect(screen.getByText("Great Food")).toBeTruthy());
-    // Layout: Add[0,1], GreatFood-edit[2,3], GreatFood-delete[4,5], LiveMusic-edit[6,7], LiveMusic-delete[8,9]
+    // Layout: Header[0,1], Add[2,3], GreatFood-edit[4,5], GreatFood-delete[6,7], LiveMusic-edit[8,9], LiveMusic-delete[10,11]
     const accessible = screen.UNSAFE_getAllByProps({ accessible: true });
     await act(async () => {
-      fireEvent.press(accessible[4]);
+      fireEvent.press(accessible[6]);
     });
     expect(adminApi.adminDeleteHighlight).toHaveBeenCalledWith(1);
   });
@@ -148,10 +188,12 @@ describe("HighlightsCard", () => {
     (adminApi.adminGetHighlights as jest.Mock).mockResolvedValue([mockHighlights[0]]);
     (adminApi.adminDeleteHighlight as jest.Mock).mockResolvedValue(false);
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => expect(screen.getByText("Great Food")).toBeTruthy());
+    // Layout: Header[0,1], Add[2,3], GreatFood-edit[4,5], GreatFood-delete[6,7]
     const accessible = screen.UNSAFE_getAllByProps({ accessible: true });
     await act(async () => {
-      fireEvent.press(accessible[4]);
+      fireEvent.press(accessible[6]);
     });
     expect(screen.getByText("Great Food")).toBeTruthy();
   });
@@ -159,10 +201,11 @@ describe("HighlightsCard", () => {
   it("opens edit form when pencil is pressed on existing highlight", async () => {
     (adminApi.adminGetHighlights as jest.Mock).mockResolvedValue([mockHighlights[0]]);
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => expect(screen.getByText("Great Food")).toBeTruthy());
-    // accessible[2] = pencil edit button for first highlight
+    // Layout: Header[0,1], Add[2,3], GreatFood-edit[4,5], GreatFood-delete[6,7]
     const accessible = screen.UNSAFE_getAllByProps({ accessible: true });
-    fireEvent.press(accessible[2]);
+    fireEvent.press(accessible[4]);
     await waitFor(() => {
       expect(screen.getByDisplayValue("Great Food")).toBeTruthy();
     });
@@ -173,9 +216,10 @@ describe("HighlightsCard", () => {
     (adminApi.adminGetHighlights as jest.Mock).mockResolvedValue([mockHighlights[0]]);
     (adminApi.adminUpdateHighlight as jest.Mock).mockResolvedValue(updated);
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => expect(screen.getByText("Great Food")).toBeTruthy());
     const accessible = screen.UNSAFE_getAllByProps({ accessible: true });
-    fireEvent.press(accessible[2]);
+    fireEvent.press(accessible[4]);
     await waitFor(() => expect(screen.getByDisplayValue("Great Food")).toBeTruthy());
     fireEvent.changeText(screen.getByDisplayValue("Great Food"), "Amazing Food");
     await act(async () => {
@@ -191,9 +235,10 @@ describe("HighlightsCard", () => {
     (adminApi.adminGetHighlights as jest.Mock).mockResolvedValue([mockHighlights[0]]);
     (adminApi.adminUpdateHighlight as jest.Mock).mockResolvedValue(null);
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => expect(screen.getByText("Great Food")).toBeTruthy());
     const accessible = screen.UNSAFE_getAllByProps({ accessible: true });
-    fireEvent.press(accessible[2]);
+    fireEvent.press(accessible[4]);
     await waitFor(() => expect(screen.getByDisplayValue("Great Food")).toBeTruthy());
     fireEvent.changeText(screen.getByDisplayValue("Great Food"), "New Title");
     await act(async () => {
@@ -205,6 +250,7 @@ describe("HighlightsCard", () => {
   it("does not add to list when adminCreateHighlight returns null", async () => {
     (adminApi.adminCreateHighlight as jest.Mock).mockResolvedValue(null);
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => expect(screen.getByText("Add")).toBeTruthy());
     fireEvent.press(screen.getByText("Add"));
     await waitFor(() =>
@@ -220,15 +266,15 @@ describe("HighlightsCard", () => {
 
   it("changes icon when an icon option is pressed", async () => {
     render(<HighlightsCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Highlights"));
     await waitFor(() => expect(screen.getByText("Add")).toBeTruthy());
     fireEvent.press(screen.getByText("Add"));
     await waitFor(() =>
       expect(screen.getByPlaceholderText("e.g. Wood-fired kitchen")).toBeTruthy()
     );
-    // Icon picker options are rendered as Pressables — press the first accessible one after the cancel/save row
+    // Press the last accessible element — the icon pickers are the last rendered Pressables
     const accessible = screen.UNSAFE_getAllByProps({ accessible: true });
-    // accessible[0] = Cancel, accessible[1] = Save (disabled), accessible[2..N] = icon pickers
-    fireEvent.press(accessible[2]);
+    fireEvent.press(accessible[accessible.length - 1]);
     expect(screen.getByPlaceholderText("e.g. Wood-fired kitchen")).toBeTruthy();
   });
 });

@@ -23,7 +23,7 @@ import {
 } from "react-native";
 import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, FORM_SIZES, getThemeColors } from "@/theme/theme";
+import { COLORS, FORM_SIZES, getThemeColors, STATUS_COLORS } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useBrand } from "@/context/BrandContext";
 
@@ -380,7 +380,7 @@ export default function AdminBookingsScreen() {
               [
                 { key: "active", label: "Active", color: PRIMARY },
                 { key: "past", label: "Past", color: "#7c3aed" },
-                { key: "cancelled", label: "Cancelled", color: "#dc2626" },
+                { key: "cancelled", label: "Cancelled", color: STATUS_COLORS.cancelled.text },
               ] as const
             ).map(({ key, label, color }) => (
               <Pressable
@@ -629,8 +629,13 @@ export default function AdminBookingsScreen() {
 
               <View style={styles.colStatus}>
                 {b.isCancelled ? (
-                  <View style={[styles.badge, { backgroundColor: "rgba(220,38,38,0.1)" }]}>
-                    <ThemedText style={[styles.badgeText, { color: "#dc2626" }]}>
+                  <View
+                    style={[
+                      styles.badge,
+                      { backgroundColor: STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"] },
+                    ]}
+                  >
+                    <ThemedText style={[styles.badgeText, { color: STATUS_COLORS.cancelled.text }]}>
                       Cancelled
                     </ThemedText>
                   </View>
@@ -642,13 +647,16 @@ export default function AdminBookingsScreen() {
               <View style={styles.colAction}>
                 {!b.isCancelled && (
                   <Pressable
-                    style={[styles.rowActionBtn, { backgroundColor: "rgba(220,38,38,0.1)" }]}
+                    style={[
+                      styles.rowActionBtn,
+                      { backgroundColor: STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"] },
+                    ]}
                     onPress={(e) => {
                       (e as { stopPropagation?: () => void }).stopPropagation?.();
                       setCancelTarget(b);
                     }}
                   >
-                    <Ionicons name="close-outline" size={14} color="#dc2626" />
+                    <Ionicons name="close-outline" size={14} color={STATUS_COLORS.cancelled.text} />
                   </Pressable>
                 )}
               </View>
@@ -706,8 +714,18 @@ export default function AdminBookingsScreen() {
                 </View>
                 <View style={styles.listCardRight}>
                   {b.isCancelled ? (
-                    <View style={[styles.badge, { backgroundColor: "rgba(220,38,38,0.1)" }]}>
-                      <ThemedText style={[styles.badgeText, { color: "#dc2626" }]}>
+                    <View
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor:
+                            STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"],
+                        },
+                      ]}
+                    >
+                      <ThemedText
+                        style={[styles.badgeText, { color: STATUS_COLORS.cancelled.text }]}
+                      >
                         Cancelled
                       </ThemedText>
                     </View>

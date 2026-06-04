@@ -211,14 +211,16 @@ export default function RestaurantCard({
         ]}
       >
         {/* Native background image via expo-image (web uses CSS backgroundImage above) */}
-        {/* istanbul ignore next */}
-        {restaurant.imageUrl && Platform.OS !== "web" && (
-          <Image
-            source={{ uri: restaurant.imageUrl }}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-          />
-        )}
+        {
+          // istanbul ignore next
+          restaurant.imageUrl && Platform.OS !== "web" && (
+            <Image
+              source={{ uri: restaurant.imageUrl }}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+            />
+          )
+        }
         {/* Branded placeholder content – visible only when no image */}
         {!restaurant.imageUrl && (
           <>

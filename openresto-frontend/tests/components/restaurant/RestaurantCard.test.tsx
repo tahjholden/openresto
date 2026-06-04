@@ -161,6 +161,11 @@ describe("RestaurantCard", () => {
     }
   });
 
+  it("renders restaurant correctly when imageUrl is set", async () => {
+    render(<RestaurantCard restaurant={{ ...mockRestaurant, imageUrl: "/media/photo.jpg" }} />);
+    await waitFor(() => expect(screen.getByText("Test Bistro")).toBeTruthy());
+  });
+
   it("does not render expo-image when imageUrl is absent", async () => {
     render(<RestaurantCard restaurant={mockRestaurant} />);
     await waitFor(() => expect(screen.queryByTestId("expo-image")).toBeNull());

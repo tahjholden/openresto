@@ -163,13 +163,13 @@ describe("RestaurantCard", () => {
   });
 
   it("renders expo-image when imageUrl is present on native", async () => {
-    const originalOS = Platform.OS;
-    (Platform as unknown as { OS: string }).OS = "ios";
+    const originalDescriptor = Object.getOwnPropertyDescriptor(Platform, "OS");
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true, writable: true });
     try {
       render(<RestaurantCard restaurant={{ ...mockRestaurant, imageUrl: "/media/photo.jpg" }} />);
       await waitFor(() => expect(screen.getByTestId("expo-image")).toBeTruthy());
     } finally {
-      (Platform as unknown as { OS: string }).OS = originalOS;
+      if (originalDescriptor) Object.defineProperty(Platform, "OS", originalDescriptor);
     }
   });
 

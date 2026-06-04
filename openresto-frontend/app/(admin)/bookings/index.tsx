@@ -635,9 +635,7 @@ export default function AdminBookingsScreen() {
                       { backgroundColor: STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"] },
                     ]}
                   >
-                    <ThemedText
-                      style={[styles.badgeText, { color: STATUS_COLORS.cancelled.text }]}
-                    >
+                    <ThemedText style={[styles.badgeText, { color: STATUS_COLORS.cancelled.text }]}>
                       Cancelled
                     </ThemedText>
                   </View>
@@ -658,11 +656,7 @@ export default function AdminBookingsScreen() {
                       setCancelTarget(b);
                     }}
                   >
-                    <Ionicons
-                      name="close-outline"
-                      size={14}
-                      color={STATUS_COLORS.cancelled.text}
-                    />
+                    <Ionicons name="close-outline" size={14} color={STATUS_COLORS.cancelled.text} />
                   </Pressable>
                 )}
               </View>
@@ -724,8 +718,7 @@ export default function AdminBookingsScreen() {
                       style={[
                         styles.badge,
                         {
-                          backgroundColor:
-                            STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"],
+                          backgroundColor: STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"],
                         },
                       ]}
                     >

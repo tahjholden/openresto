@@ -50,4 +50,11 @@ describe("Select", () => {
     expect(screen.getByText("Option 1")).toBeTruthy();
     jest.dontMock("@/hooks/use-color-scheme");
   });
+
+  it("shows checkmark on selected item inside modal", () => {
+    render(<Select selectedValue="1" options={options} onSelect={onSelect} />);
+    fireEvent.press(screen.getByText("Option 1"));
+    // Inside the modal, the selected item shows a checkmark
+    expect(screen.getByText("✓")).toBeTruthy();
+  });
 });

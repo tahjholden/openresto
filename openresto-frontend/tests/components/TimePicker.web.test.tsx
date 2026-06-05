@@ -39,4 +39,37 @@ describe("TimePicker Web", () => {
     fireEvent(input, "blur");
     expect(wrapper).toBeTruthy();
   });
+
+  it("clamps value below minTime to minTime", () => {
+    const localSelect = jest.fn();
+    const { getByTestId } = render(
+      <TimePickerWeb onSelect={localSelect} minTime="12:00" maxTime="22:00" />
+    );
+    const wrapper = getByTestId("time-picker-web");
+    const input = (wrapper as any).children[0];
+    // 08:00 is before minTime 12:00, so should be clamped to 12:00
+    fireEvent(input, "change", { target: { value: "08:00" } });
+    expect(localSelect).toHaveBeenCalledWith("12:00");
+  });
+
+  it("clamps value above maxTime to maxTime", () => {
+    const localSelect = jest.fn();
+    const { getByTestId } = render(
+      <TimePickerWeb onSelect={localSelect} minTime="09:00" maxTime="18:00" />
+    );
+    const wrapper = getByTestId("time-picker-web");
+    const input = (wrapper as any).children[0];
+    // 22:00 is after maxTime 18:00, so should be clamped to 18:00
+    fireEvent(input, "change", { target: { value: "22:00" } });
+    expect(localSelect).toHaveBeenCalledWith("18:00");
+  });
+
+  it("does not call onSelect when value is empty (early return)", () => {
+    const localSelect = jest.fn();
+    const { getByTestId } = render(<TimePickerWeb onSelect={localSelect} />);
+    const wrapper = getByTestId("time-picker-web");
+    const input = (wrapper as any).children[0];
+    fireEvent(input, "change", { target: { value: "" } });
+    expect(localSelect).not.toHaveBeenCalled();
+  });
 });

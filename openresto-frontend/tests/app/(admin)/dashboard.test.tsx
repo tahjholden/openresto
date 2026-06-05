@@ -17,17 +17,57 @@ global.fetch = jest.fn(() =>
 ) as jest.Mock;
 
 jest.mock("@/api/admin");
-jest.mock("@/components/admin/bookings/RestaurantActionModal", () => ({
-  __esModule: true,
-  default: () => null,
-}));
-jest.mock("@/components/admin/bookings/BookingDetailPopup", () => ({
-  BookingDetailPopup: () => null,
-}));
-jest.mock("@/components/common/AlertModal", () => ({
-  __esModule: true,
-  default: () => null,
-}));
+jest.mock("@/components/admin/bookings/RestaurantActionModal", () => {
+  const { View, Pressable, Text } = require("react-native");
+  return {
+    __esModule: true,
+    default: ({ visible, onClose, onSuccess }: any) => {
+      if (!visible) return null;
+      return (
+        <View testID="action-modal">
+          <Pressable testID="action-modal-close" onPress={onClose}>
+            <Text>Close Action Modal</Text>
+          </Pressable>
+          <Pressable testID="action-modal-success" onPress={() => onSuccess("Action succeeded")}>
+            <Text>Action Done</Text>
+          </Pressable>
+        </View>
+      );
+    },
+  };
+});
+jest.mock("@/components/admin/bookings/BookingDetailPopup", () => {
+  const { View, Pressable, Text } = require("react-native");
+  return {
+    BookingDetailPopup: ({ bookingId, onClose }: any) => {
+      if (!bookingId) return null;
+      return (
+        <View testID="booking-detail-popup">
+          <Pressable testID="booking-popup-close" onPress={onClose}>
+            <Text>Close Popup</Text>
+          </Pressable>
+        </View>
+      );
+    },
+  };
+});
+jest.mock("@/components/common/AlertModal", () => {
+  const { View, Pressable, Text } = require("react-native");
+  return {
+    __esModule: true,
+    default: ({ visible, onClose, message }: any) => {
+      if (!visible) return null;
+      return (
+        <View testID="alert-modal">
+          <Text>{message}</Text>
+          <Pressable testID="alert-modal-close" onPress={onClose}>
+            <Text>Close Alert</Text>
+          </Pressable>
+        </View>
+      );
+    },
+  };
+});
 const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush }),
@@ -272,5 +312,47 @@ describe("AdminDashboardScreen", () => {
     const { queryByTestId } = renderWithProviders(<AdminDashboardScreen />);
 
     await waitFor(() => expect(queryByTestId("dashboard-spinner")).toBeNull());
+  });
+
+  it("calls RestaurantActionModal onClose callback (line 239)", async () => {
+    const { queryByTestId } = renderWithProviders(<AdminDashboardScreen />);
+    await waitFor(() => expect(queryByTestId("dashboard-spinner")).toBeNull());
+    await waitFor(() => screen.getByText("Pause Bookings"));
+    fireEvent.press(screen.getByText("Pause Bookings"));
+    await waitFor(() => expect(screen.getByTestId("action-modal")).toBeTruthy());
+    fireEvent.press(screen.getByTestId("action-modal-close"));
+    await waitFor(() => expect(screen.queryByTestId("action-modal")).toBeNull());
+  });
+
+  it("calls RestaurantActionModal onSuccess callback (lines 241-242)", async () => {
+    const { queryByTestId } = renderWithProviders(<AdminDashboardScreen />);
+    await waitFor(() => expect(queryByTestId("dashboard-spinner")).toBeNull());
+    await waitFor(() => screen.getByText("Pause Bookings"));
+    fireEvent.press(screen.getByText("Pause Bookings"));
+    await waitFor(() => expect(screen.getByTestId("action-modal")).toBeTruthy());
+    fireEvent.press(screen.getByTestId("action-modal-success"));
+    await waitFor(() => expect(screen.getByTestId("alert-modal")).toBeTruthy());
+    expect(screen.getByText("Action succeeded")).toBeTruthy();
+  });
+
+  it("calls AlertModal onClose callback (line 250)", async () => {
+    const { queryByTestId } = renderWithProviders(<AdminDashboardScreen />);
+    await waitFor(() => expect(queryByTestId("dashboard-spinner")).toBeNull());
+    fireEvent.press(screen.getByText("Pause Bookings"));
+    await waitFor(() => expect(screen.getByTestId("action-modal")).toBeTruthy());
+    fireEvent.press(screen.getByTestId("action-modal-success"));
+    await waitFor(() => expect(screen.getByTestId("alert-modal")).toBeTruthy());
+    fireEvent.press(screen.getByTestId("alert-modal-close"));
+    await waitFor(() => expect(screen.queryByTestId("alert-modal")).toBeNull());
+  });
+
+  it("calls BookingDetailPopup onClose callback (line 255)", async () => {
+    const { queryByTestId } = renderWithProviders(<AdminDashboardScreen />);
+    await waitFor(() => expect(queryByTestId("dashboard-spinner")).toBeNull());
+    await waitFor(() => screen.getByText("today@test.com"));
+    fireEvent.press(screen.getByText("today@test.com"));
+    await waitFor(() => expect(screen.getByTestId("booking-detail-popup")).toBeTruthy());
+    fireEvent.press(screen.getByTestId("booking-popup-close"));
+    await waitFor(() => expect(screen.queryByTestId("booking-detail-popup")).toBeNull());
   });
 });

@@ -161,6 +161,21 @@ describe("TableRow", () => {
     expect(screen.getByText("T1")).toBeTruthy();
   });
 
+  it("renders tableIcon with seats=1 (person-outline branch)", () => {
+    render(<TableRow {...baseProps} table={{ ...baseTable, seats: 1 }} />);
+    expect(screen.getByText("1")).toBeTruthy();
+  });
+
+  it("renders tableIcon with seats=8 (apps-outline branch)", () => {
+    render(<TableRow {...baseProps} table={{ ...baseTable, seats: 8 }} />);
+    expect(screen.getByText("8")).toBeTruthy();
+  });
+
+  it("renders tableIcon with seats=10 (albums-outline branch)", () => {
+    render(<TableRow {...baseProps} table={{ ...baseTable, seats: 10 }} />);
+    expect(screen.getByText("10")).toBeTruthy();
+  });
+
   it("shows saving state while updating", async () => {
     let resolve: (v: typeof baseTable | null) => void;
     (restaurantsApi.updateTable as jest.Mock).mockReturnValue(

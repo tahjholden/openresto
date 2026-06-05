@@ -104,7 +104,7 @@ describe("RestaurantScreen", () => {
   });
 
   it("shows not found when id param is missing (else branch)", async () => {
-    mockUseLocalSearchParams.mockReturnValue({ id: undefined });
+    mockUseLocalSearchParams.mockReturnValue({ id: undefined as unknown as string });
     renderWithProviders(<RestaurantScreen />);
     await waitFor(() => {
       expect(screen.getByText("Restaurant not found.")).toBeTruthy();

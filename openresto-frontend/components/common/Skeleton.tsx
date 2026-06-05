@@ -18,6 +18,7 @@ export default function Skeleton({
 
   React.useEffect(() => {
     if (process.env.NODE_ENV === "test") return;
+    /* istanbul ignore next */
     Animated.loop(
       Animated.sequence([
         Animated.timing(animatedValue, {

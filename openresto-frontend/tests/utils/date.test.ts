@@ -1,4 +1,9 @@
-import { convertLocalToUtc, isTodayInTimezone } from "@/utils/date";
+import {
+  convertLocalToUtc,
+  isTodayInTimezone,
+  getNowInTimezone,
+  formatCurrentTimeInTimezone,
+} from "@/utils/date";
 
 describe("date utility - convertLocalToUtc", () => {
   it("converts Toronto local time (EDT, UTC-4) to UTC", () => {
@@ -36,6 +41,79 @@ describe("date utility - convertLocalToUtc", () => {
     // In Jest environment, default local might be UTC.
     const expected = new Date("2026-04-18T15:00:00").toISOString();
     expect(result).toBe(expected);
+  });
+});
+
+describe("date utility - getNowInTimezone", () => {
+  it("returns valid date and time components for UTC", () => {
+    const result = getNowInTimezone("UTC");
+    expect(result.dateStr).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(result.hours).toBeGreaterThanOrEqual(0);
+    expect(result.hours).toBeLessThanOrEqual(23);
+    expect(result.minutes).toBeGreaterThanOrEqual(0);
+    expect(result.minutes).toBeLessThanOrEqual(59);
+  });
+
+  it("returns valid date and time for a named timezone", () => {
+    const result = getNowInTimezone("America/New_York");
+    expect(result.dateStr).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(result.hours).toBeGreaterThanOrEqual(0);
+    expect(result.hours).toBeLessThanOrEqual(23);
+  });
+
+  it("uses UTC when timezone is empty string", () => {
+    const result = getNowInTimezone("");
+    expect(result.dateStr).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("falls back gracefully for invalid timezone", () => {
+    const result = getNowInTimezone("Invalid/Timezone");
+    expect(result).toHaveProperty("dateStr");
+    expect(result).toHaveProperty("hours");
+    expect(result).toHaveProperty("minutes");
+  });
+
+  it("treats hour 24 as 0 (midnight guard)", () => {
+    const origDateTimeFormat = Intl.DateTimeFormat;
+    const mockFormatToParts = jest.fn(() => [
+      { type: "year", value: "2026" },
+      { type: "month", value: "06" },
+      { type: "day", value: "05" },
+      { type: "hour", value: "24" },
+      { type: "minute", value: "00" },
+    ]);
+    // @ts-ignore
+    global.Intl.DateTimeFormat = jest.fn(() => ({ formatToParts: mockFormatToParts }));
+    const result = getNowInTimezone("UTC");
+    expect(result.hours).toBe(0);
+    // @ts-ignore
+    global.Intl.DateTimeFormat = origDateTimeFormat;
+  });
+});
+
+describe("date utility - formatCurrentTimeInTimezone", () => {
+  it("returns a formatted time string for UTC", () => {
+    const result = formatCurrentTimeInTimezone("UTC");
+    expect(typeof result).toBe("string");
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  it("returns formatted time for a named timezone", () => {
+    const result = formatCurrentTimeInTimezone("America/Chicago");
+    expect(typeof result).toBe("string");
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  it("uses UTC when timezone is empty string", () => {
+    const result = formatCurrentTimeInTimezone("");
+    expect(typeof result).toBe("string");
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  it("falls back gracefully for invalid timezone", () => {
+    const result = formatCurrentTimeInTimezone("Invalid/Timezone");
+    expect(typeof result).toBe("string");
+    expect(result.length).toBeGreaterThan(0);
   });
 });
 

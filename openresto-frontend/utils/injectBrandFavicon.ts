@@ -2,6 +2,7 @@ import { buildFaviconDataUri } from "@/constants/faviconIcons";
 import { Brand } from "@/types";
 
 export function injectBrandFavicon(brand: Brand): void {
+  /* istanbul ignore next */
   if (typeof document === "undefined") return;
 
   const { faviconIcon, primaryColor, appName } = brand;

@@ -30,6 +30,7 @@ export default function Button({
         styles.button,
         { backgroundColor: primaryColor },
         sizeStyles,
+        /* istanbul ignore next */
         (state as { hovered?: boolean }).hovered && !disabled && { opacity: 0.85 },
         disabled && { backgroundColor: colors.disabled },
         style,

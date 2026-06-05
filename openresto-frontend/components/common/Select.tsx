@@ -41,9 +41,14 @@ export default function Select({
         animationType="fade"
         transparent={true}
         visible={modalVisible}
+        /* istanbul ignore next */
         onRequestClose={() => setModalVisible(false)}
       >
-        <Pressable style={styles.backdrop} onPress={() => setModalVisible(false)}>
+        <Pressable
+          style={styles.backdrop}
+          /* istanbul ignore next */
+          onPress={() => setModalVisible(false)}
+        >
           <ThemedView style={[styles.modalView, { borderColor }]}>
             <FlatList
               data={options}

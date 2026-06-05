@@ -40,8 +40,9 @@ jest.mock("react-native", () => {
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
+const mockUseLocalSearchParams = jest.fn(() => ({ restaurantId: "1" }));
 jest.mock("expo-router", () => ({
-  useLocalSearchParams: () => ({ restaurantId: "1" }),
+  useLocalSearchParams: () => mockUseLocalSearchParams(),
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
   Stack: { Screen: () => null },
 }));
@@ -98,6 +99,7 @@ jest.setTimeout(15000);
 describe("BookScreen", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseLocalSearchParams.mockReturnValue({ restaurantId: "1" });
     (fetchRestaurantById as jest.Mock).mockResolvedValue(mockRestaurant);
     (createBooking as jest.Mock).mockResolvedValue({ id: 50, bookingRef: "REF123" });
   });
@@ -163,6 +165,24 @@ describe("BookScreen", () => {
 
   it("shows not found when restaurant is null", async () => {
     (fetchRestaurantById as jest.Mock).mockResolvedValue(null);
+    renderWithProviders(<BookScreen />);
+    await waitFor(() => {
+      expect(screen.getByText("Restaurant not found.")).toBeTruthy();
+    });
+  });
+
+  it("shows not found when restaurantId is missing (else branch)", async () => {
+    mockUseLocalSearchParams.mockReturnValue({
+      restaurantId: undefined as unknown as string,
+    });
+    renderWithProviders(<BookScreen />);
+    await waitFor(() => {
+      expect(screen.getByText("Restaurant not found.")).toBeTruthy();
+    });
+  });
+
+  it("shows not found when fetchRestaurantById throws (catch branch)", async () => {
+    (fetchRestaurantById as jest.Mock).mockRejectedValueOnce(new Error("Network error"));
     renderWithProviders(<BookScreen />);
     await waitFor(() => {
       expect(screen.getByText("Restaurant not found.")).toBeTruthy();

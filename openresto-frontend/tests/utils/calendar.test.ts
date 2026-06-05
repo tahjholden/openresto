@@ -35,6 +35,51 @@ describe("calendar utility - buildCalendarUrls", () => {
     expect(googleUrl).toContain(encodeURIComponent("Window seat"));
   });
 
+  it("omits LOCATION when restaurantAddress is empty", () => {
+    let capturedContent = "";
+    const origBlob = global.Blob;
+    global.Blob = function (parts: any) {
+      capturedContent = parts[0];
+      return {} as Blob;
+    } as any;
+
+    const mockAnchor = { href: "", download: "", click: jest.fn() };
+    jest.spyOn(document, "createElement").mockReturnValue(mockAnchor as any);
+    jest.spyOn(URL, "createObjectURL").mockReturnValue("blob-url");
+    jest.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+
+    const { downloadIcs } = buildCalendarUrls({ ...input, restaurantAddress: "" });
+    downloadIcs();
+
+    global.Blob = origBlob;
+    jest.restoreAllMocks();
+
+    expect(capturedContent).not.toContain("LOCATION:");
+  });
+
+  it("folds long lines in the ICS output", () => {
+    let capturedContent = "";
+    const origBlob = global.Blob;
+    global.Blob = function (parts: any) {
+      capturedContent = parts[0];
+      return {} as Blob;
+    } as any;
+
+    const mockAnchor = { href: "", download: "", click: jest.fn() };
+    jest.spyOn(document, "createElement").mockReturnValue(mockAnchor as any);
+    jest.spyOn(URL, "createObjectURL").mockReturnValue("blob-url");
+    jest.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+
+    const longName = "A".repeat(200);
+    const { downloadIcs } = buildCalendarUrls({ ...input, restaurantName: longName });
+    downloadIcs();
+
+    global.Blob = origBlob;
+    jest.restoreAllMocks();
+
+    expect(capturedContent).toContain("\r\n ");
+  });
+
   it("downloadIcs creates and clicks a link", () => {
     // Mock DOM API
     const mockAnchor = {

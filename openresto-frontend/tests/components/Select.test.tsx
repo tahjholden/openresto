@@ -32,4 +32,22 @@ describe("Select", () => {
     fireEvent.press(screen.getByText("Option 2"));
     expect(onSelect).toHaveBeenCalledWith("2");
   });
+
+  it("shows placeholder when no selectedValue", () => {
+    render(<Select options={options} onSelect={onSelect} placeholder="Choose..." />);
+    expect(screen.getByText("Choose...")).toBeTruthy();
+  });
+
+  it("shows default placeholder when no selectedValue and no placeholder prop", () => {
+    render(<Select options={options} onSelect={onSelect} />);
+    expect(screen.getByText("Select an option")).toBeTruthy();
+  });
+
+  it("renders in dark mode", () => {
+    const mockUseColorScheme = jest.fn(() => "dark");
+    jest.doMock("@/hooks/use-color-scheme", () => ({ useColorScheme: mockUseColorScheme }));
+    render(<Select selectedValue="1" options={options} onSelect={onSelect} />);
+    expect(screen.getByText("Option 1")).toBeTruthy();
+    jest.dontMock("@/hooks/use-color-scheme");
+  });
 });

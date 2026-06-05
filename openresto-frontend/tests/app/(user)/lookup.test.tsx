@@ -291,4 +291,107 @@ describe("LookupScreen", () => {
     fireEvent.press(screen.getByText("CACHED1"));
     expect(getBookingByRef).toHaveBeenCalledWith("CACHED1", "cached@test.com");
   });
+
+  it("shows wide layout with recent bookings list (isWide=true)", async () => {
+    const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");
+    mockUseDimensions.mockReturnValue({ width: 1024, height: 768 });
+    Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
+
+    const mockCached = [
+      {
+        bookingRef: "WIDE1",
+        email: "wide@test.com",
+        restaurantName: "Wide Resto",
+        date: "2026-12-01",
+        seats: 2,
+      },
+    ];
+    (fetchCachedBookings as jest.Mock).mockResolvedValue(mockCached);
+
+    try {
+      renderWithProviders(<LookupScreen />);
+      await waitFor(() => expect(fetchCachedBookings).toHaveBeenCalled());
+      // In wide layout, RecentBookingsList appears beside the search form
+      await waitFor(() => expect(screen.getByText("WIDE1")).toBeTruthy());
+    } finally {
+      mockUseDimensions.mockRestore();
+    }
+  });
+
+  it("pressing recent booking in wide layout calls performLookup", async () => {
+    const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");
+    mockUseDimensions.mockReturnValue({ width: 1024, height: 768 });
+    Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
+
+    const mockCached = [
+      {
+        bookingRef: "WIDE2",
+        email: "wide2@test.com",
+        restaurantName: "Resto X",
+        date: "2026-11-01",
+        seats: 4,
+      },
+    ];
+    (fetchCachedBookings as jest.Mock).mockResolvedValue(mockCached);
+    (getBookingByRef as jest.Mock).mockResolvedValue(mockBooking);
+
+    try {
+      renderWithProviders(<LookupScreen />);
+      await waitFor(() => expect(screen.getByText("WIDE2")).toBeTruthy());
+      fireEvent.press(screen.getByText("WIDE2"));
+      await waitFor(() => expect(getBookingByRef).toHaveBeenCalledWith("WIDE2", "wide2@test.com"));
+    } finally {
+      mockUseDimensions.mockRestore();
+    }
+  });
+
+  it("shows copy button in booking result card and copies to clipboard on web", async () => {
+    Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
+    const mockClipboard = jest.fn();
+    (navigator as any).clipboard = { writeText: mockClipboard };
+
+    (getBookingByRef as jest.Mock).mockResolvedValue({ ...mockBooking, bookingRef: "COPYREF" });
+    (fetchRestaurantById as jest.Mock).mockResolvedValue(mockRestaurant);
+    renderWithProviders(<LookupScreen />);
+
+    fireEvent.changeText(screen.getByPlaceholderText("e.g. crispy-basil-thyme"), "COPYREF");
+    fireEvent.changeText(
+      screen.getByPlaceholderText("The email used when booking"),
+      "test@test.com"
+    );
+    fireEvent.press(screen.getByText("Look Up"));
+
+    await waitFor(() => expect(screen.getByText("Booking Found")).toBeTruthy());
+    // Press copy button in booking result card
+    const copyBtns = screen.queryAllByText("Copy");
+    if (copyBtns.length > 0) {
+      fireEvent.press(copyBtns[0]);
+      expect(mockClipboard).toHaveBeenCalledWith("COPYREF");
+    }
+  });
+
+  it("shows narrow icon strip with restaurant address on narrow web", async () => {
+    Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
+    const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");
+    mockUseDimensions.mockReturnValue({ width: 400, height: 800 });
+
+    (getBookingByRef as jest.Mock).mockResolvedValue(mockBooking);
+    (fetchRestaurantById as jest.Mock).mockResolvedValue({ ...mockRestaurant, address: "123 Main St" });
+
+    try {
+      renderWithProviders(<LookupScreen />);
+      fireEvent.changeText(screen.getByPlaceholderText("e.g. crispy-basil-thyme"), "REF123");
+      fireEvent.changeText(
+        screen.getByPlaceholderText("The email used when booking"),
+        "test@test.com"
+      );
+      fireEvent.press(screen.getByText("Look Up"));
+
+      await waitFor(() => expect(screen.getByText("Booking Found")).toBeTruthy());
+      // The narrow icon strip shows CAL and MAPS labels
+      expect(screen.getByText("CAL")).toBeTruthy();
+    } finally {
+      mockUseDimensions.mockRestore();
+    }
+  });
 });

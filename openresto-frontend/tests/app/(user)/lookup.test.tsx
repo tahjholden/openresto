@@ -376,7 +376,10 @@ describe("LookupScreen", () => {
     mockUseDimensions.mockReturnValue({ width: 400, height: 800 });
 
     (getBookingByRef as jest.Mock).mockResolvedValue(mockBooking);
-    (fetchRestaurantById as jest.Mock).mockResolvedValue({ ...mockRestaurant, address: "123 Main St" });
+    (fetchRestaurantById as jest.Mock).mockResolvedValue({
+      ...mockRestaurant,
+      address: "123 Main St",
+    });
 
     try {
       renderWithProviders(<LookupScreen />);

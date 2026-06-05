@@ -75,7 +75,13 @@ jest.mock("@/components/admin/bookings/EditBookingForm", () => {
         <Pressable testID="set-invalid-seats-btn" onPress={() => setEditSeats?.("abc")}>
           <Text>Set Invalid Seats</Text>
         </Pressable>
-        <Pressable testID="clear-date-btn" onPress={() => { setEditDate?.(""); setEditTime?.(""); }}>
+        <Pressable
+          testID="clear-date-btn"
+          onPress={() => {
+            setEditDate?.("");
+            setEditTime?.("");
+          }}
+        >
           <Text>Clear Date</Text>
         </Pressable>
       </View>
@@ -341,7 +347,9 @@ describe("BookingDetailScreen", () => {
     ];
     (fetchRestaurants as jest.Mock).mockResolvedValue(twoRestaurants);
     renderWithProviders(<BookingDetailScreen />);
-    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull(), { timeout: 5000 });
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull(), {
+      timeout: 5000,
+    });
 
     fireEvent.press(await screen.findByText("Edit Booking"));
     await waitFor(() => expect(screen.getByText("Edit Form")).toBeTruthy());
@@ -365,7 +373,9 @@ describe("BookingDetailScreen", () => {
     ];
     (fetchRestaurants as jest.Mock).mockResolvedValue(restaurantWithMultipleSections);
     renderWithProviders(<BookingDetailScreen />);
-    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull(), { timeout: 5000 });
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull(), {
+      timeout: 5000,
+    });
 
     fireEvent.press(await screen.findByText("Edit Booking"));
     await waitFor(() => expect(screen.getByText("Edit Form")).toBeTruthy());
@@ -377,7 +387,9 @@ describe("BookingDetailScreen", () => {
 
   it("shows 'Invalid seats value' error when seats is NaN before saving", async () => {
     renderWithProviders(<BookingDetailScreen />);
-    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull(), { timeout: 5000 });
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull(), {
+      timeout: 5000,
+    });
 
     fireEvent.press(await screen.findByText("Edit Booking"));
     await waitFor(() => expect(screen.getByText("Edit Form")).toBeTruthy());
@@ -392,7 +404,9 @@ describe("BookingDetailScreen", () => {
 
   it("shows 'Date and time are required' error when date is cleared before saving", async () => {
     renderWithProviders(<BookingDetailScreen />);
-    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull(), { timeout: 5000 });
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull(), {
+      timeout: 5000,
+    });
 
     fireEvent.press(await screen.findByText("Edit Booking"));
     await waitFor(() => expect(screen.getByText("Edit Form")).toBeTruthy());

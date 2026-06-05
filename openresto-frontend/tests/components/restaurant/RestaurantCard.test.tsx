@@ -203,18 +203,14 @@ describe("RestaurantCard", () => {
     await waitFor(() => expect(screen.getByText("Google")).toBeTruthy());
     // Pass a mock event to satisfy e.stopPropagation?.()
     fireEvent.press(screen.getByText("Google"), { stopPropagation: () => {} });
-    expect(Linking.openURL).toHaveBeenCalledWith(
-      expect.stringContaining("maps.google.com")
-    );
+    expect(Linking.openURL).toHaveBeenCalledWith(expect.stringContaining("maps.google.com"));
   });
 
   it("presses Apple Maps link and opens URL", async () => {
     render(<RestaurantCard restaurant={mockRestaurant} />);
     await waitFor(() => expect(screen.getByText("Apple")).toBeTruthy());
     fireEvent.press(screen.getByText("Apple"), { stopPropagation: () => {} });
-    expect(Linking.openURL).toHaveBeenCalledWith(
-      expect.stringContaining("maps.apple.com")
-    );
+    expect(Linking.openURL).toHaveBeenCalledWith(expect.stringContaining("maps.apple.com"));
   });
 
   it("presses open-in-new-tab button on native platform (router.push)", async () => {
@@ -248,9 +244,7 @@ describe("RestaurantCard", () => {
       await waitFor(() => expect(screen.getByText("23:30")).toBeTruthy());
       // Use fireEvent with explicit event object to avoid stopPropagation error
       fireEvent(screen.getByText("23:30"), "press", { stopPropagation: () => {} });
-      expect(mockPush).toHaveBeenCalledWith(
-        expect.stringContaining("time=23%3A30")
-      );
+      expect(mockPush).toHaveBeenCalledWith(expect.stringContaining("time=23%3A30"));
     } finally {
       jest.useRealTimers();
     }
@@ -260,7 +254,12 @@ describe("RestaurantCard", () => {
     // An invalid IANA timezone causes Intl.DateTimeFormat to throw, exercising catch branches
     render(
       <RestaurantCard
-        restaurant={{ ...mockRestaurant, timezone: "Invalid/Timezone_XYZ", openTime: "00:00", closeTime: "23:59" }}
+        restaurant={{
+          ...mockRestaurant,
+          timezone: "Invalid/Timezone_XYZ",
+          openTime: "00:00",
+          closeTime: "23:59",
+        }}
       />
     );
     await waitFor(() => expect(screen.getByText("Test Bistro")).toBeTruthy());
@@ -275,7 +274,12 @@ describe("RestaurantCard", () => {
     try {
       render(
         <RestaurantCard
-          restaurant={{ ...mockRestaurant, openDays: "xyz,zzz", openTime: "00:00", closeTime: "23:59" }}
+          restaurant={{
+            ...mockRestaurant,
+            openDays: "xyz,zzz",
+            openTime: "00:00",
+            closeTime: "23:59",
+          }}
         />
       );
       // openDaysList is empty after filtering zeros, so isOpenNow skips the day check

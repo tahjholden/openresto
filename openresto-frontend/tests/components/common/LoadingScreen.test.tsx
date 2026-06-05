@@ -7,7 +7,7 @@ jest.mock("@expo/vector-icons", () => ({
 }));
 
 jest.mock("@/hooks/use-color-scheme", () => ({
-  useColorScheme: () => "light",
+  useColorScheme: jest.fn(() => "light"),
 }));
 
 const brand = { primaryColor: "#0a7ea4", appName: "Open Resto" };
@@ -23,5 +23,13 @@ describe("LoadingScreen", () => {
   it("renders custom message", () => {
     render(<LoadingScreen brand={brand} message="Loading menu..." />);
     expect(screen.getByText("Loading menu...")).toBeTruthy();
+  });
+
+  it("renders correctly in dark mode", () => {
+    const { useColorScheme } = require("@/hooks/use-color-scheme");
+    (useColorScheme as jest.Mock).mockReturnValue("dark");
+    render(<LoadingScreen brand={brand} />);
+    expect(screen.getByTestId("loading-screen")).toBeTruthy();
+    (useColorScheme as jest.Mock).mockReturnValue("light");
   });
 });

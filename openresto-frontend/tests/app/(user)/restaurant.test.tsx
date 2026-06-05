@@ -25,9 +25,10 @@ jest.mock("@expo/vector-icons", () => ({
 }));
 
 const mockPush = jest.fn();
+const mockUseLocalSearchParams = jest.fn(() => ({ id: "1" }));
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useLocalSearchParams: () => ({ id: "1" }),
+  useLocalSearchParams: () => mockUseLocalSearchParams(),
   useRouter: () => ({ push: mockPush }),
   Stack: { Screen: () => null },
 }));
@@ -57,6 +58,13 @@ jest.mock("@/api/restaurants", () => ({
 jest.setTimeout(15000);
 
 describe("RestaurantScreen", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseLocalSearchParams.mockReturnValue({ id: "1" });
+    const { fetchRestaurantById } = require("@/api/restaurants");
+    fetchRestaurantById.mockResolvedValue(mockRestaurant);
+  });
+
   const renderWithProviders = (ui: React.ReactElement) => {
     return render(
       <SafeAreaProvider
@@ -89,6 +97,23 @@ describe("RestaurantScreen", () => {
   it("shows not found when restaurant is null", async () => {
     const { fetchRestaurantById } = require("@/api/restaurants");
     fetchRestaurantById.mockResolvedValueOnce(null);
+    renderWithProviders(<RestaurantScreen />);
+    await waitFor(() => {
+      expect(screen.getByText("Restaurant not found.")).toBeTruthy();
+    });
+  });
+
+  it("shows not found when id param is missing (else branch)", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ id: undefined });
+    renderWithProviders(<RestaurantScreen />);
+    await waitFor(() => {
+      expect(screen.getByText("Restaurant not found.")).toBeTruthy();
+    });
+  });
+
+  it("shows not found when API throws (catch branch)", async () => {
+    const { fetchRestaurantById } = require("@/api/restaurants");
+    fetchRestaurantById.mockRejectedValueOnce(new Error("Network error"));
     renderWithProviders(<RestaurantScreen />);
     await waitFor(() => {
       expect(screen.getByText("Restaurant not found.")).toBeTruthy();

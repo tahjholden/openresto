@@ -204,6 +204,40 @@ describe("SecurityCard", () => {
     expect(authApi.changePassword).not.toHaveBeenCalled();
   });
 
+  it("closes password form when Cancel is pressed", async () => {
+    render(<SecurityCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Account Security"));
+    await waitFor(() => expect(screen.getByText("Change your admin password")).toBeTruthy());
+    const changeBtns = screen.queryAllByText("Change");
+    fireEvent.press(changeBtns[changeBtns.length - 1]);
+    await waitFor(() => expect(screen.getByText("Current password")).toBeTruthy());
+    // Press Cancel in the password form
+    const cancelBtns = screen.queryAllByText("Cancel");
+    fireEvent.press(cancelBtns[cancelBtns.length - 1]);
+    await waitFor(() => expect(screen.queryByText("Current password")).toBeNull());
+  });
+
+  it("shows error when setupPvq fails", async () => {
+    (authApi.setupPvq as jest.Mock).mockResolvedValue({
+      ok: false,
+      message: "Failed to save question.",
+    });
+    render(<SecurityCard {...baseProps} />);
+    fireEvent.press(screen.getByText("Account Security"));
+    await waitFor(() => expect(screen.getByText("Set up")).toBeTruthy());
+    fireEvent.press(screen.getByText("Set up"));
+    fireEvent.changeText(
+      screen.getByPlaceholderText("e.g. What was the name of your first pet?"),
+      "My question?"
+    );
+    fireEvent.changeText(screen.getByPlaceholderText("Your answer"), "my answer");
+    await act(async () => {
+      fireEvent.press(screen.getByText("Save Question"));
+    });
+    await waitFor(() => expect(screen.getByText("Failed to save question.")).toBeTruthy());
+    expect(authApi.setupPvq).toHaveBeenCalledWith("My question?", "my answer");
+  });
+
   it("calls changePassword and clears form on success", async () => {
     (authApi.changePassword as jest.Mock).mockResolvedValue({
       ok: true,

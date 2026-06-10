@@ -51,6 +51,12 @@ coverage/
 docs/superpowers/plans/2026-05-24-highlights-tags.md
 # Uploaded media files
 OpenRestoApi/wwwroot/media/
+
+# VPS runtime files (live DB, SSL certs/keys, deploy scripts, logs)
+data/
+nginx/ssl/
+auto_update.sh
+update.log
 # Playwright MCP plugin snapshots
 .playwright-mcp/
 # Session handoff notes

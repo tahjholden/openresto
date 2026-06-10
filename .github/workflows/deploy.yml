@@ -4,6 +4,10 @@ on:
   workflow_call:
   workflow_dispatch:
 
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Deploy to VPS

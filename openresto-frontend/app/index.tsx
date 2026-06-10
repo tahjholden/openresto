@@ -18,10 +18,19 @@ import RestaurantCard from "@/components/restaurant/RestaurantCard";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { Ionicons } from "@expo/vector-icons";
 
+// Module-level cache so data survives route changes — prevents hero layout shift on back-navigation.
+let _cachedRestaurants: RestaurantDto[] | null = null;
+let _cachedHighlights: HighlightDto[] | null = null;
+
+export function resetHomeCache() {
+  _cachedRestaurants = null;
+  _cachedHighlights = null;
+}
+
 export default function HomeScreen() {
-  const [restaurants, setRestaurants] = useState<RestaurantDto[]>([]);
-  const [highlights, setHighlights] = useState<HighlightDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [restaurants, setRestaurants] = useState<RestaurantDto[]>(_cachedRestaurants ?? []);
+  const [highlights, setHighlights] = useState<HighlightDto[]>(_cachedHighlights ?? []);
+  const [loading, setLoading] = useState(_cachedRestaurants === null);
   const [scrollY, setScrollY] = useState(0);
   const { width, height } = useWindowDimensions();
   const { brand, colors, primaryColor, isDark } = useAppTheme();
@@ -39,6 +48,8 @@ export default function HomeScreen() {
 
   useEffect(() => {
     Promise.all([fetchRestaurants(), fetchHighlights()]).then(([restaurantData, highlightData]) => {
+      _cachedRestaurants = restaurantData;
+      _cachedHighlights = highlightData;
       setRestaurants(restaurantData);
       setHighlights(highlightData);
       setLoading(false);
@@ -86,7 +97,7 @@ export default function HomeScreen() {
                   ? ({
                       backgroundImage: `url(${brand.headerImageUrl})`,
                       backgroundSize: "cover",
-                      backgroundPosition: "center",
+                      backgroundPosition: "center top",
                     } as object)
                   : ({
                       background: isDark

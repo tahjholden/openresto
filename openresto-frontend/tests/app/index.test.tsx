@@ -4,7 +4,7 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react-native";
 import { Platform } from "react-native";
-import HomeScreen from "@/app/index";
+import HomeScreen, { resetHomeCache } from "@/app/index";
 import { fetchRestaurants, fetchHighlights } from "@/api/restaurants";
 import { BrandProvider } from "@/context/BrandContext";
 
@@ -76,6 +76,7 @@ describe("HomeScreen", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    resetHomeCache();
     (fetchRestaurants as jest.Mock).mockResolvedValue(mockRestaurants);
     (fetchHighlights as jest.Mock).mockResolvedValue([
       {

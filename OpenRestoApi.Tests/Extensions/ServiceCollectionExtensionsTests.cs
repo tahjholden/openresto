@@ -71,4 +71,28 @@ public class ServiceCollectionExtensionsTests
         services.AddProjectDependencies();
         // Just verify it doesn't throw
     }
+
+    [Fact]
+    public void AddProjectDependencies_PersistsKeysWhenPathEnvVarSet()
+    {
+        var tmpDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tmpDir);
+        Environment.SetEnvironmentVariable("DATA_PROTECTION_KEYS_PATH", tmpDir);
+        try
+        {
+            var services = new ServiceCollection();
+            services.AddProjectDependencies();
+            using var provider = services.BuildServiceProvider();
+            // Calling Protect triggers key ring initialisation, which writes the key XML to disk
+            provider.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>()
+                .CreateProtector("test")
+                .Protect(System.Text.Encoding.UTF8.GetBytes("data"));
+            Assert.NotEmpty(Directory.GetFiles(tmpDir, "*.xml"));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("DATA_PROTECTION_KEYS_PATH", null);
+            Directory.Delete(tmpDir, recursive: true);
+        }
+    }
 }

@@ -59,14 +59,17 @@ export default function LookupScreen() {
     const timer = setTimeout(() => {
       if (!bookingCardRef.current) return;
       if (Platform.OS === "web") {
-        (bookingCardRef.current as any).scrollIntoView?.({ behavior: "smooth", block: "start" });
+        (bookingCardRef.current as unknown as HTMLElement).scrollIntoView?.({
+          behavior: "smooth",
+          block: "start",
+        });
       } else {
         const node = findNodeHandle(scrollRef.current);
         if (!node) return;
         bookingCardRef.current.measureLayout(
           node,
           (_x, y) => scrollRef.current?.scrollTo({ y: Math.max(0, y - 16), animated: true }),
-          () => {},
+          () => {}
         );
       }
     }, 150);

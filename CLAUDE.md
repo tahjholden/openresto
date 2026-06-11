@@ -99,6 +99,8 @@ openresto-frontend/
 - **SW cache versioning**: bump `CACHE_NAME` in `public/sw.js` on every deploy that changes `public/manifest.json`, otherwise browsers serve the stale cached manifest.
 - Tab favicon (SVG data URI via `injectBrandFavicon`) works in standalone dev. PWA install icon requires Docker — nginx must proxy `/api/brand/pwa-icon-*.png` to the backend.
 - `app/+html.tsx` is Expo Router's HTML `<head>` template for static output mode — favicon link, manifest link, and SW registration script all live here.
+- **Cross-platform scroll-to-element**: to smoothly scroll a `ScrollView` to a specific child after it appears, use two paths: on web call `(ref.current as unknown as HTMLElement).scrollIntoView?.({ behavior: "smooth", block: "start" })`; on native call `findNodeHandle(scrollRef.current)` then `childRef.current.measureLayout(node, (_x, y) => scrollRef.current?.scrollTo({ y: Math.max(0, y - 16), animated: true }), () => {})`. Wrap in a `setTimeout` of ~150 ms so layout settles before measuring. See `app/(user)/lookup.tsx`.
+- **ESLint `no-explicit-any`**: never cast with `as any`. When you need to access a DOM method unavailable on the RN type, use `as unknown as HTMLElement` (or the appropriate DOM type) instead.
 
 ### Auth model
 
@@ -129,4 +131,6 @@ Booking history is intentionally **GDPR-purgeable** via the existing `PurgeBooki
 
 - **Backend**: xUnit + Moq. Tests live in `OpenRestoApi.Tests/`. Services are tested in isolation with mocked repos and a mock `ISystemClock` (inject `MockSystemClock` to control time-dependent hold/availability logic).
 - **Frontend**: Jest + React Native Testing Library. 100% coverage target. E2E with Playwright (`tests/e2e/`).
+- **Testing async effects with delays**: for `useEffect` code that fires inside a `setTimeout`, use `waitFor` with a custom `timeout` (e.g. `{ timeout: 1000 }`) rather than fake timers — the real timer fires within the `waitFor` polling window. Example: `await waitFor(() => expect(mockFn).toHaveBeenCalled(), { timeout: 1000 })`.
+- **Testing cross-platform scroll**: In the jsdom + RN test renderer environment, `View` refs are RN component instances (NOT DOM elements), so `HTMLElement.prototype.scrollIntoView` is never reachable. Test the web scroll path by waiting past the timeout delay and asserting no crash (the `scrollIntoView?.()` optional chain is a no-op but the line is still covered). For the native path, spy on `findNodeHandle` via `jest.spyOn(require("react-native"), "findNodeHandle")`.
 - **CI ZAP scan**: runs against the full Docker stack; the OpenAPI spec (`/openapi/v1.json`) is used as the scan target so ZAP discovers all endpoints. Ignored rules are listed in `.zap-rules.tsv`.

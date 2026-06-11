@@ -2,6 +2,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using OpenRestoApi.Core.Application.Interfaces;
@@ -171,7 +172,10 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<OpenRestoApi.Core.Application.Mappings.BookingMapper>();
 
-        services.AddDataProtection();
+        var dpKeysPath = Environment.GetEnvironmentVariable("DATA_PROTECTION_KEYS_PATH");
+        var dpBuilder = services.AddDataProtection().SetApplicationName("openresto");
+        if (!string.IsNullOrEmpty(dpKeysPath))
+            dpBuilder.PersistKeysToFileSystem(new DirectoryInfo(dpKeysPath));
         services.AddSingleton<OpenRestoApi.Infrastructure.Email.CredentialProtector>();
         services.AddSingleton<OpenRestoApi.Infrastructure.Cookies.RecentBookingsCookie>();
         services.AddScoped<Func<ISmtpClient>>(_ => () => new SmtpClient());

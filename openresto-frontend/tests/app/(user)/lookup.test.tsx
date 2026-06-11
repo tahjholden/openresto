@@ -370,6 +370,64 @@ describe("LookupScreen", () => {
     }
   });
 
+  it("calls scrollIntoView on booking card when booking is found on web", async () => {
+    Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
+    const mockScrollIntoView = jest.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = mockScrollIntoView;
+
+    try {
+      (getBookingByRef as jest.Mock).mockResolvedValue(mockBooking);
+      (fetchRestaurantById as jest.Mock).mockResolvedValue(mockRestaurant);
+      renderWithProviders(<LookupScreen />);
+
+      fireEvent.changeText(screen.getByPlaceholderText("e.g. crispy-basil-thyme"), "REF123");
+      fireEvent.changeText(
+        screen.getByPlaceholderText("The email used when booking"),
+        "test@test.com"
+      );
+      fireEvent.press(screen.getByText("Look Up"));
+
+      await waitFor(() => expect(screen.getByText("Booking Found")).toBeTruthy());
+      await waitFor(
+        () =>
+          expect(mockScrollIntoView).toHaveBeenCalledWith({
+            behavior: "smooth",
+            block: "start",
+          }),
+        { timeout: 1000 }
+      );
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
+  it("calls findNodeHandle on native when booking is found", async () => {
+    Object.defineProperty(Platform, "OS", { get: () => "ios", configurable: true });
+    const findNodeHandleSpy = jest
+      .spyOn(require("react-native"), "findNodeHandle")
+      .mockReturnValue(1);
+
+    try {
+      (getBookingByRef as jest.Mock).mockResolvedValue(mockBooking);
+      (fetchRestaurantById as jest.Mock).mockResolvedValue(mockRestaurant);
+      renderWithProviders(<LookupScreen />);
+
+      fireEvent.changeText(screen.getByPlaceholderText("e.g. crispy-basil-thyme"), "REF123");
+      fireEvent.changeText(
+        screen.getByPlaceholderText("The email used when booking"),
+        "test@test.com"
+      );
+      fireEvent.press(screen.getByText("Look Up"));
+
+      await waitFor(() => expect(screen.getByText("Booking Found")).toBeTruthy());
+      await waitFor(() => expect(findNodeHandleSpy).toHaveBeenCalled(), { timeout: 1000 });
+    } finally {
+      findNodeHandleSpy.mockRestore();
+      Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
+    }
+  });
+
   it("shows narrow icon strip with restaurant address on narrow web", async () => {
     Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
     const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");

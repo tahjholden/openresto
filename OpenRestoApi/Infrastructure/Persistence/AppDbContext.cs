@@ -15,6 +15,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<BrandSettings> BrandSettings { get; set; } = null!;
     public DbSet<RestaurantHighlight> Highlights { get; set; } = null!;
     public DbSet<EmailFailure> EmailFailures { get; set; } = null!;
+    public DbSet<AdminNotification> AdminNotifications { get; set; } = null!;
+    public DbSet<AdminPushSubscription> AdminPushSubscriptions { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -82,6 +84,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<AdminCredential>(a =>
         {
             a.HasKey(x => x.Id);
+        });
+
+        modelBuilder.Entity<AdminNotification>(n =>
+        {
+            n.HasKey(x => x.Id);
+            n.HasOne(x => x.Restaurant).WithMany().HasForeignKey(x => x.RestaurantId).OnDelete(DeleteBehavior.Cascade);
+            n.HasOne(x => x.Booking).WithMany().HasForeignKey(x => x.BookingId).OnDelete(DeleteBehavior.SetNull);
+            n.HasIndex(x => new { x.RestaurantId, x.CreatedAt });
+            n.HasIndex(x => new { x.RestaurantId, x.IsRead });
+        });
+
+        modelBuilder.Entity<AdminPushSubscription>(s =>
+        {
+            s.HasKey(x => x.Id);
+            s.HasOne(x => x.Restaurant).WithMany().HasForeignKey(x => x.RestaurantId).OnDelete(DeleteBehavior.Cascade);
+            s.HasIndex(x => x.Endpoint).IsUnique();
+            s.HasIndex(x => x.RestaurantId);
         });
     }
 }

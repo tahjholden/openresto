@@ -6,10 +6,11 @@ using OpenRestoApi.Infrastructure.Persistence;
 
 namespace OpenRestoApi.Core.Application.Services;
 
-public class AdminService(AppDbContext db, IHoldService holdService)
+public class AdminService(AppDbContext db, IHoldService holdService, INotificationService? notificationService = null)
 {
     private readonly AppDbContext _db = db;
     private readonly IHoldService _holdService = holdService;
+    private readonly INotificationService? _notificationService = notificationService;
 
     private static string NormalizeStatus(string status) => status.ToLowerInvariant() switch
     {
@@ -260,6 +261,12 @@ public class AdminService(AppDbContext db, IHoldService holdService)
         await _db.Entry(booking).Reference(b => b.Section).LoadAsync();
         await _db.Entry(booking).Reference(b => b.Restaurant).LoadAsync();
 
+        if (_notificationService != null)
+        {
+            try { await _notificationService.NotifyBookingCreatedAsync(booking, booking.Restaurant!.Name); }
+            catch (Exception ex) { Console.WriteLine($"[AdminService] Notification failed for ref {booking.BookingRef}: {ex.Message}"); }
+        }
+
         return ToDetailDto(booking);
     }
 
@@ -292,6 +299,17 @@ public class AdminService(AppDbContext db, IHoldService holdService)
         booking.IsCancelled = true;
         booking.CancelledAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        if (_notificationService != null)
+        {
+            try
+            {
+                await _db.Entry(booking).Reference(b => b.Restaurant).LoadAsync();
+                await _notificationService.NotifyBookingCancelledAsync(booking, booking.Restaurant?.Name ?? "");
+            }
+            catch (Exception ex) { Console.WriteLine($"[AdminService] Notification failed for booking {id}: {ex.Message}"); }
+        }
+
         return true;
     }
 

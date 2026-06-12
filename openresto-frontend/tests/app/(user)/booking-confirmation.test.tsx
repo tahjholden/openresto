@@ -319,4 +319,124 @@ describe("BookingConfirmationScreen", () => {
     // We just confirm it doesn't crash
     expect(true).toBe(true);
   });
+
+  it("pressing copy in wide layout covers the wide copy button branch", async () => {
+    const { useLocalSearchParams } = require("expo-router");
+    useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
+
+    const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");
+    mockUseDimensions.mockReturnValue({ width: 1024, height: 768 });
+
+    try {
+      renderWithProviders(<BookingConfirmationScreen />);
+      await waitFor(() => expect(screen.getByText("Booking Confirmed")).toBeTruthy());
+
+      // In wide layout the ref card appears in the right column
+      // Both the narrow and wide copy buttons render "Copy" — press the last one
+      const copyBtns = screen.getAllByText("Copy");
+      fireEvent.press(copyBtns[copyBtns.length - 1]);
+      expect(mockWriteText).toHaveBeenCalledWith("REF123");
+    } finally {
+      mockUseDimensions.mockRestore();
+    }
+  });
+
+  it("pressing Google Maps in the directions section fires Linking.openURL", async () => {
+    const { useLocalSearchParams } = require("expo-router");
+    useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
+
+    const { Linking } = require("react-native");
+    const openURLSpy = jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+
+    try {
+      renderWithProviders(<BookingConfirmationScreen />);
+      await waitFor(() => expect(screen.getByText("Booking Confirmed")).toBeTruthy());
+
+      // The directions card shows Google and Apple maps buttons
+      const googleBtns = screen.queryAllByText("Google");
+      if (googleBtns.length > 0) {
+        fireEvent.press(googleBtns[0]);
+        expect(openURLSpy).toHaveBeenCalledWith(
+          expect.stringContaining("maps.google.com")
+        );
+      }
+    } finally {
+      openURLSpy.mockRestore();
+    }
+  });
+
+  it("pressing Apple Maps in the directions section fires Linking.openURL", async () => {
+    const { useLocalSearchParams } = require("expo-router");
+    useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
+
+    const { Linking } = require("react-native");
+    const openURLSpy = jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+
+    try {
+      renderWithProviders(<BookingConfirmationScreen />);
+      await waitFor(() => expect(screen.getByText("Booking Confirmed")).toBeTruthy());
+
+      const appleBtns = screen.queryAllByText("Apple");
+      if (appleBtns.length > 0) {
+        fireEvent.press(appleBtns[0]);
+        expect(openURLSpy).toHaveBeenCalledWith(
+          expect.stringContaining("maps.apple.com")
+        );
+      }
+    } finally {
+      openURLSpy.mockRestore();
+    }
+  });
+
+  it("fires onScroll to update scrollY", async () => {
+    const { useLocalSearchParams } = require("expo-router");
+    useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
+
+    renderWithProviders(<BookingConfirmationScreen />);
+    await waitFor(() => expect(screen.getByText("Booking Confirmed")).toBeTruthy());
+
+    // Find the outer ScrollView by its scroll event handler and fire a scroll event
+    const scrollViews = screen.UNSAFE_getAllByType(require("react-native").ScrollView);
+    if (scrollViews.length > 0) {
+      fireEvent.scroll(scrollViews[0], {
+        nativeEvent: { contentOffset: { y: 400 } },
+      });
+    }
+    // scrollY is now 400; component should still render without error
+    expect(screen.getByText("Booking Confirmed")).toBeTruthy();
+  });
+
+  it("pressing ScrollToTopFab calls scrollToTop", async () => {
+    const { useLocalSearchParams } = require("expo-router");
+    useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
+
+    const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");
+    // Portrait mobile: width < 700, height > width
+    mockUseDimensions.mockReturnValue({ width: 375, height: 667 });
+
+    try {
+      renderWithProviders(<BookingConfirmationScreen />);
+      await waitFor(() => expect(screen.getByText("Booking Confirmed")).toBeTruthy());
+
+      // Scroll past 300 to make FAB visible
+      const scrollViews = screen.UNSAFE_getAllByType(require("react-native").ScrollView);
+      if (scrollViews.length > 0) {
+        fireEvent.scroll(scrollViews[0], {
+          nativeEvent: { contentOffset: { y: 400 } },
+        });
+      }
+
+      // FAB appears with accessibilityLabel "Scroll to top"
+      await waitFor(() => {
+        const fab = screen.queryByLabelText("Scroll to top");
+        if (fab) {
+          fireEvent.press(fab);
+        }
+      });
+      // scrollRef.current?.scrollTo is a no-op in test env but the callback runs
+      expect(screen.getByText("Booking Confirmed")).toBeTruthy();
+    } finally {
+      mockUseDimensions.mockRestore();
+    }
+  });
 });

@@ -404,6 +404,7 @@ export default function AdminBookingsScreen() {
         {/* View toggle */}
         <View style={[styles.modeToggle, { borderColor, backgroundColor: cardBg }]}>
           <Pressable
+            testID="view-toggle-timetable"
             style={[styles.modeBtn, viewMode === "timetable" && { backgroundColor: PRIMARY }]}
             onPress={switchToTimetable}
           >
@@ -424,6 +425,7 @@ export default function AdminBookingsScreen() {
             )}
           </Pressable>
           <Pressable
+            testID="view-toggle-list"
             style={[styles.modeBtn, viewMode === "list" && { backgroundColor: PRIMARY }]}
             onPress={() => setViewMode("list")}
           >
@@ -450,7 +452,7 @@ export default function AdminBookingsScreen() {
         /* ── Timetable view ── */
         <View style={[styles.gridCard, { backgroundColor: cardBg, borderColor }]}>
           <View style={[styles.gridDateBar, { borderBottomColor: borderColor }]}>
-            <Pressable style={styles.gridNavBtn} onPress={() => handleGridDateChange(-1)}>
+            <Pressable testID="grid-nav-prev" style={styles.gridNavBtn} onPress={() => handleGridDateChange(-1)}>
               <Ionicons name="chevron-back" size={18} color={PRIMARY} />
             </Pressable>
             <Pressable
@@ -467,7 +469,7 @@ export default function AdminBookingsScreen() {
                 </ThemedText>
               )}
             </Pressable>
-            <Pressable style={styles.gridNavBtn} onPress={() => handleGridDateChange(1)}>
+            <Pressable testID="grid-nav-next" style={styles.gridNavBtn} onPress={() => handleGridDateChange(1)}>
               <Ionicons name="chevron-forward" size={18} color={PRIMARY} />
             </Pressable>
           </View>
@@ -647,6 +649,7 @@ export default function AdminBookingsScreen() {
               <View style={styles.colAction}>
                 {!b.isCancelled && (
                   <Pressable
+                    accessibilityLabel="Cancel booking"
                     style={[
                       styles.rowActionBtn,
                       { backgroundColor: STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"] },

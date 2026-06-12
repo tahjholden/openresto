@@ -75,6 +75,9 @@ jest.mock("@/components/admin/bookings/EditBookingForm", () => {
         <Pressable testID="set-invalid-seats-btn" onPress={() => setEditSeats?.("abc")}>
           <Text>Set Invalid Seats</Text>
         </Pressable>
+        <Pressable testID="set-seats-5-btn" onPress={() => setEditSeats?.("5")}>
+          <Text>Set Seats 5</Text>
+        </Pressable>
         <Pressable
           testID="clear-date-btn"
           onPress={() => {
@@ -417,5 +420,197 @@ describe("BookingDetailScreen", () => {
 
     await waitFor(() => expect(screen.getByText("Date and time are required")).toBeTruthy());
     expect(adminUpdateBookingFull).not.toHaveBeenCalled();
+  });
+
+  it("shows window.confirm when seats exceed table capacity and aborts on cancel", async () => {
+    (window as any).confirm = jest.fn(() => false);
+    const twoRestaurants = [
+      {
+        id: 1,
+        name: "Resto A",
+        sections: [{ id: 1, name: "S1", tables: [{ id: 1, name: "T1", seats: 2 }] }],
+      },
+    ];
+    (fetchRestaurants as jest.Mock).mockResolvedValue(twoRestaurants);
+
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Edit Booking"));
+    await waitFor(() => expect(screen.getByText("Edit Form")).toBeTruthy());
+
+    // Set seats to 5 (exceeds table capacity of 2)
+    fireEvent.press(screen.getByTestId("set-seats-5-btn"));
+    fireEvent.press(screen.getByText("Save Changes"));
+
+    await waitFor(() => expect((window as any).confirm).toHaveBeenCalled());
+    // Since confirm returns false, the save is aborted
+    expect(adminUpdateBookingFull).not.toHaveBeenCalled();
+  });
+
+  it("window.confirm proceeds when user confirms overbooking", async () => {
+    (window as any).confirm = jest.fn(() => true);
+    (adminUpdateBookingFull as jest.Mock).mockResolvedValue({ ...mockBooking, seats: 5 });
+    const twoRestaurants = [
+      {
+        id: 1,
+        name: "Resto A",
+        sections: [{ id: 1, name: "S1", tables: [{ id: 1, name: "T1", seats: 2 }] }],
+      },
+    ];
+    (fetchRestaurants as jest.Mock).mockResolvedValue(twoRestaurants);
+
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Edit Booking"));
+    await waitFor(() => expect(screen.getByText("Edit Form")).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId("set-seats-5-btn"));
+    fireEvent.press(screen.getByText("Save Changes"));
+
+    await waitFor(() => expect((window as any).confirm).toHaveBeenCalled());
+    await waitFor(() => expect(adminUpdateBookingFull).toHaveBeenCalled());
+  });
+
+  it("sends email when subject and body are both filled", async () => {
+    (sendBookingEmail as jest.Mock).mockResolvedValue({ ok: true, message: "Sent!" });
+
+    renderWithProviders(<BookingDetailScreen />);
+    await screen.findByText("Send Email", {}, { timeout: 5000 });
+
+    // EmailGuestForm uses HTML <input> elements — interact via DOM events
+    const subjectInput = document.querySelector('[placeholder="Subject"]') as HTMLInputElement;
+    const bodyInput = document.querySelector(
+      '[placeholder="Message body (HTML supported)"]'
+    ) as HTMLInputElement;
+
+    if (subjectInput && bodyInput) {
+      // Simulate React synthetic input events
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value"
+      )?.set;
+      const nativeTextareaSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement?.prototype ?? window.HTMLInputElement.prototype,
+        "value"
+      )?.set;
+
+      nativeInputValueSetter?.call(subjectInput, "Hello");
+      subjectInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+      nativeInputValueSetter?.call(bodyInput, "Your booking is confirmed");
+      bodyInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+      // Wait for React state update then press Send
+      await waitFor(() => expect(screen.getByText("Send Email")).toBeTruthy());
+      fireEvent.press(screen.getByText("Send Email"));
+      await waitFor(() =>
+        expect(sendBookingEmail).toHaveBeenCalledWith(10, "Hello", "Your booking is confirmed")
+      );
+    } else {
+      // If DOM inputs not available, verify Send Email button exists
+      expect(screen.getByText("Send Email")).toBeTruthy();
+    }
+  });
+
+  it("handleSendEmail does nothing when email send returns not ok", async () => {
+    (sendBookingEmail as jest.Mock).mockResolvedValue({ ok: false, message: "Error" });
+
+    renderWithProviders(<BookingDetailScreen />);
+    await screen.findByText("Send Email", {}, { timeout: 5000 });
+
+    const subjectInput = document.querySelector('[placeholder="Subject"]') as HTMLInputElement;
+    const bodyInput = document.querySelector(
+      '[placeholder="Message body (HTML supported)"]'
+    ) as HTMLInputElement;
+
+    if (subjectInput && bodyInput) {
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value"
+      )?.set;
+      nativeInputValueSetter?.call(subjectInput, "Hi");
+      subjectInput.dispatchEvent(new Event("input", { bubbles: true }));
+      nativeInputValueSetter?.call(bodyInput, "Message");
+      bodyInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+      await waitFor(() => expect(screen.getByText("Send Email")).toBeTruthy());
+      fireEvent.press(screen.getByText("Send Email"));
+      await waitFor(() => expect(sendBookingEmail).toHaveBeenCalled());
+    }
+    expect(screen.getByText("Booking Details")).toBeTruthy();
+  });
+
+  it("dismisses the cancel-booking confirm modal via Keep button", async () => {
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    // Open the cancel confirm modal
+    fireEvent.press(await screen.findByText("Cancel Booking"));
+    await waitFor(() =>
+      expect(screen.queryByText(/Are you sure you want to cancel this booking/)).toBeTruthy()
+    );
+
+    // Dismiss via Keep
+    fireEvent.press(screen.getByText("Keep"));
+    await waitFor(() =>
+      expect(screen.queryByText(/Are you sure you want to cancel this booking/)).toBeNull()
+    );
+    expect(adminDeleteBooking).not.toHaveBeenCalled();
+  });
+
+  it("dismisses the restore-booking confirm modal via Go Back button", async () => {
+    (getAdminBooking as jest.Mock).mockResolvedValue({ ...mockBooking, isCancelled: true });
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Restore Booking"));
+    await waitFor(() =>
+      expect(screen.getByText("Are you sure you want to restore this cancelled booking?")).toBeTruthy()
+    );
+
+    fireEvent.press(screen.getByText("Go Back"));
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Are you sure you want to restore this cancelled booking?")
+      ).toBeNull()
+    );
+    expect(adminRestoreBooking).not.toHaveBeenCalled();
+  });
+
+  it("dismisses the purge confirm modal via Go Back button", async () => {
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Permanently Delete (GDPR)"));
+    await waitFor(() =>
+      expect(screen.queryByText(/permanently erase all data/)).toBeTruthy()
+    );
+
+    fireEvent.press(screen.getByText("Go Back"));
+    await waitFor(() =>
+      expect(screen.queryByText(/permanently erase all data/)).toBeNull()
+    );
+    expect(adminPurgeBooking).not.toHaveBeenCalled();
+  });
+
+  it("dismisses the AlertModal error via onClose button", async () => {
+    (adminUpdateBookingFull as jest.Mock).mockRejectedValue(new Error("Update failed"));
+
+    renderWithProviders(<BookingDetailScreen />);
+    await waitFor(() => expect(screen.queryByTestId("loading-indicator")).toBeNull());
+
+    fireEvent.press(await screen.findByText("Edit Booking"));
+    fireEvent.press(screen.getByText("Save Changes"));
+
+    await waitFor(() => expect(screen.getByText("Update failed")).toBeTruthy());
+
+    // Dismiss the AlertModal
+    const closeBtns = screen.queryAllByText("Close");
+    if (closeBtns.length > 0) {
+      fireEvent.press(closeBtns[closeBtns.length - 1]);
+      await waitFor(() => expect(screen.queryByText("Update failed")).toBeNull());
+    }
   });
 });

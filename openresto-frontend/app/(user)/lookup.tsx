@@ -367,13 +367,13 @@ function BookingActions({
         <View style={styles.iconGroup}>
           <ThemedText style={[styles.iconGroupLabel, { color: colors.muted }]}>CAL</ThemedText>
           <View style={styles.iconGroupRow}>
-            <Pressable style={styles.iconBtn} onPress={() => window.open(googleUrl, "_blank")}>
+            <Pressable testID="cal-google-btn" style={styles.iconBtn} onPress={() => window.open(googleUrl, "_blank")}>
               <Ionicons name="logo-google" size={18} color={primaryColor} />
             </Pressable>
-            <Pressable style={styles.iconBtn} onPress={() => window.open(outlookUrl, "_blank")}>
+            <Pressable testID="cal-outlook-btn" style={styles.iconBtn} onPress={() => window.open(outlookUrl, "_blank")}>
               <Ionicons name="calendar-outline" size={18} color={primaryColor} />
             </Pressable>
-            <Pressable style={styles.iconBtn} onPress={downloadIcs}>
+            <Pressable testID="cal-ics-btn" style={styles.iconBtn} onPress={downloadIcs}>
               <Ionicons name="download-outline" size={18} color={colors.muted} />
             </Pressable>
           </View>
@@ -385,6 +385,7 @@ function BookingActions({
               <ThemedText style={[styles.iconGroupLabel, { color: colors.muted }]}>MAPS</ThemedText>
               <View style={styles.iconGroupRow}>
                 <Pressable
+                  testID="maps-google-btn-narrow"
                   style={styles.iconBtn}
                   onPress={() =>
                     Linking.openURL(
@@ -395,6 +396,7 @@ function BookingActions({
                   <Ionicons name="navigate-outline" size={18} color={colors.muted} />
                 </Pressable>
                 <Pressable
+                  testID="maps-apple-btn-narrow"
                   style={styles.iconBtn}
                   onPress={() =>
                     Linking.openURL(

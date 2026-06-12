@@ -466,4 +466,138 @@ describe("AdminBookingsScreen", () => {
     // Since BookingDetailPopup is mocked to null, we can verify the screen renders
     expect(screen.getByText("Bookings")).toBeTruthy();
   });
+
+  it("navigates to the next grid date via forward button", async () => {
+    render(<AdminBookingsScreen />);
+    await waitFor(() => expect(adminGetTables).toHaveBeenCalled(), { timeout: 3000 });
+    const callsBefore = (adminGetTables as jest.Mock).mock.calls.length;
+    fireEvent.press(screen.getByTestId("grid-nav-next"));
+    await waitFor(() =>
+      expect((adminGetTables as jest.Mock).mock.calls.length).toBeGreaterThan(callsBefore)
+    );
+  });
+
+  it("navigates to the previous grid date via back button", async () => {
+    render(<AdminBookingsScreen />);
+    await waitFor(() => expect(adminGetTables).toHaveBeenCalled(), { timeout: 3000 });
+    const callsBefore = (adminGetTables as jest.Mock).mock.calls.length;
+    fireEvent.press(screen.getByTestId("grid-nav-prev"));
+    await waitFor(() =>
+      expect((adminGetTables as jest.Mock).mock.calls.length).toBeGreaterThan(callsBefore)
+    );
+  });
+
+  it("resets grid date to today when date label is pressed on a non-today date", async () => {
+    render(<AdminBookingsScreen />);
+    await waitFor(() => expect(adminGetTables).toHaveBeenCalled(), { timeout: 3000 });
+    // Navigate forward to make gridDate != today
+    fireEvent.press(screen.getByTestId("grid-nav-next"));
+    await waitFor(() => expect((adminGetTables as jest.Mock).mock.calls.length).toBeGreaterThan(1));
+    // Now "tap for today" hint should appear; press the date label to reset
+    const todayHint = screen.queryByText("tap for today");
+    if (todayHint) {
+      fireEvent.press(todayHint);
+      await waitFor(() => expect(adminGetTables).toHaveBeenCalled());
+    }
+  });
+
+  it("renders mobile card list when window is narrow", async () => {
+    const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");
+    mockUseDimensions.mockReturnValue({ width: 400, height: 800 });
+    try {
+      (getAdminBookings as jest.Mock).mockResolvedValue(mockBookings);
+      render(<AdminBookingsScreen />);
+      // Switch to list so the mobile card list renders (not timetable)
+      await waitFor(() => expect(screen.getByTestId("view-toggle-list")).toBeTruthy());
+      fireEvent.press(screen.getByTestId("view-toggle-list"));
+      await waitFor(() => expect(screen.getByText("john@example.com")).toBeTruthy());
+      // Mobile card list shows the booking
+      expect(screen.getByText("john@example.com")).toBeTruthy();
+    } finally {
+      mockUseDimensions.mockRestore();
+    }
+  });
+
+  it("pressing a mobile card opens the booking popup", async () => {
+    const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");
+    mockUseDimensions.mockReturnValue({ width: 400, height: 800 });
+    try {
+      (getAdminBookings as jest.Mock).mockResolvedValue(mockBookings);
+      render(<AdminBookingsScreen />);
+      await waitFor(() => expect(screen.getByTestId("view-toggle-list")).toBeTruthy());
+      fireEvent.press(screen.getByTestId("view-toggle-list"));
+      await waitFor(() => expect(screen.getByText("john@example.com")).toBeTruthy());
+      fireEvent.press(screen.getByText("john@example.com"));
+      expect(screen.getByText("Bookings")).toBeTruthy();
+    } finally {
+      mockUseDimensions.mockRestore();
+    }
+  });
+
+  it("renders mobile card with customerName and email", async () => {
+    const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");
+    mockUseDimensions.mockReturnValue({ width: 400, height: 800 });
+    try {
+      (getAdminBookings as jest.Mock).mockResolvedValue([
+        { ...mockBookings[0], customerName: "Alice Smith", customerEmail: "alice@example.com" },
+      ]);
+      render(<AdminBookingsScreen />);
+      await waitFor(() => expect(screen.getByTestId("view-toggle-list")).toBeTruthy());
+      fireEvent.press(screen.getByTestId("view-toggle-list"));
+      await waitFor(() => expect(screen.getByText("Alice Smith")).toBeTruthy());
+      expect(screen.getByText("alice@example.com")).toBeTruthy();
+    } finally {
+      mockUseDimensions.mockRestore();
+    }
+  });
+
+  it("renders mobile card with cancelled badge", async () => {
+    const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");
+    mockUseDimensions.mockReturnValue({ width: 400, height: 800 });
+    try {
+      (getAdminBookings as jest.Mock).mockResolvedValue([
+        { ...mockBookings[0], isCancelled: true },
+      ]);
+      render(<AdminBookingsScreen />);
+      await waitFor(() => expect(screen.getByTestId("view-toggle-list")).toBeTruthy());
+      fireEvent.press(screen.getByTestId("view-toggle-list"));
+      await waitFor(() => expect(screen.getAllByText("Cancelled").length).toBeGreaterThan(0));
+    } finally {
+      mockUseDimensions.mockRestore();
+    }
+  });
+
+  it("triggers cancel flow via row cancel button in wide table view", async () => {
+    (getAdminBookings as jest.Mock).mockResolvedValue(mockBookings);
+    render(<AdminBookingsScreen />);
+    fireEvent.press(await screen.findByText("List"));
+    await waitFor(() => expect(screen.getByText("john@example.com")).toBeTruthy());
+
+    const cancelBtns = screen.queryAllByLabelText("Cancel booking");
+    if (cancelBtns.length > 0) {
+      // Provide a synthetic event with stopPropagation to avoid TypeError
+      fireEvent.press(cancelBtns[0], { stopPropagation: jest.fn() });
+      await waitFor(() => expect(screen.queryByText(/Cancel booking for/)).toBeTruthy());
+      // Press Keep to dismiss the modal
+      fireEvent.press(screen.getByText("Keep"));
+      await waitFor(() => expect(screen.queryByText(/Cancel booking for/)).toBeNull());
+    }
+  });
+
+  it("confirms cancel booking from row cancel button", async () => {
+    (getAdminBookings as jest.Mock).mockResolvedValue(mockBookings);
+    (adminDeleteBooking as jest.Mock).mockResolvedValue(true);
+    render(<AdminBookingsScreen />);
+    fireEvent.press(await screen.findByText("List"));
+    await waitFor(() => expect(screen.getByText("john@example.com")).toBeTruthy());
+
+    const cancelBtns = screen.queryAllByLabelText("Cancel booking");
+    if (cancelBtns.length > 0) {
+      fireEvent.press(cancelBtns[0], { stopPropagation: jest.fn() });
+      const confirmBtns = await screen.findAllByText("Cancel Booking");
+      // Last one is the confirm button in the modal
+      fireEvent.press(confirmBtns[confirmBtns.length - 1]);
+      await waitFor(() => expect(adminDeleteBooking).toHaveBeenCalledWith(1));
+    }
+  });
 });

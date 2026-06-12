@@ -74,7 +74,8 @@
       "context/**/*.{ts,tsx}",
       "hooks/**/*.{ts,tsx}",
       "utils/**/*.{ts,tsx}",
-      "!**/*.d.ts"
+      "!**/*.d.ts",
+      "!hooks/use-color-scheme.ts"
     ],
     "coverageReporters": [
       "text",

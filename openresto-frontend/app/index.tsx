@@ -88,31 +88,44 @@ export default function HomeScreen() {
             {
               backgroundColor: surface,
               borderBottomColor: border,
-              ...(Platform.OS === "web" &&
-                (hasHero
-                  ? ({
-                      backgroundImage: `url(${brand.headerImageUrl})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center top",
-                    } as object)
-                  : ({
-                      background: isDark
-                        ? `radial-gradient(80% 90% at 90% 10%, ${accentSoft}, transparent 60%), radial-gradient(60% 80% at 10% 100%, rgba(${accentR},${accentG},${accentB},0.12), transparent 60%), linear-gradient(180deg, ${surface} 0%, ${bg} 100%)`
-                        : `radial-gradient(80% 90% at 90% 10%, ${accentSoft}, transparent 60%), linear-gradient(180deg, ${surface} 0%, ${bg} 100%)`,
-                    } as object))),
+              ...(!hasHero &&
+                Platform.OS === "web" &&
+                ({
+                  background: isDark
+                    ? `radial-gradient(80% 90% at 90% 10%, ${accentSoft}, transparent 60%), radial-gradient(60% 80% at 10% 100%, rgba(${accentR},${accentG},${accentB},0.12), transparent 60%), linear-gradient(180deg, ${surface} 0%, ${bg} 100%)`
+                    : `radial-gradient(80% 90% at 90% 10%, ${accentSoft}, transparent 60%), linear-gradient(180deg, ${surface} 0%, ${bg} 100%)`,
+                } as object)),
             },
           ]}
         >
           {hasHero && (
-            <View
-              style={[
-                { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-                {
-                  background: `linear-gradient(160deg, rgba(${accentR},${accentG},${accentB},0.30) 0%, rgba(0,0,0,0.40) 100%)`,
-                } as object,
-              ]}
-              pointerEvents="none"
-            />
+            <>
+              <img
+                src={brand.headerImageUrl!}
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: "center",
+                  pointerEvents: "none",
+                }}
+              />
+              <View
+                style={[
+                  { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
+                  {
+                    background: `linear-gradient(160deg, rgba(${accentR},${accentG},${accentB},0.30) 0%, rgba(0,0,0,0.40) 100%)`,
+                  } as object,
+                ]}
+                pointerEvents="none"
+              />
+            </>
           )}
           <View style={[styles.heroInner, isMobile && { paddingHorizontal: 20 }]}>
             <View

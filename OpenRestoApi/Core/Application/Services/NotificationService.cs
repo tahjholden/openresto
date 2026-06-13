@@ -28,7 +28,7 @@ public class NotificationService(AppDbContext db) : INotificationService
         await _db.SaveChangesAsync();
 
         // TODO: send Web Push to all AdminPushSubscription rows for this RestaurantId
-        // 1. dotnet add package WebPush
+        // 1. dotnet add package WebPush - done
         // 2. Add VapidPublicKey + VapidPrivateKey + VapidSubject to appsettings (generate with WebPushClient.GenerateVapidKeys())
         // 3. Inject IConfiguration, loop _db.AdminPushSubscriptions.Where(s => s.RestaurantId == ...), call WebPushClient.SendNotificationAsync
     }

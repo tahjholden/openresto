@@ -34,6 +34,12 @@ const NAV_ITEMS = [
     icon: "notifications-outline" as const,
     href: "/(admin)/notifications" as const,
     match: (p: string) => p === "/notifications",
+
+    notifications page should have the following
+    - list of notifications with pagination
+    - Filter by restaurant
+    - Filter by type of notification (booking created, ooking cancelled, restaurant full, etc)
+    etc etc
   },
   */
   {

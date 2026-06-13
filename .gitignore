@@ -30,6 +30,9 @@ Thumbs.db
 # env files
 *.env
 
+# Local secrets (never commit)
+**/appsettings.Local.json
+
 # Claude Code local settings
 .claude/settings.local.json
 

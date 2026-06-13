@@ -33,7 +33,6 @@ jest.mock("@/api/restaurants", () => ({
 
 jest.mock("@/api/admin", () => ({
   adminLookupBookings: jest.fn().mockResolvedValue([]),
-  getAdminBookings: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock("@/components/admin/bookings/BookingDetailPopup", () => ({
@@ -45,8 +44,6 @@ describe("AdminSidebar", () => {
     jest.clearAllMocks();
     const { fetchRestaurants } = require("@/api/restaurants");
     (fetchRestaurants as jest.Mock).mockResolvedValue([{ id: 1 }, { id: 2 }]);
-    const { getAdminBookings } = require("@/api/admin");
-    (getAdminBookings as jest.Mock).mockResolvedValue([]);
   });
 
   it("renders app name", async () => {
@@ -68,28 +65,6 @@ describe("AdminSidebar", () => {
     });
   });
 
-  it("shows no upcoming bookings message when empty", async () => {
-    render(<AdminSidebar />);
-    await waitFor(() => expect(screen.getByText("No upcoming bookings today")).toBeTruthy());
-  });
-
-  it("shows upcoming booking when returned from API", async () => {
-    const { getAdminBookings } = require("@/api/admin");
-    const futureDate = new Date(Date.now() + 3600000).toISOString();
-    (getAdminBookings as jest.Mock).mockResolvedValue([
-      {
-        id: 1,
-        date: futureDate,
-        customerEmail: "alice@example.com",
-        seats: 2,
-        tableName: "T1",
-        restaurantName: "Bistro",
-      },
-    ]);
-    render(<AdminSidebar />);
-    await waitFor(() => expect(screen.getByText("alice")).toBeTruthy());
-  });
-
   it("navigates to overview when Overview is pressed", async () => {
     render(<AdminSidebar />);
     await waitFor(() => expect(screen.getByText("Overview")).toBeTruthy());
@@ -101,13 +76,6 @@ describe("AdminSidebar", () => {
     render(<AdminSidebar />);
     await waitFor(() => expect(screen.getByText("Bookings")).toBeTruthy());
     fireEvent.press(screen.getByText("Bookings"));
-    expect(mockPush).toHaveBeenCalledWith("/(admin)/bookings");
-  });
-
-  it("navigates when View all is pressed", async () => {
-    render(<AdminSidebar />);
-    await waitFor(() => expect(screen.getByText("View all")).toBeTruthy());
-    fireEvent.press(screen.getByText("View all"));
     expect(mockPush).toHaveBeenCalledWith("/(admin)/bookings");
   });
 

@@ -184,6 +184,11 @@ public static class ServiceCollectionExtensions
         services.AddOptions<OpenRestoApi.Core.Application.Settings.VapidSettings>()
                 .BindConfiguration("Vapid");
 
+        services.AddSingleton<OpenRestoApi.Infrastructure.Notifications.NotificationQueue>();
+        services.AddSingleton<INotificationQueue>(sp =>
+            sp.GetRequiredService<OpenRestoApi.Infrastructure.Notifications.NotificationQueue>());
+        services.AddHostedService<OpenRestoApi.Infrastructure.Notifications.NotificationWorker>();
+
         services.AddSession(options =>
         {
             options.IdleTimeout = TimeSpan.FromSeconds(10);

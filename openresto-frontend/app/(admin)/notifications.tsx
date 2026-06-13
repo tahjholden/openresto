@@ -460,6 +460,17 @@ export default function NotificationsScreen() {
     showToast(`Deleted ${idsToDelete.length} notification${idsToDelete.length !== 1 ? "s" : ""}`);
   };
 
+  // On web, only allow swipe-to-delete for touch pointers (not mouse drags).
+  // The Pointer Events API exposes pointerType ("mouse" | "touch" | "pen") on every
+  // pointerdown event — we capture it in the capture phase before RNGH sees the event.
+  const [webTouchActive, setWebTouchActive] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const fn = (e: PointerEvent) => setWebTouchActive(e.pointerType === "touch");
+    document.addEventListener("pointerdown", fn, true);
+    return () => document.removeEventListener("pointerdown", fn, true);
+  }, []);
+
   const [clearingRead, setClearingRead] = useState(false);
   const handleClearRead = async () => {
     // Pinned items are immune to bulk clear
@@ -509,7 +520,7 @@ export default function NotificationsScreen() {
         friction={2}
         leftThreshold={64}
         rightThreshold={64}
-        enabled={!isPinned}
+        enabled={(Platform.OS !== "web" || webTouchActive) && !isPinned}
         renderLeftActions={() => (
           <View style={styles.swipeDeleteBg}>
             <Ionicons name="trash-outline" size={20} color="#fff" />
@@ -572,14 +583,15 @@ export default function NotificationsScreen() {
               style={[
                 styles.actionPinBtn,
                 {
-                  borderColor: isPinned ? primaryColor : borderColor,
-                  backgroundColor: isPinned ? hexToRgba(primaryColor, 0.1) : "transparent",
+                  backgroundColor: isPinned
+                    ? primaryColor
+                    : isDark
+                      ? "rgba(255,255,255,0.08)"
+                      : "rgba(0,0,0,0.06)",
                 },
               ]}
             >
-              <ThemedText
-                style={[styles.actionText, { color: isPinned ? primaryColor : mutedColor }]}
-              >
+              <ThemedText style={[styles.actionText, { color: isPinned ? "#fff" : mutedColor }]}>
                 {isPinned ? "Unpin" : "Pin"}
               </ThemedText>
             </Pressable>
@@ -587,7 +599,12 @@ export default function NotificationsScreen() {
               <Pressable
                 onPress={() => handleMarkUnread(n.id)}
                 hitSlop={6}
-                style={[styles.actionToggleBtn, { borderColor }]}
+                style={[
+                  styles.actionToggleBtn,
+                  {
+                    backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                  },
+                ]}
               >
                 <ThemedText style={[styles.actionText, { color: mutedColor }]}>
                   Mark Unread
@@ -597,7 +614,12 @@ export default function NotificationsScreen() {
               <Pressable
                 onPress={() => handleMarkRead(n.id)}
                 hitSlop={6}
-                style={[styles.actionToggleBtn, { borderColor }]}
+                style={[
+                  styles.actionToggleBtn,
+                  {
+                    backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                  },
+                ]}
               >
                 <ThemedText style={[styles.actionText, { color: mutedColor }]}>
                   Mark Read
@@ -607,14 +629,7 @@ export default function NotificationsScreen() {
             <Pressable
               onPress={() => requestDelete(n.id)}
               hitSlop={6}
-              style={[
-                styles.actionDeleteBtn,
-                {
-                  borderColor: isDark
-                    ? hexToRgba(COLORS.error, 0.35)
-                    : hexToRgba(COLORS.error, 0.25),
-                },
-              ]}
+              style={[styles.actionDeleteBtn, { backgroundColor: hexToRgba(COLORS.error, 0.12) }]}
             >
               <Ionicons name="trash-outline" size={13} color={COLORS.error} />
             </Pressable>
@@ -656,41 +671,47 @@ export default function NotificationsScreen() {
                 style={[
                   styles.markAllBtn,
                   {
-                    borderColor: hexToRgba(COLORS.error, 0.45),
+                    backgroundColor: COLORS.error,
                     opacity: items.length === 0 ? 0.35 : 1,
                   },
                 ]}
               >
                 {deletingAll ? (
-                  <ActivityIndicator size="small" color={COLORS.error} />
+                  <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+                  <Ionicons name="trash-outline" size={16} color="#fff" />
                 )}
-                <ThemedText style={[styles.markAllText, { color: COLORS.error }]}>
+                <ThemedText style={[styles.markAllText, { color: "#fff" }]}>
                   {deletingAll ? "Deleting…" : "Delete all"}
                 </ThemedText>
               </Pressable>
 
-              {/* Clear read — only shown when there are unpinned read items */}
-              {items.some((x) => x.isRead && !pinnedIds.has(x.id)) && (
-                <Pressable
-                  onPress={handleClearRead}
-                  disabled={clearingRead}
-                  style={[
-                    styles.markAllBtn,
-                    { borderColor: hexToRgba(COLORS.error, 0.45), opacity: clearingRead ? 0.5 : 1 },
-                  ]}
-                >
-                  {clearingRead ? (
-                    <ActivityIndicator size="small" color={COLORS.error} />
-                  ) : (
-                    <Ionicons name="checkmark-circle-outline" size={16} color={COLORS.error} />
-                  )}
-                  <ThemedText style={[styles.markAllText, { color: COLORS.error }]}>
-                    {clearingRead ? "Clearing…" : "Clear read"}
-                  </ThemedText>
-                </Pressable>
-              )}
+              {/* Clear read */}
+              {(() => {
+                const hasRead = items.some((x) => x.isRead && !pinnedIds.has(x.id));
+                return (
+                  <Pressable
+                    onPress={handleClearRead}
+                    disabled={clearingRead || !hasRead}
+                    style={[
+                      styles.markAllBtn,
+                      {
+                        backgroundColor: COLORS.error,
+                        opacity: !hasRead || clearingRead ? 0.35 : 1,
+                      },
+                    ]}
+                  >
+                    {clearingRead ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
+                    )}
+                    <ThemedText style={[styles.markAllText, { color: "#fff" }]}>
+                      {clearingRead ? "Clearing…" : "Clear read"}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })()}
 
               {/* Mark all read — dimmed when nothing to mark */}
               <Pressable
@@ -699,17 +720,17 @@ export default function NotificationsScreen() {
                 style={[
                   styles.markAllBtn,
                   {
-                    borderColor: hexToRgba(primaryColor, 0.4),
+                    backgroundColor: primaryColor,
                     opacity: unreadCount === 0 ? 0.35 : 1,
                   },
                 ]}
               >
                 {markingAll ? (
-                  <ActivityIndicator size="small" color={primaryColor} />
+                  <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Ionicons name="checkmark-done-outline" size={16} color={primaryColor} />
+                  <Ionicons name="checkmark-done-outline" size={16} color="#fff" />
                 )}
-                <ThemedText style={[styles.markAllText, { color: primaryColor }]}>
+                <ThemedText style={[styles.markAllText, { color: "#fff" }]}>
                   {markingAll ? "Marking…" : "Mark all read"}
                 </ThemedText>
               </Pressable>
@@ -992,7 +1013,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
     minHeight: 44,
   },
   markAllText: {
@@ -1109,7 +1129,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     minHeight: 30,
@@ -1119,7 +1138,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     minHeight: 30,
@@ -1129,7 +1147,6 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -253,8 +253,7 @@ public class NotificationService(AppDbContext db, IOptions<VapidSettings> vapidO
                 UserAgent = request.UserAgent,
                 CreatedAt = DateTime.UtcNow,
             });
-            _log.LogInformation("[Push] New subscription for restaurant {RestaurantId} endpoint={Endpoint}",
-                restaurantId, request.Endpoint[..Math.Min(60, request.Endpoint.Length)] + "…");
+            _log.LogInformation("[Push] New subscription for restaurant {RestaurantId}", restaurantId);
         }
         await _db.SaveChangesAsync();
     }
@@ -270,13 +269,11 @@ public class NotificationService(AppDbContext db, IOptions<VapidSettings> vapidO
         {
             _db.AdminPushSubscriptions.RemoveRange(subs);
             await _db.SaveChangesAsync();
-            _log.LogInformation("[Push] Unsubscribed {Count} subscription(s) for endpoint={Endpoint}",
-                subs.Count, endpoint[..Math.Min(60, endpoint.Length)] + "…");
+            _log.LogInformation("[Push] Unsubscribed {Count} subscription(s)", subs.Count);
         }
         else
         {
-            _log.LogWarning("[Push] Unsubscribe called but no subscription found for endpoint={Endpoint}",
-                endpoint[..Math.Min(60, endpoint.Length)] + "…");
+            _log.LogWarning("[Push] Unsubscribe called but no matching subscription found");
         }
     }
 

@@ -289,6 +289,26 @@ public static partial class DatabaseExtensions
                 }
             }
 
+            // Flush any WAL frames left by a previous abrupt shutdown (e.g. dotnet watch restart).
+            // Runs before Migrate() so the schema it sees is fully consistent.
+            if (db.Database.CanConnect())
+            {
+                try { db.Database.ExecuteSqlRaw("PRAGMA wal_checkpoint(TRUNCATE)"); }
+                catch { /* non-fatal */ }
+            }
+
+            // Checkpoint WAL on graceful shutdown so the next dotnet watch restart finds a clean slate.
+            app.Lifetime.ApplicationStopping.Register(() =>
+            {
+                try
+                {
+                    using IServiceScope stopScope = app.Services.CreateScope();
+                    AppDbContext stopDb = stopScope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    stopDb.Database.ExecuteSqlRaw("PRAGMA wal_checkpoint(TRUNCATE)");
+                }
+                catch { /* best-effort */ }
+            });
+
             // Squash migration history: if the DB still has the old incremental migration IDs
             // (from before the consolidation into InitialCreate), replace them all with the
             // single consolidated migration so EF doesn't try to CREATE already-existing tables.

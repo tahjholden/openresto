@@ -6,11 +6,11 @@ using OpenRestoApi.Infrastructure.Persistence;
 
 namespace OpenRestoApi.Core.Application.Services;
 
-public class AdminService(AppDbContext db, IHoldService holdService, INotificationService? notificationService = null)
+public class AdminService(AppDbContext db, IHoldService holdService, INotificationQueue? notificationQueue = null)
 {
     private readonly AppDbContext _db = db;
     private readonly IHoldService _holdService = holdService;
-    private readonly INotificationService? _notificationService = notificationService;
+    private readonly INotificationQueue? _notificationQueue = notificationQueue;
 
     private static string NormalizeStatus(string status) => status.ToLowerInvariant() switch
     {
@@ -261,14 +261,10 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
         await _db.Entry(booking).Reference(b => b.Section).LoadAsync();
         await _db.Entry(booking).Reference(b => b.Restaurant).LoadAsync();
 
-        if (_notificationService != null)
+        if (_notificationQueue != null)
         {
-            try
-            {
-                await _notificationService.NotifyBookingCreatedAsync(booking, booking.Restaurant!.Name);
-                await _notificationService.CheckAndNotifyCapacityAsync(booking.RestaurantId, booking.Restaurant!.Name, booking.Date);
-            }
-            catch (Exception ex) { Console.WriteLine($"[AdminService] Notification failed for ref {booking.BookingRef}: {ex.Message}"); }
+            _notificationQueue.EnqueueBookingCreated(booking, booking.Restaurant!.Name);
+            _notificationQueue.EnqueueCapacityCheck(booking.RestaurantId, booking.Restaurant!.Name, booking.Date);
         }
 
         return ToDetailDto(booking);
@@ -304,14 +300,10 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
         booking.CancelledAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
-        if (_notificationService != null)
+        if (_notificationQueue != null)
         {
-            try
-            {
-                await _db.Entry(booking).Reference(b => b.Restaurant).LoadAsync();
-                await _notificationService.NotifyBookingCancelledAsync(booking, booking.Restaurant?.Name ?? "");
-            }
-            catch (Exception ex) { Console.WriteLine($"[AdminService] Notification failed for booking {id}: {ex.Message}"); }
+            await _db.Entry(booking).Reference(b => b.Restaurant).LoadAsync();
+            _notificationQueue.EnqueueBookingCancelled(booking, booking.Restaurant?.Name ?? "");
         }
 
         return true;

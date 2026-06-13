@@ -8,5 +8,8 @@
       "Bash(python -c ' *)",
       "Read(//c/Users/karan/AppData/Local/Temp/**)"
     ]
+  },
+  "enabledPlugins": {
+    "expo@claude-plugins-official": true
   }
 }

@@ -18,7 +18,7 @@ public class BookingService(
     EmailSettingsService? emailSettingsService = null,
     IEmailService? emailService = null,
     AppDbContext? db = null,
-    INotificationService? notificationService = null)
+    INotificationQueue? notificationQueue = null)
 {
     private readonly IBookingRepository _bookingRepository = bookingRepository;
     private readonly ITableRepository _tableRepository = tableRepository;
@@ -30,7 +30,7 @@ public class BookingService(
     private readonly EmailSettingsService? _emailSettingsService = emailSettingsService;
     private readonly IEmailService? _emailService = emailService;
     private readonly AppDbContext? _db = db;
-    private readonly INotificationService? _notificationService = notificationService;
+    private readonly INotificationQueue? _notificationQueue = notificationQueue;
 
     /// <summary>
     /// Creates a booking after validating:
@@ -118,15 +118,11 @@ public class BookingService(
             _holdService.ReleaseHold(bookingDto.HoldId);
         }
 
-        // 6. Admin push notification (best-effort)
-        if (_notificationService != null)
+        // 6. Admin push notification (fire-and-forget via background queue)
+        if (_notificationQueue != null)
         {
-            try
-            {
-                await _notificationService.NotifyBookingCreatedAsync(newBooking, restaurant.Name);
-                await _notificationService.CheckAndNotifyCapacityAsync(restaurant.Id, restaurant.Name, newBooking.Date);
-            }
-            catch (Exception ex) { Console.WriteLine($"[BookingService] Notification failed for ref {newBooking.BookingRef}: {ex.Message}"); }
+            _notificationQueue.EnqueueBookingCreated(newBooking, restaurant.Name);
+            _notificationQueue.EnqueueCapacityCheck(restaurant.Id, restaurant.Name, newBooking.Date);
         }
 
         // 7. Send booking confirmation email (best-effort, never fails the booking)
@@ -356,14 +352,10 @@ public class BookingService(
         booking.CancelledAt = DateTime.UtcNow;
         await _bookingRepository.UpdateAsync(booking);
 
-        if (_notificationService != null)
+        if (_notificationQueue != null)
         {
-            try
-            {
-                Restaurant? restaurant = await _restaurantRepository.GetByIdAsync(booking.RestaurantId);
-                await _notificationService.NotifyBookingCancelledAsync(booking, restaurant?.Name ?? "");
-            }
-            catch (Exception ex) { Console.WriteLine($"[BookingService] Notification failed for ref {booking.BookingRef}: {ex.Message}"); }
+            Restaurant? restaurant = await _restaurantRepository.GetByIdAsync(booking.RestaurantId);
+            _notificationQueue.EnqueueBookingCancelled(booking, restaurant?.Name ?? "");
         }
 
         return true;

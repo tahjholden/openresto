@@ -155,8 +155,14 @@ export default function AdminLocationsScreen() {
   const [addingLocation, setAddingLocation] = useState(false);
   const [newLocationName, setNewLocationName] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
-  const [locationExpanded, setLocationExpanded] = usePersistedState("locations:location:expanded", true);
-  const [dangerZoneExpanded, setDangerZoneExpanded] = usePersistedState("locations:danger:expanded", false);
+  const [locationExpanded, setLocationExpanded] = usePersistedState(
+    "locations:location:expanded",
+    true
+  );
+  const [dangerZoneExpanded, setDangerZoneExpanded] = usePersistedState(
+    "locations:danger:expanded",
+    false
+  );
   const [dangerSelectedId, setDangerSelectedId] = useState<number | null>(null);
   const [deleteStep, setDeleteStep] = useState<"idle" | "confirm">("idle");
   const [deleting, setDeleting] = useState(false);

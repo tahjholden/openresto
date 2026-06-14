@@ -8,6 +8,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { hexToRgba } from "@/utils/colors";
 import { getVapidPublicKey, subscribePush, unsubscribePush } from "@/api/notifications";
 import { fetchRestaurants } from "@/api/restaurants";
+import { AnimatedAccordion } from "@/components/common/AnimatedAccordion";
 import { styles } from "./settings.styles";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
@@ -178,8 +179,8 @@ export function PushNotificationsCard() {
         )}
       </Pressable>
 
-      {expanded && pushState !== "loading" && (
-        <View style={[styles.secForm, { borderTopColor: borderColor }]}>
+      <AnimatedAccordion expanded={expanded}>
+        {pushState !== "loading" && (<View style={[styles.secForm, { borderTopColor: borderColor }]}>
           {isUnconfigured ? (
             <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
               <Ionicons
@@ -264,8 +265,8 @@ export function PushNotificationsCard() {
               </Pressable>
             </View>
           )}
-        </View>
-      )}
+        </View>)}
+      </AnimatedAccordion>
     </View>
   );
 }

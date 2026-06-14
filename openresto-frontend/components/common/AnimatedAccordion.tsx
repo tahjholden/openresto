@@ -9,14 +9,26 @@ export function AnimatedAccordion({
   children: ReactNode;
 }) {
   const [anim] = useState(() => new Animated.Value(expanded ? 1 : 0));
+  const [mounted, setMounted] = useState(expanded);
 
   useEffect(() => {
-    Animated.timing(anim, {
-      toValue: expanded ? 1 : 0,
-      duration: 180,
-      useNativeDriver: false,
-    }).start();
+    if (expanded) {
+      setMounted(true);
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: false,
+      }).start();
+    } else {
+      Animated.timing(anim, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: false,
+      }).start(() => setMounted(false));
+    }
   }, [expanded, anim]);
+
+  if (!mounted) return null;
 
   return (
     <Animated.View

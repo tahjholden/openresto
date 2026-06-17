@@ -67,7 +67,7 @@ public class BookingServiceTests
             TableId = 1,
             CustomerEmail = "guest@example.com",
             Seats = 2,
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc)
+            Date = DateTime.UtcNow.AddDays(7)
         };
 
         BookingDto result = await svc.CreateBookingAsync(dto);
@@ -91,7 +91,7 @@ public class BookingServiceTests
             TableId = 1,
             CustomerEmail = "guest@example.com",
             Seats = 2,
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc)
+            Date = DateTime.UtcNow.AddDays(7)
         };
 
         BookingDto result = await svc.CreateBookingAsync(dto);
@@ -116,7 +116,7 @@ public class BookingServiceTests
         db.SaveChanges();
 
         BookingService svc = CreateService(db);
-        var date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc);
+        var date = DateTime.UtcNow.AddDays(7);
 
         BookingDto a = await svc.CreateBookingAsync(new BookingDto
         { RestaurantId = 1, SectionId = 1, TableId = 1, CustomerEmail = "a@x.com", Seats = 2, Date = date });
@@ -140,7 +140,7 @@ public class BookingServiceTests
             TableId = 1,
             CustomerEmail = "first@example.com",
             Seats = 2,
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc)
+            Date = DateTime.UtcNow.AddDays(7)
         };
 
         await svc.CreateBookingAsync(dto);
@@ -152,7 +152,7 @@ public class BookingServiceTests
             TableId = 1,
             CustomerEmail = "second@example.com",
             Seats = 2,
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc)
+            Date = DateTime.UtcNow.AddDays(7)
         };
 
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -180,7 +180,7 @@ public class BookingServiceTests
             TableId = 1,
             CustomerEmail = "guest@example.com",
             Seats = 2,
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc)
+            Date = DateTime.UtcNow.AddDays(7)
         };
 
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -209,7 +209,7 @@ public class BookingServiceTests
             CustomerEmail = "guest@example.com",
             Seats = 2,
             HoldId = "my-hold-id",
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc)
+            Date = DateTime.UtcNow.AddDays(7)
         };
 
         await svc.CreateBookingAsync(dto);
@@ -231,7 +231,7 @@ public class BookingServiceTests
             TableId = 1,
             CustomerEmail = "guest@example.com",
             Seats = 2,
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc),
+            Date = DateTime.UtcNow.AddDays(7),
             SpecialRequests = "nut allergy"
         };
 
@@ -256,7 +256,7 @@ public class BookingServiceTests
             TableId = 1,
             CustomerEmail = "guest@example.com",
             Seats = 2,
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc)
+            Date = DateTime.UtcNow.AddDays(7)
         });
 
         BookingDto? result = await svc.GetBookingByIdAsync(created.Id);
@@ -292,7 +292,7 @@ public class BookingServiceTests
             TableId = 1,
             CustomerEmail = "guest@example.com",
             Seats = 2,
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc)
+            Date = DateTime.UtcNow.AddDays(7)
         });
 
         BookingDto? result = await svc.GetBookingByRefAsync(created.BookingRef!);
@@ -326,7 +326,7 @@ public class BookingServiceTests
         db.SaveChanges();
 
         BookingService svc = CreateService(db);
-        var date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc);
+        var date = DateTime.UtcNow.AddDays(7);
         await svc.CreateBookingAsync(new BookingDto
         { RestaurantId = 1, SectionId = 1, TableId = 1, CustomerEmail = "a@x.com", Seats = 2, Date = date });
         await svc.CreateBookingAsync(new BookingDto
@@ -354,7 +354,7 @@ public class BookingServiceTests
             TableId = 1,
             CustomerEmail = "guest@example.com",
             Seats = 2,
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc)
+            Date = DateTime.UtcNow.AddDays(7)
         });
 
         await svc.DeleteBookingAsync(created.Id);
@@ -378,7 +378,7 @@ public class BookingServiceTests
             TableId = 1,
             CustomerEmail = "guest@example.com",
             Seats = 5,
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc)
+            Date = DateTime.UtcNow.AddDays(7)
         };
 
         InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -401,7 +401,7 @@ public class BookingServiceTests
             TableId = 1,
             CustomerEmail = "guest@example.com",
             Seats = 4,
-            Date = new DateTime(2026, 6, 15, 19, 0, 0, DateTimeKind.Utc)
+            Date = DateTime.UtcNow.AddDays(7)
         };
 
         BookingDto result = await svc.CreateBookingAsync(dto);

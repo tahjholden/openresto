@@ -1,5 +1,7 @@
-# Use the official .NET SDK image to build the application
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+# Build stage — always runs on the native host platform so dotnet publish
+# doesn't run under QEMU emulation. The output is architecture-independent
+# IL; the aspnet runtime JIT-compiles it for the target CPU at startup.
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy the project file and restore dependencies

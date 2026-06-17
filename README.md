@@ -233,6 +233,25 @@ cd openresto-frontend && npm test -- --coverage
 - **Migration safety CI** — every PR that adds an EF Core migration generates SQL for both a fresh install and an upgrade from the previous state, applies both to SQLite, and asserts the schemas are identical. Catches migration bugs before they reach self-hosters.
 - **Multi-arch releases** — `linux/amd64` and `linux/arm64` images published to GHCR on every semver tag; Pi/NAS users get native binaries.
 
+## Cutting a release
+
+1. **Update `CHANGELOG.md`** — add a `## [x.y.z] - YYYY-MM-DD` section above `## [Unreleased]` and update the comparison links at the bottom of the file.
+
+2. **Merge to main** — all CI must be green before tagging.
+
+3. **Tag and push:**
+
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+4. **That's it.** The [`release.yml`](.github/workflows/release.yml) workflow triggers automatically and:
+   - Builds `linux/amd64` + `linux/arm64` Docker images for the backend, frontend, and nginx proxy
+   - Pushes them to GHCR as `ghcr.io/karanshukla/openresto-{backend,frontend,nginx}:v1.0.0` (and `:latest`)
+   - Creates a GitHub Release with the `[x.y.z]` section from `CHANGELOG.md` as the release notes
+   - Attaches a pinned `docker-compose.yml` (with the exact image tag baked in) as a downloadable release asset — this is what self-hosters download
+
 ## License
 
 MIT, do what you want with it

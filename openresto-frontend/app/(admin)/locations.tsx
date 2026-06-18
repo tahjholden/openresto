@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, ScrollView, View, Platform, Pressable, TextInput } from "react-native";
 import { Stack } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
@@ -127,10 +127,14 @@ export default function AdminLocationsScreen() {
           minute: "2-digit",
         })
       : null;
-  const willPauseUntilText = new Date(Date.now() + 60 * 60 * 1000).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const willPauseUntilText = useMemo(
+    () =>
+      new Date(Date.now() + 60 * 60 * 1000).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    []
+  );
 
   function handleSelectLocation(id: number) {
     setSelectedId(id);

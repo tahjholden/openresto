@@ -72,8 +72,8 @@ describe("RestaurantInfoForm", () => {
 
   it("renders open days as toggleable buttons", () => {
     render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
-    expect(screen.getByText("Mon")).toBeTruthy();
-    expect(screen.getByText("Sun")).toBeTruthy();
+    expect(screen.getByText("Monday")).toBeTruthy();
+    expect(screen.getByText("Sunday")).toBeTruthy();
   });
 
   it("shows tags", () => {
@@ -122,16 +122,16 @@ describe("RestaurantInfoForm", () => {
 
   it("toggles a day open/closed when pressed", () => {
     render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
-    // Sat (day 6) is not in openDays "1,2,3,4,5" — pressing it should include it
-    fireEvent.press(screen.getByText("Sat"));
+    // Saturday (day 6) is not in openDays "1,2,3,4,5" — pressing it should include it
+    fireEvent.press(screen.getByText("Saturday"));
     // Component should still render correctly after toggle
-    expect(screen.getByText("Sat")).toBeTruthy();
+    expect(screen.getByText("Saturday")).toBeTruthy();
   });
 
   it("deselects an active day when pressed again", () => {
     render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
-    // Mon (day 1) is active in "1,2,3,4,5" — pressing it deselects it
-    fireEvent.press(screen.getByText("Mon"));
+    // Monday (day 1) is active in "1,2,3,4,5" — pressing it deselects it
+    fireEvent.press(screen.getByText("Monday"));
     expect(screen.getByText("4 of 7 days open")).toBeTruthy();
   });
 

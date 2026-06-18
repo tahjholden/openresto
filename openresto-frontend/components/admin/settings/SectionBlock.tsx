@@ -4,7 +4,6 @@ import { ThemedText } from "@/components/themed-text";
 import { SectionDto, TableDto, updateSection, deleteSection, addTable } from "@/api/restaurants";
 import { TableRow } from "./TableRow";
 import { AddRow } from "./AddRow";
-import { Ionicons } from "@expo/vector-icons";
 import { COLORS, getThemeColors } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 import { styles } from "./settings.styles";
@@ -73,31 +72,17 @@ export function SectionBlock({
           borderBottomColor: borderColor,
         }}
       >
-        {/* Left: icon + name / edit input */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
-          <View
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 8,
-              backgroundColor: `${primaryColor}18`,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Ionicons name="layers-outline" size={14} color={primaryColor} />
-          </View>
+        {/* Left: name / edit input */}
+        <View style={{ flex: 1 }}>
           {editing ? (
-            <View style={{ flex: 1 }}>
-              <Input
-                value={draft}
-                onChangeText={setDraft}
-                placeholder="e.g. Indoor, Patio"
-                autoFocus
-              />
-            </View>
+            <Input
+              value={draft}
+              onChangeText={setDraft}
+              placeholder="e.g. Indoor, Patio"
+              autoFocus
+            />
           ) : (
-            <ThemedText style={[styles.editableValue, { flex: 0 }]}>{section.name}</ThemedText>
+            <ThemedText style={styles.editableValue}>{section.name}</ThemedText>
           )}
         </View>
 
@@ -126,16 +111,16 @@ export function SectionBlock({
                   {saving ? "…" : "Save"}
                 </ThemedText>
               </Pressable>
-              <Pressable
-                style={[styles.smallBtn, { paddingHorizontal: 6 }]}
-                onPress={() => setEditing(false)}
-              >
-                <Ionicons name="close-outline" size={20} color={colors.muted} />
+              <Pressable style={styles.smallBtn} onPress={() => setEditing(false)}>
+                <ThemedText style={[styles.smallBtnText, { color: colors.muted }]}>
+                  Cancel
+                </ThemedText>
               </Pressable>
             </>
           ) : (
             <>
               <Pressable
+                testID="section-edit-btn"
                 style={styles.smallBtn}
                 onPress={() => {
                   setDraft(section.name);
@@ -145,7 +130,8 @@ export function SectionBlock({
                 <ThemedText style={[styles.smallBtnText, { color: primaryColor }]}>Edit</ThemedText>
               </Pressable>
               <Pressable
-                style={[styles.smallBtn, { paddingHorizontal: 6 }]}
+                testID="section-delete-btn"
+                style={styles.smallBtn}
                 onPress={async () => {
                   const ok = await confirmAction(
                     `Delete section "${section.name}" and all its tables?`
@@ -155,22 +141,17 @@ export function SectionBlock({
                   if (success) onSectionDeleted();
                 }}
               >
-                <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+                <ThemedText style={[styles.smallBtnText, { color: COLORS.error }]}>
+                  Delete
+                </ThemedText>
               </Pressable>
             </>
           )}
         </View>
       </View>
 
-      {/* Table grid — auto-fill, min 160px per card */}
-      <View
-        style={{
-          padding: 12,
-          flexDirection: "row",
-          flexWrap: "wrap",
-          gap: 8,
-        }}
-      >
+      {/* Table list */}
+      <View>
         {section.tables.map((t) => (
           <TableRow
             key={t.id}
@@ -185,12 +166,14 @@ export function SectionBlock({
           />
         ))}
         {section.tables.length === 0 && (
-          <ThemedText style={[styles.emptyNote, { color: mutedColor }]}>No tables yet.</ThemedText>
+          <ThemedText style={[styles.emptyNote, { color: mutedColor, padding: 12 }]}>
+            No tables yet.
+          </ThemedText>
         )}
       </View>
 
       {/* Add table */}
-      <View style={{ paddingHorizontal: 12, paddingBottom: 12 }}>
+      <View style={{ padding: 12 }}>
         <AddRow
           label="Add Table"
           placeholder="Table name (e.g. T1, Booth 1)"

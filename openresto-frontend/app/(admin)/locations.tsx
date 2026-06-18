@@ -117,6 +117,7 @@ export default function AdminLocationsScreen() {
   const selectedRestaurant = restaurants.find((r) => r.id === selectedId) ?? null;
   const dangerSelectedRestaurant = allRestaurants.find((r) => r.id === dangerSelectedId) ?? null;
   const selectedAdminData = allRestaurants.find((r) => r.id === selectedId) ?? null;
+  const activeCount = selectedAdminData?.activeBookingsCount ?? 0;
   const isPaused = selectedAdminData?.bookingsPausedUntil
     ? new Date(selectedAdminData.bookingsPausedUntil) > new Date()
     : false;
@@ -364,20 +365,18 @@ export default function AdminLocationsScreen() {
             <ThemedText
               style={{ fontSize: 13, fontWeight: "600", color: isPaused ? "#16a34a" : "#ca8a04" }}
             >
-              {pausing ? "Saving…" : isPaused ? `Resume (until ${pausedUntilText})` : "Pause 1h"}
+              {pausing
+                ? "Saving…"
+                : isPaused
+                  ? `Resume New Bookings now (Paused until ${pausedUntilText})`
+                  : "Pause New Bookings for 60m"}
             </ThemedText>
           </Pressable>
 
           <Pressable
-            disabled={extending || extendNoActive}
+            disabled={extending || extendedBookings !== null || extendNoActive || activeCount === 0}
             onPress={async () => {
-              if (extendedBookings !== null) {
-                setExtendedBookings(null);
-                setExtendNoActive(false);
-                return;
-              }
               setExtending(true);
-              setExtendNoActive(false);
               const result = await extendRestaurantBookings(selectedRestaurant.id, 60);
               setExtending(false);
               if (result.ok) {
@@ -398,29 +397,38 @@ export default function AdminLocationsScreen() {
               borderRadius: BORDER_RADIUS.md,
               borderWidth: 1,
               borderColor: borderColor,
-              opacity: extending || extendNoActive ? 0.5 : 1,
+              opacity:
+                extending || extendedBookings !== null || extendNoActive || activeCount === 0
+                  ? 0.4
+                  : 1,
               minHeight: 44,
             }}
           >
             <Ionicons
               name="timer-outline"
               size={15}
-              color={extendedBookings !== null ? mutedColor : primaryColor}
+              color={
+                extendedBookings !== null || extendNoActive || activeCount === 0
+                  ? mutedColor
+                  : primaryColor
+              }
             />
             <ThemedText
               style={{
                 fontSize: 13,
                 fontWeight: "600",
-                color: extendedBookings !== null ? mutedColor : primaryColor,
+                color: extendedBookings !== null || extendNoActive ? mutedColor : primaryColor,
               }}
             >
               {extending
                 ? "Extending…"
                 : extendedBookings !== null
-                  ? `Extended ${extendedBookings.length} · Clear`
+                  ? `Extended ${extendedBookings.length} active bookings +60m`
                   : extendNoActive
-                    ? "No active bookings"
-                    : "Extend 60m"}
+                    ? "No active bookings to extend"
+                    : activeCount > 0
+                      ? `Extend ${activeCount} active Bookings by 60m`
+                      : "No active bookings"}
             </ThemedText>
           </Pressable>
         </View>

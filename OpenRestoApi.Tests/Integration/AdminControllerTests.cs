@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using OpenRestoApi.Core.Domain;
@@ -616,6 +615,60 @@ public class AdminControllerTests(TestWebAppFactory factory) : IClassFixture<Tes
         JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal("Bookings extended successfully.", body.GetProperty("message").GetString());
         Assert.True(body.GetProperty("extendedBookings").GetArrayLength() >= 1);
+    }
+
+    [Fact]
+    public async Task ExtendRestaurantBookings_SkipsExpiredBookingsWithNoEndTime()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+        (int r, int s, int t) = GetSeededIds();
+
+        // Create a booking that started 2 hours ago (past the implicit 1-hour window) with no EndTime
+        int expiredBookingId;
+        using (IServiceScope scope = _factory.Services.CreateScope())
+        {
+            AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var expired = new Booking
+            {
+                RestaurantId = r,
+                SectionId = s,
+                TableId = t,
+                Date = DateTime.UtcNow.AddHours(-2),
+                BookingRef = "EXPIRED1",
+                CustomerEmail = "expired@test.com",
+                Seats = 2,
+                EndTime = null
+            };
+            db.Bookings.Add(expired);
+            await db.SaveChangesAsync();
+            expiredBookingId = expired.Id;
+        }
+
+        HttpResponseMessage response = await client.PostAsJsonAsync($"/api/admin/restaurants/{r}/extend", new { minutes = 60 });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        // The expired booking must not appear in the extended list
+        bool expiredWasExtended = false;
+        foreach (JsonElement b in body.GetProperty("extendedBookings").EnumerateArray())
+        {
+            if (b.GetProperty("id").GetInt32() == expiredBookingId)
+            {
+                expiredWasExtended = true;
+                break;
+            }
+        }
+        Assert.False(expiredWasExtended, "A booking that started >1h ago with no EndTime should not be extended.");
+
+        // Verify the expired booking's EndTime is still null in DB
+        using (IServiceScope scope = _factory.Services.CreateScope())
+        {
+            AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            Booking? expired = await db.Bookings.FindAsync(expiredBookingId);
+            Assert.NotNull(expired);
+            Assert.Null(expired.EndTime);
+        }
     }
 
     [Fact]

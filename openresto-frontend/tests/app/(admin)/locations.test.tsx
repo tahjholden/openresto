@@ -63,7 +63,7 @@ jest.mock("@/components/admin/settings/LocationCard", () => ({
 jest.setTimeout(15000);
 
 describe("AdminLocationsScreen", () => {
-  const mockRestaurants = [{ id: 1, name: "Resto 1", sections: [] }];
+  const mockRestaurants = [{ id: 1, name: "Resto 1", sections: [], activeBookingsCount: 2 }];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -354,8 +354,19 @@ describe("AdminLocationsScreen", () => {
 
   it("renders booking action buttons when a location is selected", async () => {
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Pause 1h")).toBeTruthy());
-    expect(screen.getByText("Extend 60m")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("Pause New Bookings for 60m")).toBeTruthy());
+    expect(screen.getByText("Extend 2 active Bookings by 60m")).toBeTruthy();
+  });
+
+  it("shows disabled No active bookings button when there are no active bookings", async () => {
+    (adminGetRestaurants as jest.Mock).mockResolvedValue([
+      { id: 1, name: "Resto 1", sections: [], activeBookingsCount: 0 },
+    ]);
+    renderWithProviders(<AdminLocationsScreen />);
+    await waitFor(() => expect(screen.getByText("No active bookings")).toBeTruthy());
+    // Button must not call the API when disabled
+    fireEvent.press(screen.getByText("No active bookings"));
+    expect(extendRestaurantBookings).not.toHaveBeenCalled();
   });
 
   it("shows Resume button when restaurant is paused", async () => {
@@ -364,14 +375,14 @@ describe("AdminLocationsScreen", () => {
       { id: 1, name: "Resto 1", bookingsPausedUntil: futureDate },
     ]);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText(/^Resume \(until/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/Resume New Bookings now/)).toBeTruthy());
   });
 
-  it("pauses bookings when Pause 1h is pressed", async () => {
+  it("pauses bookings when Pause New Bookings for 60m is pressed", async () => {
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Pause 1h")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Pause New Bookings for 60m")).toBeTruthy());
     await act(async () => {
-      fireEvent.press(screen.getByText("Pause 1h"));
+      fireEvent.press(screen.getByText("Pause New Bookings for 60m"));
     });
     expect(pauseRestaurantBookings).toHaveBeenCalledWith(1, 60);
   });
@@ -382,24 +393,24 @@ describe("AdminLocationsScreen", () => {
       { id: 1, name: "Resto 1", bookingsPausedUntil: futureDate },
     ]);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText(/^Resume \(until/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/Resume New Bookings now/)).toBeTruthy());
     await act(async () => {
-      fireEvent.press(screen.getByText(/^Resume \(until/));
+      fireEvent.press(screen.getByText(/Resume New Bookings now/));
     });
     expect(unpauseRestaurantBookings).toHaveBeenCalledWith(1);
   });
 
-  it("shows No active bookings when extend returns empty", async () => {
+  it("shows No active bookings to extend when extend returns empty", async () => {
     (extendRestaurantBookings as jest.Mock).mockResolvedValue({ ok: true, extendedBookings: [] });
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Extend 60m")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Extend 2 active Bookings by 60m")).toBeTruthy());
     await act(async () => {
-      fireEvent.press(screen.getByText("Extend 60m"));
+      fireEvent.press(screen.getByText("Extend 2 active Bookings by 60m"));
     });
-    await waitFor(() => expect(screen.getByText("No active bookings")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("No active bookings to extend")).toBeTruthy());
   });
 
-  it("shows extended count on button after extend succeeds", async () => {
+  it("shows extended count on button after extend succeeds and locks it", async () => {
     (extendRestaurantBookings as jest.Mock).mockResolvedValue({
       ok: true,
       extendedBookings: [
@@ -420,48 +431,21 @@ describe("AdminLocationsScreen", () => {
       ],
     });
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Extend 60m")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Extend 2 active Bookings by 60m")).toBeTruthy());
     await act(async () => {
-      fireEvent.press(screen.getByText("Extend 60m"));
+      fireEvent.press(screen.getByText("Extend 2 active Bookings by 60m"));
     });
-    await waitFor(() => expect(screen.getByText("Extended 1 · Clear")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Extended 1 active bookings +60m")).toBeTruthy());
     expect(extendRestaurantBookings).toHaveBeenCalledWith(1, 60);
-  });
-
-  it("clears extend results when Extended · Clear is pressed", async () => {
-    (extendRestaurantBookings as jest.Mock).mockResolvedValue({
-      ok: true,
-      extendedBookings: [
-        {
-          id: 10,
-          restaurantId: 1,
-          restaurantName: "Resto 1",
-          sectionId: null,
-          sectionName: "",
-          tableId: null,
-          tableName: "",
-          date: new Date().toISOString(),
-          endTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-          customerEmail: "alice@example.com",
-          customerName: "Alice",
-          seats: 2,
-        },
-      ],
-    });
-    renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Extend 60m")).toBeTruthy());
-    await act(async () => {
-      fireEvent.press(screen.getByText("Extend 60m"));
-    });
-    await waitFor(() => expect(screen.getByText("Extended 1 · Clear")).toBeTruthy());
-    fireEvent.press(screen.getByText("Extended 1 · Clear"));
-    await waitFor(() => expect(screen.getByText("Extend 60m")).toBeTruthy());
+    // Pressing again must not re-extend (button is locked)
+    fireEvent.press(screen.getByText("Extended 1 active bookings +60m"));
+    expect(extendRestaurantBookings).toHaveBeenCalledTimes(1);
   });
 
   it("resets extend state when switching locations", async () => {
     const twoRestaurants = [
-      { id: 1, name: "Resto 1", sections: [] },
-      { id: 2, name: "Resto 2", sections: [] },
+      { id: 1, name: "Resto 1", sections: [], activeBookingsCount: 2 },
+      { id: 2, name: "Resto 2", sections: [], activeBookingsCount: 2 },
     ];
     (fetchRestaurants as jest.Mock).mockResolvedValue(twoRestaurants);
     (adminGetRestaurants as jest.Mock).mockResolvedValue(twoRestaurants);
@@ -485,12 +469,12 @@ describe("AdminLocationsScreen", () => {
       ],
     });
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Extend 60m")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Extend 2 active Bookings by 60m")).toBeTruthy());
     await act(async () => {
-      fireEvent.press(screen.getByText("Extend 60m"));
+      fireEvent.press(screen.getByText("Extend 2 active Bookings by 60m"));
     });
-    await waitFor(() => expect(screen.getByText("Extended 1 · Clear")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Extended 1 active bookings +60m")).toBeTruthy());
     fireEvent.press(screen.getByText("Resto 2"));
-    await waitFor(() => expect(screen.getByText("Extend 60m")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Extend 2 active Bookings by 60m")).toBeTruthy());
   });
 });

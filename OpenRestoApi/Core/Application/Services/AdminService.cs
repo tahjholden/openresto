@@ -480,7 +480,7 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
                     b.RestaurantId == r.Id &&
                     !b.IsCancelled &&
                     b.Date <= nowUtc &&
-                    (b.EndTime == null || b.EndTime > nowUtc))
+                    (b.EndTime.HasValue ? b.EndTime.Value > nowUtc : b.Date.AddHours(1) > nowUtc))
             })
             .ToListAsync();
     }
@@ -540,7 +540,7 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
             .Where(b => b.RestaurantId == restaurantId &&
                         !b.IsCancelled &&
                         b.Date <= nowUtc &&
-                        (b.EndTime == null || b.EndTime > nowUtc))
+                        (b.EndTime.HasValue ? b.EndTime.Value > nowUtc : b.Date.AddHours(1) > nowUtc))
             .ToListAsync();
 
         foreach (Booking? booking in activeBookings)

@@ -205,6 +205,28 @@ describe("PopularTimesPicker", () => {
     expect(screen.getByText("18:00")).toBeTruthy();
   });
 
+  it("shows slots within 5-minute grace period and hides those beyond", () => {
+    // mock returns 13:00 (780 mins); 12:55 = 775 mins (≥ 775) shown; 12:54 = 774 mins hidden
+    const slots: TimeSlotDto[] = [
+      { time: "12:54", isAvailable: true, availableTableIds: [1], category: "Lunch" }, // 6 min past — hidden
+      { time: "12:55", isAvailable: true, availableTableIds: [1], category: "Lunch" }, // 5 min past — shown
+      { time: "13:00", isAvailable: true, availableTableIds: [1], category: "Lunch" }, // now — shown
+    ];
+    render(
+      <PopularTimesPicker
+        slots={slots}
+        selectedTime=""
+        onSelectTime={jest.fn()}
+        selectedDate="2026-10-10"
+        timezone="UTC"
+      />
+    );
+    fireEvent.press(screen.getByText("All"));
+    expect(screen.queryByText("12:54")).toBeNull();
+    expect(screen.getByText("12:55")).toBeTruthy();
+    expect(screen.getByText("13:00")).toBeTruthy();
+  });
+
   it("disables Lunch tab when all lunch slots are past today", () => {
     // getNowInTimezone mock returns 13:00 on 2026-10-10 — lunch is over
     const slots: TimeSlotDto[] = [

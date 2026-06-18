@@ -54,7 +54,7 @@ export default function PopularTimesPicker({
     const nowMins = hours * 60 + minutes;
     return slots.filter((s) => {
       const [h, m] = s.time.split(":").map(Number);
-      return h * 60 + m > nowMins;
+      return h * 60 + m >= nowMins - 5;
     });
   }, [slots, selectedDate, timezone]);
 

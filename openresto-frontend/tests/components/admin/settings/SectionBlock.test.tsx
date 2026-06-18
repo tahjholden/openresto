@@ -66,12 +66,12 @@ describe("SectionBlock", () => {
 
   it("shows Edit button for the section", () => {
     render(<SectionBlock {...baseProps} />);
-    expect(screen.getByText("Edit")).toBeTruthy();
+    expect(screen.getByTestId("section-edit-btn")).toBeTruthy();
   });
 
   it("switches to editing mode when Edit is pressed", () => {
     render(<SectionBlock {...baseProps} />);
-    fireEvent.press(screen.getByText("Edit"));
+    fireEvent.press(screen.getByTestId("section-edit-btn"));
     expect(screen.getByDisplayValue("Indoor")).toBeTruthy();
     expect(screen.getByText("Save")).toBeTruthy();
   });
@@ -83,7 +83,7 @@ describe("SectionBlock", () => {
       tables: [],
     });
     render(<SectionBlock {...baseProps} />);
-    fireEvent.press(screen.getByText("Edit"));
+    fireEvent.press(screen.getByTestId("section-edit-btn"));
     fireEvent.changeText(screen.getByDisplayValue("Indoor"), "Outdoor");
     await act(async () => {
       fireEvent.press(screen.getByText("Save"));
@@ -94,7 +94,7 @@ describe("SectionBlock", () => {
 
   it("does not save when draft is empty", async () => {
     render(<SectionBlock {...baseProps} />);
-    fireEvent.press(screen.getByText("Edit"));
+    fireEvent.press(screen.getByTestId("section-edit-btn"));
     fireEvent.changeText(screen.getByDisplayValue("Indoor"), "");
     await act(async () => {
       fireEvent.press(screen.getByText("Save"));
@@ -103,31 +103,21 @@ describe("SectionBlock", () => {
   });
 
   it("cancels edit mode", () => {
-    // Use empty tables to simplify accessible element counting
     render(<SectionBlock {...baseProps} section={{ ...mockSection, tables: [] }} />);
-    fireEvent.press(screen.getByText("Edit"));
+    fireEvent.press(screen.getByTestId("section-edit-btn"));
     expect(screen.getByText("Save")).toBeTruthy();
-    // In edit mode: [Save pressable (x2 fibers), Cancel pressable (x2 fibers), AddTable pressable (x2)]
-    // The Cancel pressable comes after Save in the tree. Press the last accessible before AddTable.
-    // Simplest: press the 3rd accessible (index 2) which is the cancel pressable's first fiber.
-    const accessible = screen.UNSAFE_getAllByProps({ accessible: true });
     act(() => {
-      fireEvent.press(accessible[2]);
+      fireEvent.press(screen.getByText("Cancel"));
     });
-    // Back in view mode — "Indoor" text should be visible
     expect(screen.getByText("Indoor")).toBeTruthy();
   });
 
   it("calls deleteSection and onSectionDeleted when confirmed", async () => {
     (baseProps.confirmAction as jest.Mock).mockResolvedValue(true);
     (restaurantsApi.deleteSection as jest.Mock).mockResolvedValue(true);
-    // Use empty tables to avoid table button interference with accessible indices
     render(<SectionBlock {...baseProps} section={{ ...mockSection, tables: [] }} />);
-    // In view mode with no tables: [Edit(x2), Delete(x2), AddTable(x2)]
-    // Delete is at index 2 or 3
-    const accessible = screen.UNSAFE_getAllByProps({ accessible: true });
     await act(async () => {
-      fireEvent.press(accessible[2]);
+      fireEvent.press(screen.getByTestId("section-delete-btn"));
     });
     expect(baseProps.confirmAction).toHaveBeenCalledWith(
       'Delete section "Indoor" and all its tables?'
@@ -139,9 +129,8 @@ describe("SectionBlock", () => {
   it("does not delete when confirmAction returns false", async () => {
     (baseProps.confirmAction as jest.Mock).mockResolvedValue(false);
     render(<SectionBlock {...baseProps} section={{ ...mockSection, tables: [] }} />);
-    const accessible = screen.UNSAFE_getAllByProps({ accessible: true });
     await act(async () => {
-      fireEvent.press(accessible[2]);
+      fireEvent.press(screen.getByTestId("section-delete-btn"));
     });
     expect(restaurantsApi.deleteSection).not.toHaveBeenCalled();
     expect(baseProps.onSectionDeleted).not.toHaveBeenCalled();
@@ -198,7 +187,7 @@ describe("SectionBlock", () => {
   it("does not call onSectionRenamed when updateSection returns null", async () => {
     (restaurantsApi.updateSection as jest.Mock).mockResolvedValue(null);
     render(<SectionBlock {...baseProps} />);
-    fireEvent.press(screen.getByText("Edit"));
+    fireEvent.press(screen.getByTestId("section-edit-btn"));
     fireEvent.changeText(screen.getByDisplayValue("Indoor"), "Updated");
     await act(async () => {
       fireEvent.press(screen.getByText("Save"));

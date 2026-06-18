@@ -82,13 +82,13 @@ describe("AdminLocationsScreen", () => {
 
   it("renders locations after loading", async () => {
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.queryByText(/1 location configured/)).toBeTruthy());
+    await waitFor(() => expect(screen.queryByText(/1 location/)).toBeTruthy());
   });
 
   it("handles empty locations list", async () => {
     (fetchRestaurants as jest.Mock).mockResolvedValue([]);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("No locations found")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("No locations yet")).toBeTruthy());
   });
 
   it("patches restaurant when LocationCard onSaved is triggered", async () => {
@@ -164,26 +164,22 @@ describe("AdminLocationsScreen", () => {
     await waitFor(() => expect(screen.queryByText("Test Message")).toBeNull());
   });
 
-  it("toggles location section collapsed and expanded", async () => {
+  it("shows location pills without requiring any toggle", async () => {
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Location Manager")).toBeTruthy());
-    fireEvent.press(screen.getByText("Location Manager"));
-    await waitFor(() => expect(screen.queryByText("Add location")).toBeNull());
-    fireEvent.press(screen.getByText("Location Manager"));
-    await waitFor(() => expect(screen.getByText("Add location")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Resto 1")).toBeTruthy());
   });
 
   it("shows 0 locations configured when empty", async () => {
     (fetchRestaurants as jest.Mock).mockResolvedValue([]);
     (adminGetRestaurants as jest.Mock).mockResolvedValue([]);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("0 locations configured")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("No locations configured")).toBeTruthy());
   });
 
   it("expands danger zone and shows select-a-location placeholder", async () => {
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Archive / Delete Location")).toBeTruthy());
-    fireEvent.press(screen.getByText("Archive / Delete Location"));
+    await waitFor(() => expect(screen.getByText("Archive or delete a location")).toBeTruthy());
+    fireEvent.press(screen.getByText("Archive or delete a location"));
     await waitFor(() =>
       expect(screen.getByText("Select a location above to see options.")).toBeTruthy()
     );
@@ -191,12 +187,12 @@ describe("AdminLocationsScreen", () => {
 
   it("collapses danger zone and resets step", async () => {
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Archive / Delete Location")).toBeTruthy());
-    fireEvent.press(screen.getByText("Archive / Delete Location"));
+    await waitFor(() => expect(screen.getByText("Archive or delete a location")).toBeTruthy());
+    fireEvent.press(screen.getByText("Archive or delete a location"));
     await waitFor(() =>
       expect(screen.getByText("Select a location above to see options.")).toBeTruthy()
     );
-    fireEvent.press(screen.getByText("Archive / Delete Location"));
+    fireEvent.press(screen.getByText("Archive or delete a location"));
     await waitFor(() =>
       expect(screen.queryByText("Select a location above to see options.")).toBeNull()
     );
@@ -205,8 +201,8 @@ describe("AdminLocationsScreen", () => {
   it("selects a location in the danger zone", async () => {
     (adminGetRestaurants as jest.Mock).mockResolvedValue([{ id: 1, name: "Resto 1" }]);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Archive / Delete Location")).toBeTruthy());
-    fireEvent.press(screen.getByText("Archive / Delete Location"));
+    await waitFor(() => expect(screen.getByText("Archive or delete a location")).toBeTruthy());
+    fireEvent.press(screen.getByText("Archive or delete a location"));
     await waitFor(() =>
       expect(screen.getByText("Select a location above to see options.")).toBeTruthy()
     );
@@ -219,8 +215,8 @@ describe("AdminLocationsScreen", () => {
     (adminGetRestaurants as jest.Mock).mockResolvedValue([{ id: 1, name: "Resto 1" }]);
     (adminSetRestaurantArchived as jest.Mock).mockResolvedValue(true);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Archive / Delete Location")).toBeTruthy());
-    fireEvent.press(screen.getByText("Archive / Delete Location"));
+    await waitFor(() => expect(screen.getByText("Archive or delete a location")).toBeTruthy());
+    fireEvent.press(screen.getByText("Archive or delete a location"));
     await waitFor(() =>
       expect(screen.getByText("Select a location above to see options.")).toBeTruthy()
     );
@@ -237,8 +233,8 @@ describe("AdminLocationsScreen", () => {
     (adminGetRestaurants as jest.Mock).mockResolvedValue([{ id: 1, name: "Resto 1" }]);
     (adminSetRestaurantArchived as jest.Mock).mockResolvedValue(false);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Archive / Delete Location")).toBeTruthy());
-    fireEvent.press(screen.getByText("Archive / Delete Location"));
+    await waitFor(() => expect(screen.getByText("Archive or delete a location")).toBeTruthy());
+    fireEvent.press(screen.getByText("Archive or delete a location"));
     await waitFor(() =>
       expect(screen.getByText("Select a location above to see options.")).toBeTruthy()
     );
@@ -261,8 +257,8 @@ describe("AdminLocationsScreen", () => {
       .mockResolvedValueOnce([])
       .mockResolvedValue([{ id: 1, name: "Resto 1", sections: [] }]);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Archive / Delete Location")).toBeTruthy());
-    fireEvent.press(screen.getByText("Archive / Delete Location"));
+    await waitFor(() => expect(screen.getByText("Archive or delete a location")).toBeTruthy());
+    fireEvent.press(screen.getByText("Archive or delete a location"));
     await waitFor(() =>
       expect(screen.getByText("Select a location above to see options.")).toBeTruthy()
     );
@@ -278,8 +274,8 @@ describe("AdminLocationsScreen", () => {
   it("moves to delete confirm step and cancels", async () => {
     (adminGetRestaurants as jest.Mock).mockResolvedValue([{ id: 1, name: "Resto 1" }]);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Archive / Delete Location")).toBeTruthy());
-    fireEvent.press(screen.getByText("Archive / Delete Location"));
+    await waitFor(() => expect(screen.getByText("Archive or delete a location")).toBeTruthy());
+    fireEvent.press(screen.getByText("Archive or delete a location"));
     await waitFor(() =>
       expect(screen.getByText("Select a location above to see options.")).toBeTruthy()
     );
@@ -296,8 +292,8 @@ describe("AdminLocationsScreen", () => {
     (adminGetRestaurants as jest.Mock).mockResolvedValue([{ id: 1, name: "Resto 1" }]);
     (adminDeleteRestaurant as jest.Mock).mockResolvedValue(true);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Archive / Delete Location")).toBeTruthy());
-    fireEvent.press(screen.getByText("Archive / Delete Location"));
+    await waitFor(() => expect(screen.getByText("Archive or delete a location")).toBeTruthy());
+    fireEvent.press(screen.getByText("Archive or delete a location"));
     await waitFor(() =>
       expect(screen.getByText("Select a location above to see options.")).toBeTruthy()
     );
@@ -316,8 +312,8 @@ describe("AdminLocationsScreen", () => {
     (adminGetRestaurants as jest.Mock).mockResolvedValue([{ id: 1, name: "Resto 1" }]);
     (adminDeleteRestaurant as jest.Mock).mockResolvedValue(false);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Archive / Delete Location")).toBeTruthy());
-    fireEvent.press(screen.getByText("Archive / Delete Location"));
+    await waitFor(() => expect(screen.getByText("Archive or delete a location")).toBeTruthy());
+    fireEvent.press(screen.getByText("Archive or delete a location"));
     await waitFor(() =>
       expect(screen.getByText("Select a location above to see options.")).toBeTruthy()
     );

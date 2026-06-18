@@ -69,7 +69,6 @@ export function LocationCard({
   isDark,
   borderColor,
   mutedColor,
-  cardBg,
   confirmAction,
 }: {
   restaurant: RestaurantDto;
@@ -77,7 +76,6 @@ export function LocationCard({
   isDark: boolean;
   borderColor: string;
   mutedColor: string;
-  cardBg: string;
   confirmAction: (msg: string) => Promise<boolean>;
 }) {
   const brand = useBrand();
@@ -223,84 +221,77 @@ export function LocationCard({
         </View>
       </View>
 
-      {/* Location image */}
+      {/* Compact image strip */}
       <View
         style={{
-          padding: 22,
+          paddingHorizontal: 22,
+          paddingVertical: 16,
+          flexDirection: "row",
+          gap: 16,
+          alignItems: "center",
           borderBottomWidth: 1,
           borderBottomColor: borderColor,
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
-          <View style={{ flex: 1 }}>
-            <ThemedText
-              style={{
-                fontFamily: "monospace" as const,
-                fontSize: 10,
-                textTransform: "uppercase" as const,
-                letterSpacing: 1.5,
-                color: mutedColor,
-                marginBottom: 6,
-              }}
-            >
-              OPTIONAL
-            </ThemedText>
-            <ThemedText
-              style={{ fontSize: 16, fontWeight: "600", letterSpacing: -0.2, marginBottom: 4 }}
-            >
-              Location Image
-            </ThemedText>
-            <ThemedText style={{ fontSize: 13, color: mutedColor }}>
-              Shown on the restaurant card and booking page. JPEG, PNG or WebP, max 2 MB.
-            </ThemedText>
-          </View>
+        {/* Thumbnail */}
+        <View
+          style={{
+            width: 96,
+            height: 68,
+            borderRadius: 8,
+            overflow: "hidden",
+            borderWidth: 1,
+            borderStyle: restaurant.imageUrl ? ("solid" as const) : ("dashed" as const),
+            borderColor,
+            flexShrink: 0,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {restaurant.imageUrl ? (
+            <img
+              src={restaurant.imageUrl}
+              alt="Location"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <Ionicons name="image-outline" size={20} color={mutedColor} />
+          )}
         </View>
 
-        <View style={{ gap: 10 }}>
-          {restaurant.imageUrl ? (
-            <View
+        {/* Label + buttons */}
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8, marginBottom: 3 }}>
+            <ThemedText style={{ fontSize: 14, fontWeight: "600", letterSpacing: -0.1 }}>
+              Location image
+            </ThemedText>
+            <ThemedText
               style={{
-                width: "100%",
-                aspectRatio: 16 / 5,
-                borderRadius: 10,
-                overflow: "hidden",
-                borderWidth: 1,
-                borderColor,
+                fontSize: 10,
+                fontWeight: "600",
+                textTransform: "uppercase" as const,
+                letterSpacing: 1,
+                color: mutedColor,
               }}
             >
-              <img
-                src={restaurant.imageUrl}
-                alt="Location"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            </View>
-          ) : (
-            <View
-              style={{
-                width: "100%",
-                aspectRatio: 16 / 5,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderStyle: "dashed" as const,
-                borderColor,
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6,
-              }}
-            >
-              <Ionicons name="image-outline" size={24} color={mutedColor} />
-              <ThemedText style={{ fontSize: 12, color: mutedColor }}>No image set</ThemedText>
-            </View>
-          )}
-
-          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+              optional
+            </ThemedText>
+          </View>
+          <ThemedText style={{ fontSize: 12, color: mutedColor, marginBottom: 10 }}>
+            Shown on the restaurant card. JPEG, PNG or WebP, max 2 MB.
+          </ThemedText>
+          <View style={{ flexDirection: "row", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <Pressable
               style={[styles.secBtn, { borderColor, opacity: imgUploading ? 0.5 : 1 }]}
               onPress={handlePickImage}
               disabled={imgUploading}
             >
               <ThemedText style={[styles.secBtnText, { color: primaryColor }]}>
-                {imgUploading ? "Uploading…" : restaurant.imageUrl ? "Change" : "Upload"}
+                {imgUploading
+                  ? "Uploading…"
+                  : restaurant.imageUrl
+                    ? "Change image"
+                    : "Upload image"}
               </ThemedText>
             </Pressable>
             {restaurant.imageUrl && (
@@ -323,128 +314,100 @@ export function LocationCard({
         </View>
       </View>
 
-      {/* Two-column work area */}
-      <View style={{ padding: 22, flexDirection: "row", gap: 22, alignItems: "flex-start" }}>
-        {/* Left: Restaurant Info card */}
-        <View style={{ flex: 1.05 }}>
-          <RestaurantInfoForm restaurant={restaurant} onSaved={onSaved} />
-        </View>
+      {/* Restaurant info — full width */}
+      <View style={{ padding: 22, borderBottomWidth: 1, borderBottomColor: borderColor }}>
+        <RestaurantInfoForm restaurant={restaurant} onSaved={onSaved} />
+      </View>
 
-        {/* Right: Sections & Tables card */}
-        <View
+      {/* Sections & Tables — full width below */}
+      <View style={{ padding: 22 }}>
+        <ThemedText
           style={{
-            flex: 1,
-            backgroundColor: cardBg,
-            borderWidth: 1,
-            borderColor,
-            borderRadius: 14,
-            padding: 22,
+            fontFamily: "monospace" as const,
+            fontSize: 10,
+            textTransform: "uppercase" as const,
+            letterSpacing: 1.5,
+            color: mutedColor,
+            marginBottom: 6,
           }}
         >
-          {/* Card head */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 14,
-              marginBottom: 18,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <ThemedText
-                style={{
-                  fontFamily: "monospace" as const,
-                  fontSize: 10,
-                  textTransform: "uppercase" as const,
-                  letterSpacing: 1.5,
-                  color: mutedColor,
-                  marginBottom: 6,
-                }}
-              >
-                STEP 2
-              </ThemedText>
-              <ThemedText
-                style={{ fontSize: 16, fontWeight: "600", letterSpacing: -0.2, marginBottom: 4 }}
-              >
-                Sections & tables
-              </ThemedText>
-              <ThemedText style={{ fontSize: 13, color: mutedColor }}>
-                Group tables into dining areas. Guests can book by section.
-              </ThemedText>
-            </View>
-          </View>
+          STEP 2
+        </ThemedText>
+        <ThemedText
+          style={{ fontSize: 15, fontWeight: "600", letterSpacing: -0.2, marginBottom: 3 }}
+        >
+          Sections & tables
+        </ThemedText>
+        <ThemedText style={{ fontSize: 13, color: mutedColor, marginBottom: 20 }}>
+          Group tables into dining areas. Guests can book by section.
+        </ThemedText>
 
-          {/* Sections list */}
-          <View style={{ gap: 14 }}>
-            {restaurant.sections.map((section) => (
-              <SectionBlock
-                key={section.id}
-                section={section}
-                restaurantId={restaurant.id}
-                isDark={isDark}
-                borderColor={borderColor}
-                mutedColor={mutedColor}
-                confirmAction={confirmAction}
-                onSectionRenamed={(name) =>
-                  onSaved({
-                    sections: restaurant.sections.map((s) =>
-                      s.id === section.id ? { ...s, name } : s
-                    ),
-                  })
-                }
-                onSectionDeleted={() =>
-                  onSaved({
-                    sections: restaurant.sections.filter((s) => s.id !== section.id),
-                  })
-                }
-                onTableAdded={(t: TableDto) =>
-                  onSaved({
-                    sections: restaurant.sections.map((s) =>
-                      s.id === section.id ? { ...s, tables: [...s.tables, t] } : s
-                    ),
-                  })
-                }
-                onTableUpdated={(t: TableDto) =>
-                  onSaved({
-                    sections: restaurant.sections.map((s) =>
-                      s.id === section.id
-                        ? { ...s, tables: s.tables.map((x) => (x.id === t.id ? t : x)) }
-                        : s
-                    ),
-                  })
-                }
-                onTableDeleted={(id: number) =>
-                  onSaved({
-                    sections: restaurant.sections.map((s) =>
-                      s.id === section.id
-                        ? { ...s, tables: s.tables.filter((x) => x.id !== id) }
-                        : s
-                    ),
-                  })
-                }
-              />
-            ))}
-            {restaurant.sections.length === 0 && (
-              <ThemedText style={{ fontSize: 13, color: mutedColor, fontStyle: "italic" }}>
-                No sections yet.
-              </ThemedText>
-            )}
-          </View>
-
-          <View style={{ marginTop: 12 }}>
-            <AddRow
-              label="Add Section"
-              placeholder="e.g. Indoor, Patio, Bar"
-              onAdd={async (name) => {
-                const result = await addSection(restaurant.id, name);
-                if (result)
-                  onSaved({
-                    sections: [...restaurant.sections, { ...result, tables: [] }],
-                  });
-              }}
+        <View style={{ gap: 14 }}>
+          {restaurant.sections.map((section) => (
+            <SectionBlock
+              key={section.id}
+              section={section}
+              restaurantId={restaurant.id}
+              isDark={isDark}
+              borderColor={borderColor}
+              mutedColor={mutedColor}
+              confirmAction={confirmAction}
+              onSectionRenamed={(name) =>
+                onSaved({
+                  sections: restaurant.sections.map((s) =>
+                    s.id === section.id ? { ...s, name } : s
+                  ),
+                })
+              }
+              onSectionDeleted={() =>
+                onSaved({
+                  sections: restaurant.sections.filter((s) => s.id !== section.id),
+                })
+              }
+              onTableAdded={(t: TableDto) =>
+                onSaved({
+                  sections: restaurant.sections.map((s) =>
+                    s.id === section.id ? { ...s, tables: [...s.tables, t] } : s
+                  ),
+                })
+              }
+              onTableUpdated={(t: TableDto) =>
+                onSaved({
+                  sections: restaurant.sections.map((s) =>
+                    s.id === section.id
+                      ? { ...s, tables: s.tables.map((x) => (x.id === t.id ? t : x)) }
+                      : s
+                  ),
+                })
+              }
+              onTableDeleted={(id: number) =>
+                onSaved({
+                  sections: restaurant.sections.map((s) =>
+                    s.id === section.id ? { ...s, tables: s.tables.filter((x) => x.id !== id) } : s
+                  ),
+                })
+              }
             />
-          </View>
+          ))}
+          {restaurant.sections.length === 0 && (
+            <ThemedText style={{ fontSize: 13, color: mutedColor, fontStyle: "italic" }}>
+              No sections yet.
+            </ThemedText>
+          )}
+        </View>
+
+        <View style={{ marginTop: 12 }}>
+          <AddRow
+            label="Add Section"
+            placeholder="e.g. Indoor, Patio, Bar"
+            onAdd={async (name) => {
+              const result = await addSection(restaurant.id, name);
+              if (result)
+                onSaved({
+                  sections: [...restaurant.sections, { ...result, tables: [] }],
+                });
+            }}
+          />
         </View>
       </View>
     </View>

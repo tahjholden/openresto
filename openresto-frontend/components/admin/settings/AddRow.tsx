@@ -29,11 +29,14 @@ export function AddRow({
   if (!open) {
     return (
       <Pressable
-        style={[styles.addBtn, { backgroundColor: primaryColor }]}
+        style={[
+          styles.addBtn,
+          { backgroundColor: "transparent", borderWidth: 1, borderColor: primaryColor },
+        ]}
         onPress={() => setOpen(true)}
       >
-        <Ionicons name="add-circle-outline" size={16} color="#fff" />
-        <ThemedText style={styles.addBtnText}>{label}</ThemedText>
+        <Ionicons name="add-circle-outline" size={16} color={primaryColor} />
+        <ThemedText style={[styles.addBtnText, { color: primaryColor }]}>{label}</ThemedText>
       </Pressable>
     );
   }

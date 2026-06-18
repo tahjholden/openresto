@@ -203,24 +203,24 @@ describe("LocationCard", () => {
     expect(screen.getByText("Add Section")).toBeTruthy();
   });
 
-  it("shows No image set placeholder when no imageUrl", () => {
+  it("shows image section when no imageUrl", () => {
     render(<LocationCard {...baseProps} />);
-    expect(screen.getByText("No image set")).toBeTruthy();
+    expect(screen.getByText("Location image")).toBeTruthy();
   });
 
-  it("shows Upload button when no imageUrl", () => {
+  it("shows Upload image button when no imageUrl", () => {
     render(<LocationCard {...baseProps} />);
-    expect(screen.getByText("Upload")).toBeTruthy();
+    expect(screen.getByText("Upload image")).toBeTruthy();
   });
 
-  it("shows Change and Remove buttons when imageUrl is set", () => {
+  it("shows Change image and Remove buttons when imageUrl is set", () => {
     render(
       <LocationCard
         {...baseProps}
         restaurant={{ ...baseRestaurant, imageUrl: "http://example.com/img.jpg" }}
       />
     );
-    expect(screen.getByText("Change")).toBeTruthy();
+    expect(screen.getByText("Change image")).toBeTruthy();
     expect(screen.getByText("Remove")).toBeTruthy();
   });
 
@@ -285,7 +285,7 @@ describe("LocationCard", () => {
     jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
     render(<LocationCard {...baseProps} />);
     act(() => {
-      fireEvent.press(screen.getByText("Upload"));
+      fireEvent.press(screen.getByText("Upload image"));
     });
     act(() => {
       mockInput.onchange?.({} as Event);
@@ -313,7 +313,7 @@ describe("LocationCard", () => {
     jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
     render(<LocationCard {...baseProps} />);
     act(() => {
-      fireEvent.press(screen.getByText("Upload"));
+      fireEvent.press(screen.getByText("Upload image"));
     });
     await act(async () => {
       mockInput.onchange?.({} as Event);
@@ -338,7 +338,7 @@ describe("LocationCard", () => {
     jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
     render(<LocationCard {...baseProps} />);
     act(() => {
-      fireEvent.press(screen.getByText("Upload"));
+      fireEvent.press(screen.getByText("Upload image"));
     });
     await act(async () => {
       mockInput.onchange?.({} as Event);
@@ -365,7 +365,7 @@ describe("LocationCard", () => {
     jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
     render(<LocationCard {...baseProps} />);
     act(() => {
-      fireEvent.press(screen.getByText("Upload"));
+      fireEvent.press(screen.getByText("Upload image"));
     });
     await act(async () => {
       mockInput.onchange?.({} as Event);
@@ -388,7 +388,7 @@ describe("LocationCard", () => {
     jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
     render(<LocationCard {...baseProps} />);
     act(() => {
-      fireEvent.press(screen.getByText("Upload"));
+      fireEvent.press(screen.getByText("Upload image"));
     });
     await act(async () => {
       mockInput.onchange?.({} as Event);
@@ -410,7 +410,7 @@ describe("LocationCard", () => {
     jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
     render(<LocationCard {...baseProps} />);
     act(() => {
-      fireEvent.press(screen.getByText("Upload"));
+      fireEvent.press(screen.getByText("Upload image"));
     });
     await act(async () => {
       mockInput.onchange?.({} as Event);
@@ -432,7 +432,7 @@ describe("LocationCard", () => {
     jest.spyOn(document, "createElement").mockReturnValueOnce(mockInput as unknown as HTMLElement);
     render(<LocationCard {...baseProps} />);
     act(() => {
-      fireEvent.press(screen.getByText("Upload"));
+      fireEvent.press(screen.getByText("Upload image"));
     });
     await act(async () => {
       mockInput.onchange?.({} as Event);
@@ -481,7 +481,7 @@ describe("LocationCard", () => {
 
   it("renders Location Image section label", () => {
     render(<LocationCard {...baseProps} />);
-    expect(screen.getByText("Location Image")).toBeTruthy();
+    expect(screen.getByText("Location image")).toBeTruthy();
   });
 
   it("renders restaurant without address", () => {

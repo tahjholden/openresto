@@ -64,7 +64,7 @@ const TIMEZONES = [
   "Africa/Nairobi",
 ];
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export function RestaurantInfoForm({
   restaurant,
@@ -79,7 +79,6 @@ export function RestaurantInfoForm({
   const primaryColor = brand.primaryColor || COLORS.primary;
 
   const mutedColor = colors.muted;
-  const cardBg = colors.card;
   const borderColor = colors.border;
   const surface2 = isDark ? "#252729" : "#f9fafb";
 
@@ -163,15 +162,7 @@ export function RestaurantInfoForm({
   };
 
   return (
-    <View
-      style={{
-        backgroundColor: cardBg,
-        borderWidth: 1,
-        borderColor,
-        borderRadius: 14,
-        padding: 22,
-      }}
-    >
+    <View>
       {/* Card head */}
       <View
         style={{

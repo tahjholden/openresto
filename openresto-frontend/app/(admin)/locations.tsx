@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, View, Platform, Pressable, TextInput } from "react-native";
 import { Stack } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
@@ -127,15 +127,6 @@ export default function AdminLocationsScreen() {
           minute: "2-digit",
         })
       : null;
-  const willPauseUntilText = useMemo(
-    () =>
-      new Date(Date.now() + 60 * 60 * 1000).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    []
-  );
-
   function handleSelectLocation(id: number) {
     setSelectedId(id);
     setExtendedBookings(null);
@@ -321,6 +312,120 @@ export default function AdminLocationsScreen() {
         </ScrollView>
       )}
 
+      {/* ── Booking action buttons ──────────────────────────────────── */}
+      {selectedRestaurant && (
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <Pressable
+            disabled={pausing}
+            onPress={async () => {
+              setPausing(true);
+              if (isPaused) {
+                await unpauseRestaurantBookings(selectedRestaurant.id);
+                setAllRestaurants((prev) =>
+                  prev.map((r) =>
+                    r.id === selectedRestaurant.id ? { ...r, bookingsPausedUntil: undefined } : r
+                  )
+                );
+              } else {
+                await pauseRestaurantBookings(selectedRestaurant.id, 60);
+                setAllRestaurants((prev) =>
+                  prev.map((r) =>
+                    r.id === selectedRestaurant.id
+                      ? {
+                          ...r,
+                          bookingsPausedUntil: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                        }
+                      : r
+                  )
+                );
+              }
+              setPausing(false);
+            }}
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              paddingVertical: 10,
+              borderRadius: BORDER_RADIUS.md,
+              borderWidth: 1,
+              borderColor: isPaused ? "#16a34a" : "#ca8a04",
+              backgroundColor: isPaused ? "rgba(22,163,74,0.08)" : "rgba(234,179,8,0.08)",
+              opacity: pausing ? 0.5 : 1,
+              minHeight: 44,
+            }}
+          >
+            <Ionicons
+              name={isPaused ? "play-circle-outline" : "pause-circle-outline"}
+              size={15}
+              color={isPaused ? "#16a34a" : "#ca8a04"}
+            />
+            <ThemedText
+              style={{ fontSize: 13, fontWeight: "600", color: isPaused ? "#16a34a" : "#ca8a04" }}
+            >
+              {pausing ? "Saving…" : isPaused ? `Resume (until ${pausedUntilText})` : "Pause 1h"}
+            </ThemedText>
+          </Pressable>
+
+          <Pressable
+            disabled={extending || extendNoActive}
+            onPress={async () => {
+              if (extendedBookings !== null) {
+                setExtendedBookings(null);
+                setExtendNoActive(false);
+                return;
+              }
+              setExtending(true);
+              setExtendNoActive(false);
+              const result = await extendRestaurantBookings(selectedRestaurant.id, 60);
+              setExtending(false);
+              if (result.ok) {
+                if (result.extendedBookings.length > 0) {
+                  setExtendedBookings(result.extendedBookings);
+                } else {
+                  setExtendNoActive(true);
+                }
+              }
+            }}
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              paddingVertical: 10,
+              borderRadius: BORDER_RADIUS.md,
+              borderWidth: 1,
+              borderColor: borderColor,
+              opacity: extending || extendNoActive ? 0.5 : 1,
+              minHeight: 44,
+            }}
+          >
+            <Ionicons
+              name="timer-outline"
+              size={15}
+              color={extendedBookings !== null ? mutedColor : primaryColor}
+            />
+            <ThemedText
+              style={{
+                fontSize: 13,
+                fontWeight: "600",
+                color: extendedBookings !== null ? mutedColor : primaryColor,
+              }}
+            >
+              {extending
+                ? "Extending…"
+                : extendedBookings !== null
+                  ? `Extended ${extendedBookings.length} · Clear`
+                  : extendNoActive
+                    ? "No active bookings"
+                    : "Extend 60m"}
+            </ThemedText>
+          </Pressable>
+        </View>
+      )}
+
       {/* ── Location detail or empty state ───────────────────────────── */}
       {restaurants.length === 0 ? (
         <View
@@ -373,191 +478,6 @@ export default function AdminLocationsScreen() {
           />
         </View>
       ) : null}
-
-      {/* ── Booking controls ─────────────────────────────────────────── */}
-      {selectedRestaurant && (
-        <View style={styles.section}>
-          <ThemedText style={[styles.sectionHeading, { color: mutedColor }]}>
-            BOOKING CONTROLS
-          </ThemedText>
-          <View style={[styles.secCard, { backgroundColor: cardBg, borderColor }]}>
-            {/* Pause / Resume row */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-                padding: 14,
-              }}
-            >
-              <View
-                style={[
-                  styles.secIcon,
-                  {
-                    backgroundColor: isPaused
-                      ? "rgba(22,163,74,0.1)"
-                      : "rgba(234,179,8,0.1)",
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={isPaused ? "play-circle-outline" : "pause-circle-outline"}
-                  size={20}
-                  color={isPaused ? "#16a34a" : "#ca8a04"}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <ThemedText style={styles.secRowTitle}>
-                  {isPaused ? "Resume Bookings" : "Pause Bookings"}
-                </ThemedText>
-                <ThemedText style={[styles.secRowSub, { color: mutedColor }]}>
-                  {isPaused
-                    ? `Paused until ${pausedUntilText} · new bookings are blocked`
-                    : `Block new bookings for 1 hour (until ${willPauseUntilText})`}
-                </ThemedText>
-              </View>
-              <Pressable
-                disabled={pausing}
-                onPress={async () => {
-                  setPausing(true);
-                  if (isPaused) {
-                    await unpauseRestaurantBookings(selectedRestaurant.id);
-                    setAllRestaurants((prev) =>
-                      prev.map((r) =>
-                        r.id === selectedRestaurant.id
-                          ? { ...r, bookingsPausedUntil: undefined }
-                          : r
-                      )
-                    );
-                  } else {
-                    await pauseRestaurantBookings(selectedRestaurant.id, 60);
-                    setAllRestaurants((prev) =>
-                      prev.map((r) =>
-                        r.id === selectedRestaurant.id
-                          ? {
-                              ...r,
-                              bookingsPausedUntil: new Date(
-                                Date.now() + 60 * 60 * 1000
-                              ).toISOString(),
-                            }
-                          : r
-                      )
-                    );
-                  }
-                  setPausing(false);
-                }}
-                style={[
-                  styles.secBtn,
-                  {
-                    borderColor: isPaused ? "#16a34a" : "#ca8a04",
-                    backgroundColor: isPaused
-                      ? "rgba(22,163,74,0.08)"
-                      : "rgba(234,179,8,0.08)",
-                    opacity: pausing ? 0.5 : 1,
-                  },
-                ]}
-              >
-                <ThemedText
-                  style={[styles.secBtnText, { color: isPaused ? "#16a34a" : "#ca8a04" }]}
-                >
-                  {pausing ? "Saving…" : isPaused ? "Resume" : "Pause for 1h"}
-                </ThemedText>
-              </Pressable>
-            </View>
-
-            <View style={{ height: 1, backgroundColor: borderColor }} />
-
-            {/* Extend bookings row */}
-            <View style={{ padding: 14, gap: 12 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                <View style={[styles.secIcon, { backgroundColor: `${primaryColor}14` }]}>
-                  <Ionicons name="timer-outline" size={20} color={primaryColor} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <ThemedText style={styles.secRowTitle}>Extend Active Bookings</ThemedText>
-                  <ThemedText style={[styles.secRowSub, { color: mutedColor }]}>
-                    {extendedBookings !== null
-                      ? `Extended ${extendedBookings.length} booking${extendedBookings.length !== 1 ? "s" : ""} by 1 hour`
-                      : extendNoActive
-                        ? "No active bookings to extend"
-                        : `${selectedAdminData?.activeBookingsCount ?? 0} active booking${(selectedAdminData?.activeBookingsCount ?? 0) !== 1 ? "s" : ""} · extend all by 1 hour`}
-                  </ThemedText>
-                </View>
-                {extendedBookings === null ? (
-                  <Pressable
-                    disabled={extending}
-                    onPress={async () => {
-                      setExtending(true);
-                      setExtendNoActive(false);
-                      const result = await extendRestaurantBookings(selectedRestaurant.id, 60);
-                      setExtending(false);
-                      if (result.ok) {
-                        if (result.extendedBookings.length > 0) {
-                          setExtendedBookings(result.extendedBookings);
-                        } else {
-                          setExtendNoActive(true);
-                        }
-                      }
-                    }}
-                    style={[
-                      styles.secBtn,
-                      { borderColor, opacity: extending ? 0.5 : 1 },
-                    ]}
-                  >
-                    <ThemedText style={[styles.secBtnText, { color: primaryColor }]}>
-                      {extending ? "Extending…" : "Extend 60m"}
-                    </ThemedText>
-                  </Pressable>
-                ) : (
-                  <Pressable
-                    onPress={() => {
-                      setExtendedBookings(null);
-                      setExtendNoActive(false);
-                    }}
-                    style={[styles.secBtn, { borderColor }]}
-                  >
-                    <ThemedText style={[styles.secBtnText, { color: mutedColor }]}>
-                      Clear
-                    </ThemedText>
-                  </Pressable>
-                )}
-              </View>
-              {extendedBookings !== null && extendedBookings.length > 0 && (
-                <ScrollView style={{ maxHeight: 200 }} showsVerticalScrollIndicator={false}>
-                  {extendedBookings.map((b) => (
-                    <View
-                      key={b.id}
-                      style={{
-                        paddingVertical: 8,
-                        borderTopWidth: 1,
-                        borderTopColor: borderColor,
-                      }}
-                    >
-                      <ThemedText style={{ fontSize: 13, fontWeight: "600" }}>
-                        {b.customerName || b.customerEmail}
-                      </ThemedText>
-                      <ThemedText style={{ fontSize: 12, color: mutedColor }}>
-                        {new Date(b.date).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                        {" → "}
-                        {b.endTime
-                          ? new Date(b.endTime).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "Extended"}
-                        {` · ${b.seats} guests`}
-                      </ThemedText>
-                    </View>
-                  ))}
-                </ScrollView>
-              )}
-            </View>
-          </View>
-        </View>
-      )}
 
       {/* ── Archive / Delete ─────────────────────────────────────────── */}
       <View style={styles.section}>

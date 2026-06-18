@@ -352,60 +352,54 @@ describe("AdminLocationsScreen", () => {
     expect(screen.getByText("Resto 2")).toBeTruthy();
   });
 
-  it("renders BOOKING CONTROLS section when a location is selected", async () => {
+  it("renders booking action buttons when a location is selected", async () => {
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("BOOKING CONTROLS")).toBeTruthy());
-    expect(screen.getByText("Pause Bookings")).toBeTruthy();
-    expect(screen.getByText("Extend Active Bookings")).toBeTruthy();
-    expect(screen.getByText("Pause for 1h")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("Pause 1h")).toBeTruthy());
     expect(screen.getByText("Extend 60m")).toBeTruthy();
   });
 
-  it("shows Resume Bookings when restaurant is paused", async () => {
+  it("shows Resume button when restaurant is paused", async () => {
     const futureDate = new Date(Date.now() + 60 * 60 * 1000).toISOString();
     (adminGetRestaurants as jest.Mock).mockResolvedValue([
       { id: 1, name: "Resto 1", bookingsPausedUntil: futureDate },
     ]);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Resume Bookings")).toBeTruthy());
-    expect(screen.getByText("Resume")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText(/^Resume \(until/)).toBeTruthy());
   });
 
-  it("pauses bookings when Pause for 1h is pressed", async () => {
+  it("pauses bookings when Pause 1h is pressed", async () => {
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Pause for 1h")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Pause 1h")).toBeTruthy());
     await act(async () => {
-      fireEvent.press(screen.getByText("Pause for 1h"));
+      fireEvent.press(screen.getByText("Pause 1h"));
     });
     expect(pauseRestaurantBookings).toHaveBeenCalledWith(1, 60);
   });
 
-  it("resumes bookings when Resume is pressed", async () => {
+  it("resumes bookings when Resume button is pressed", async () => {
     const futureDate = new Date(Date.now() + 60 * 60 * 1000).toISOString();
     (adminGetRestaurants as jest.Mock).mockResolvedValue([
       { id: 1, name: "Resto 1", bookingsPausedUntil: futureDate },
     ]);
     renderWithProviders(<AdminLocationsScreen />);
-    await waitFor(() => expect(screen.getByText("Resume")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/^Resume \(until/)).toBeTruthy());
     await act(async () => {
-      fireEvent.press(screen.getByText("Resume"));
+      fireEvent.press(screen.getByText(/^Resume \(until/));
     });
     expect(unpauseRestaurantBookings).toHaveBeenCalledWith(1);
   });
 
-  it("shows No active bookings message when extend returns empty", async () => {
+  it("shows No active bookings when extend returns empty", async () => {
     (extendRestaurantBookings as jest.Mock).mockResolvedValue({ ok: true, extendedBookings: [] });
     renderWithProviders(<AdminLocationsScreen />);
     await waitFor(() => expect(screen.getByText("Extend 60m")).toBeTruthy());
     await act(async () => {
       fireEvent.press(screen.getByText("Extend 60m"));
     });
-    await waitFor(() =>
-      expect(screen.getByText("No active bookings to extend")).toBeTruthy()
-    );
+    await waitFor(() => expect(screen.getByText("No active bookings")).toBeTruthy());
   });
 
-  it("shows extended bookings list after extend succeeds", async () => {
+  it("shows extended count on button after extend succeeds", async () => {
     (extendRestaurantBookings as jest.Mock).mockResolvedValue({
       ok: true,
       extendedBookings: [
@@ -430,12 +424,11 @@ describe("AdminLocationsScreen", () => {
     await act(async () => {
       fireEvent.press(screen.getByText("Extend 60m"));
     });
-    await waitFor(() => expect(screen.getByText("Extended 1 booking by 1 hour")).toBeTruthy());
-    expect(screen.getByText("Alice")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("Extended 1 · Clear")).toBeTruthy());
     expect(extendRestaurantBookings).toHaveBeenCalledWith(1, 60);
   });
 
-  it("clears extend results when Clear is pressed", async () => {
+  it("clears extend results when Extended · Clear is pressed", async () => {
     (extendRestaurantBookings as jest.Mock).mockResolvedValue({
       ok: true,
       extendedBookings: [
@@ -460,8 +453,8 @@ describe("AdminLocationsScreen", () => {
     await act(async () => {
       fireEvent.press(screen.getByText("Extend 60m"));
     });
-    await waitFor(() => expect(screen.getByText("Clear")).toBeTruthy());
-    fireEvent.press(screen.getByText("Clear"));
+    await waitFor(() => expect(screen.getByText("Extended 1 · Clear")).toBeTruthy());
+    fireEvent.press(screen.getByText("Extended 1 · Clear"));
     await waitFor(() => expect(screen.getByText("Extend 60m")).toBeTruthy());
   });
 
@@ -496,7 +489,7 @@ describe("AdminLocationsScreen", () => {
     await act(async () => {
       fireEvent.press(screen.getByText("Extend 60m"));
     });
-    await waitFor(() => expect(screen.getByText("Clear")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Extended 1 · Clear")).toBeTruthy());
     fireEvent.press(screen.getByText("Resto 2"));
     await waitFor(() => expect(screen.getByText("Extend 60m")).toBeTruthy());
   });

@@ -16,8 +16,13 @@ jest.mock("@/api/admin", () => ({
   deleteHeroImage: jest.fn(),
 }));
 
-// Mutable so individual tests can supply a headerImageUrl
-let mockBrandData: { primaryColor: string; appName: string; headerImageUrl: string | null } = {
+// Mutable so individual tests can supply a headerImageUrl or faviconIcon
+let mockBrandData: {
+  primaryColor: string;
+  appName: string;
+  headerImageUrl: string | null;
+  faviconIcon?: string;
+} = {
   primaryColor: "#0a7ea4",
   appName: "Open Resto",
   headerImageUrl: null,
@@ -283,5 +288,47 @@ describe("BrandSettingsCard", () => {
     await waitFor(() => {
       expect(screen.getByText("Failed to update brand.")).toBeTruthy();
     });
+  });
+
+  it("shows favicon icon label in subtitle when faviconIcon is set", () => {
+    mockBrandData = {
+      primaryColor: "#0a7ea4",
+      appName: "Open Resto",
+      headerImageUrl: null,
+      faviconIcon: "utensils",
+    };
+    render(<BrandSettingsCard {...baseProps} />);
+    expect(screen.getAllByText(/Utensils/).length).toBeGreaterThan(0);
+  });
+
+  it("pressing a favicon icon swatch selects it and shows 'tap to deselect'", () => {
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByTestId("favicon-icon-utensils"));
+    expect(screen.getByText(/tap to deselect/)).toBeTruthy();
+  });
+
+  it("pressing an already-selected favicon icon deselects it", () => {
+    mockBrandData = {
+      primaryColor: "#0a7ea4",
+      appName: "Open Resto",
+      headerImageUrl: null,
+      faviconIcon: "utensils",
+    };
+    render(<BrandSettingsCard {...baseProps} />);
+    expect(screen.getByText(/tap to deselect/)).toBeTruthy();
+    fireEvent.press(screen.getByTestId("favicon-icon-utensils"));
+    expect(screen.queryByText(/tap to deselect/)).toBeNull();
+  });
+
+  it("passes faviconIcon to saveBrandSettings when saving", async () => {
+    (adminApi.saveBrandSettings as jest.Mock).mockResolvedValue({ message: "Saved." });
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.press(screen.getByTestId("favicon-icon-coffee"));
+    await act(async () => {
+      fireEvent.press(screen.getByText("Save"));
+    });
+    expect(adminApi.saveBrandSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ faviconIcon: "coffee" })
+    );
   });
 });

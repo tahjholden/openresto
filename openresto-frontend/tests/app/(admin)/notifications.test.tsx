@@ -439,4 +439,52 @@ describe("NotificationsScreen", () => {
       expect(screen.getByText("Nearly Full")).toBeTruthy();
     });
   });
+
+  it("relativeTime shows 'Xm ago' for notifications created minutes ago", async () => {
+    const thirtyMinsAgo = new Date(Date.now() - 30 * 60000).toISOString();
+    mockGetNotifications.mockResolvedValue({
+      items: [{ ...mockNotification, createdAt: thirtyMinsAgo }],
+      totalCount: 1,
+    });
+    render(<NotificationsScreen />);
+    await waitFor(() => expect(screen.getByText(/30m ago/)).toBeTruthy());
+  });
+
+  it("relativeTime shows 'Xh ago' for notifications created hours ago", async () => {
+    const threeHoursAgo = new Date(Date.now() - 3 * 3600000).toISOString();
+    mockGetNotifications.mockResolvedValue({
+      items: [{ ...mockNotification, createdAt: threeHoursAgo }],
+      totalCount: 1,
+    });
+    render(<NotificationsScreen />);
+    await waitFor(() => expect(screen.getByText(/3h ago/)).toBeTruthy());
+  });
+
+  it("relativeTime shows 'Xd ago' for notifications created days ago", async () => {
+    const twoDaysAgo = new Date(Date.now() - 25 * 3600000).toISOString();
+    mockGetNotifications.mockResolvedValue({
+      items: [{ ...mockNotification, createdAt: twoDaysAgo }],
+      totalCount: 1,
+    });
+    render(<NotificationsScreen />);
+    await waitFor(() => expect(screen.getByText(/1d ago/)).toBeTruthy());
+  });
+
+  it("pressing Mark all read with a specific restaurant selected calls markAllRead for that restaurant only", async () => {
+    mockFetchRestaurants.mockResolvedValue([
+      { id: 1, name: "Resto A" },
+      { id: 2, name: "Resto B" },
+    ]);
+    render(<NotificationsScreen />);
+    await waitFor(() => expect(screen.getByText("Resto B")).toBeTruthy());
+    fireEvent.press(screen.getByText("Resto B"));
+    await waitFor(() =>
+      expect(mockGetNotifications).toHaveBeenCalledWith(
+        expect.objectContaining({ restaurantId: 2 })
+      )
+    );
+    fireEvent.press(screen.getByText("Mark all read"));
+    await waitFor(() => expect(mockMarkAllRead).toHaveBeenCalledWith(2));
+    expect(mockMarkAllRead).not.toHaveBeenCalledWith(1);
+  });
 });

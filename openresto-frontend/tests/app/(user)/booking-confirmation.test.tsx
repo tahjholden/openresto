@@ -261,6 +261,15 @@ describe("BookingConfirmationScreen", () => {
     expect(mockReplace).toHaveBeenCalledWith("/");
   });
 
+  it("shows customer name in subtitle when booking has customerName", async () => {
+    const { useLocalSearchParams } = require("expo-router");
+    useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
+    (getBookingByRef as jest.Mock).mockResolvedValue({ ...mockBooking, customerName: "Alice" });
+
+    renderWithProviders(<BookingConfirmationScreen />);
+    await waitFor(() => expect(screen.getAllByText(/Alice/).length).toBeGreaterThan(0));
+  });
+
   it("geocodes restaurant address and sets map coords when nominatim returns data", async () => {
     const { useLocalSearchParams } = require("expo-router");
     useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });

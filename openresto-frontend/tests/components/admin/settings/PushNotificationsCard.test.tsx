@@ -40,6 +40,9 @@ const mockSubscribePush = notificationsApi.subscribePush as jest.Mock;
 const mockUnsubscribePush = notificationsApi.unsubscribePush as jest.Mock;
 const mockFetchRestaurants = restaurantsApi.fetchRestaurants as jest.Mock;
 
+// Use global as Record to avoid bare `navigator`/`window` which may not exist in the node test env
+const g = global as Record<string, unknown>;
+
 // Build a fake push subscription
 function makeSub(endpoint = "https://push.example.com/sub") {
   const buffer = new ArrayBuffer(16);
@@ -60,25 +63,31 @@ function makeSW(existingSub: ReturnType<typeof makeSub> | null = null) {
   };
 }
 
+function setNavigatorSW(sw: ReturnType<typeof makeSW> | null) {
+  if (!g.navigator || typeof g.navigator !== "object") {
+    Object.defineProperty(global, "navigator", {
+      value: {},
+      configurable: true,
+      writable: true,
+    });
+  }
+  const nav = g.navigator as Record<string, unknown>;
+  if (sw) {
+    nav.serviceWorker = { ready: Promise.resolve(sw) };
+  } else {
+    delete nav.serviceWorker;
+  }
+}
+
 function setupWebEnvironment(hasServiceWorker = true, hasPushManager = true) {
   Object.defineProperty(Platform, "OS", { value: "web", configurable: true });
 
-  if (hasServiceWorker) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (navigator as unknown as Record<string, unknown>).serviceWorker = {
-      ready: Promise.resolve(makeSW()),
-    };
-  } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (navigator as unknown as Record<string, unknown>).serviceWorker;
-  }
+  setNavigatorSW(hasServiceWorker ? makeSW() : null);
 
   if (hasPushManager) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as unknown as Record<string, unknown>).PushManager = {};
+    g.PushManager = {};
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (window as unknown as Record<string, unknown>).PushManager;
+    delete g.PushManager;
   }
 }
 
@@ -193,10 +202,7 @@ describe("PushNotificationsCard", () => {
   describe("web platform - inactive (no existing subscription)", () => {
     it("shows inactive status text when no existing subscription", async () => {
       const sw = makeSW(null);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (navigator as unknown as Record<string, unknown>).serviceWorker = {
-        ready: Promise.resolve(sw),
-      };
+      setNavigatorSW(sw);
 
       render(<PushNotificationsCard />);
 
@@ -207,10 +213,7 @@ describe("PushNotificationsCard", () => {
 
     it("shows Enable push notifications button", async () => {
       const sw = makeSW(null);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (navigator as unknown as Record<string, unknown>).serviceWorker = {
-        ready: Promise.resolve(sw),
-      };
+      setNavigatorSW(sw);
 
       render(<PushNotificationsCard />);
 
@@ -223,10 +226,7 @@ describe("PushNotificationsCard", () => {
   describe("web platform - active (existing subscription)", () => {
     it("shows active status text when subscription exists", async () => {
       const sw = makeSW(makeSub());
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (navigator as unknown as Record<string, unknown>).serviceWorker = {
-        ready: Promise.resolve(sw),
-      };
+      setNavigatorSW(sw);
 
       render(<PushNotificationsCard />);
 
@@ -237,10 +237,7 @@ describe("PushNotificationsCard", () => {
 
     it("shows Disable push notifications button when active", async () => {
       const sw = makeSW(makeSub());
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (navigator as unknown as Record<string, unknown>).serviceWorker = {
-        ready: Promise.resolve(sw),
-      };
+      setNavigatorSW(sw);
 
       render(<PushNotificationsCard />);
 
@@ -253,10 +250,7 @@ describe("PushNotificationsCard", () => {
   describe("handleEnable", () => {
     async function renderInactive() {
       const sw = makeSW(null);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (navigator as unknown as Record<string, unknown>).serviceWorker = {
-        ready: Promise.resolve(sw),
-      };
+      setNavigatorSW(sw);
       render(<PushNotificationsCard />);
       await waitFor(() => {
         expect(screen.getByText("Enable push notifications")).toBeTruthy();
@@ -323,10 +317,7 @@ describe("PushNotificationsCard", () => {
     async function renderActive() {
       const existingSub = makeSub();
       const sw = makeSW(existingSub);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (navigator as unknown as Record<string, unknown>).serviceWorker = {
-        ready: Promise.resolve(sw),
-      };
+      setNavigatorSW(sw);
       render(<PushNotificationsCard />);
       await waitFor(() => {
         expect(screen.getByText("Disable push notifications")).toBeTruthy();

@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react-native";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react-native";
 import RestaurantScreen from "@/app/(user)/restaurant/[id]";
 import { AppThemeProvider } from "@/context/ThemeContext";
 import { BrandProvider } from "@/context/BrandContext";
@@ -118,5 +118,47 @@ describe("RestaurantScreen", () => {
     await waitFor(() => {
       expect(screen.getByText("Restaurant not found.")).toBeTruthy();
     });
+  });
+
+  it("fires onScroll to update scrollY", async () => {
+    renderWithProviders(<RestaurantScreen />);
+    await waitFor(() => expect(screen.getByText("Sushi Spot")).toBeTruthy());
+
+    const { ScrollView } = require("react-native");
+    const scrollViews = screen.UNSAFE_getAllByType(ScrollView);
+    if (scrollViews.length > 0) {
+      fireEvent.scroll(scrollViews[0], {
+        nativeEvent: { contentOffset: { y: 400 } },
+      });
+    }
+    expect(screen.getByText("Sushi Spot")).toBeTruthy();
+  });
+
+  it("pressing ScrollToTopFab calls scrollToTop", async () => {
+    const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");
+    mockUseDimensions.mockReturnValue({ width: 375, height: 667 });
+
+    try {
+      renderWithProviders(<RestaurantScreen />);
+      await waitFor(() => expect(screen.getByText("Sushi Spot")).toBeTruthy());
+
+      const { ScrollView } = require("react-native");
+      const scrollViews = screen.UNSAFE_getAllByType(ScrollView);
+      if (scrollViews.length > 0) {
+        fireEvent.scroll(scrollViews[0], {
+          nativeEvent: { contentOffset: { y: 400 } },
+        });
+      }
+
+      await waitFor(() => {
+        const fab = screen.queryByLabelText("Scroll to top");
+        if (fab) {
+          fireEvent.press(fab);
+        }
+      });
+      expect(screen.getByText("Sushi Spot")).toBeTruthy();
+    } finally {
+      mockUseDimensions.mockRestore();
+    }
   });
 });

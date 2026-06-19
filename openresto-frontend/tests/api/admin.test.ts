@@ -9,6 +9,7 @@ import {
   adminPurgeBooking,
   adminCreateRestaurant,
   adminDeleteRestaurant,
+  adminSetRestaurantArchived,
   adminGetTables,
   adminGetRestaurants,
   adminGetSections,
@@ -153,6 +154,12 @@ describe("getAdminDashboardStats", () => {
     expect(result?.recentBookings).toHaveLength(2);
     expect(result?.recentBookings[0].isCancelled).toBe(false);
     expect(result?.recentBookings[1].isCancelled).toBe(true);
+  });
+
+  it("returns null when fetch throws", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("network error"));
+    const result = await getAdminDashboardStats();
+    expect(result).toBeNull();
   });
 });
 
@@ -377,6 +384,32 @@ describe("adminDeleteRestaurant", () => {
     mockFetch.mockResolvedValueOnce({ ok: false });
     expect(await adminDeleteRestaurant(3)).toBe(false);
   });
+
+  it("returns false on network error", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("offline"));
+    expect(await adminDeleteRestaurant(3)).toBe(false);
+  });
+});
+
+describe("adminSetRestaurantArchived", () => {
+  it("sends PATCH with isArchived true and returns true on success", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true });
+    expect(await adminSetRestaurantArchived(1, true)).toBe(true);
+    const [url, opts] = mockFetch.mock.calls[0];
+    expect(url).toContain("/api/admin/restaurants/1");
+    expect(opts.method).toBe("PATCH");
+    expect(JSON.parse(opts.body)).toEqual({ isArchived: true });
+  });
+
+  it("returns false on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    expect(await adminSetRestaurantArchived(1, false)).toBe(false);
+  });
+
+  it("returns false on network error", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("offline"));
+    expect(await adminSetRestaurantArchived(1, true)).toBe(false);
+  });
 });
 
 // ---------- Tables ----------
@@ -581,6 +614,11 @@ describe("adminGetSections", () => {
 
   it("returns empty array on error", async () => {
     mockFetch.mockResolvedValueOnce({ ok: false });
+    expect(await adminGetSections(2)).toEqual([]);
+  });
+
+  it("returns empty array on network error", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("offline"));
     expect(await adminGetSections(2)).toEqual([]);
   });
 });

@@ -156,9 +156,7 @@ describe("PushNotificationsCard", () => {
       render(<PushNotificationsCard />);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Push notifications require VAPID keys/)
-        ).toBeTruthy();
+        expect(screen.getByText(/Push notifications require VAPID keys/)).toBeTruthy();
       });
     });
   });
@@ -187,9 +185,7 @@ describe("PushNotificationsCard", () => {
       render(<PushNotificationsCard />);
 
       await waitFor(() => {
-        expect(
-          screen.getByText("Notifications blocked — enable in browser settings")
-        ).toBeTruthy();
+        expect(screen.getByText("Notifications blocked — enable in browser settings")).toBeTruthy();
       });
     });
   });
@@ -205,9 +201,7 @@ describe("PushNotificationsCard", () => {
       render(<PushNotificationsCard />);
 
       await waitFor(() => {
-        expect(
-          screen.getByText("Enable to receive real-time booking alerts")
-        ).toBeTruthy();
+        expect(screen.getByText("Enable to receive real-time booking alerts")).toBeTruthy();
       });
     });
 
@@ -237,9 +231,7 @@ describe("PushNotificationsCard", () => {
       render(<PushNotificationsCard />);
 
       await waitFor(() => {
-        expect(
-          screen.getByText("Push notifications active for all locations")
-        ).toBeTruthy();
+        expect(screen.getByText("Push notifications active for all locations")).toBeTruthy();
       });
     });
 

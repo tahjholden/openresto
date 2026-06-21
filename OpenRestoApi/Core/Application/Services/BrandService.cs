@@ -15,11 +15,19 @@ public class BrandService(AppDbContext db, IConfiguration configuration)
         return Regex.IsMatch(color, @"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$");
     }
 
-    public string GetWebsiteUrl()
+    public string GetWebsiteUrl(BrandSettings? brand = null)
     {
+        if (!string.IsNullOrWhiteSpace(brand?.WebsiteUrl))
+            return brand.WebsiteUrl;
         return _configuration["Website:Url"]
                ?? Environment.GetEnvironmentVariable("WEBSITE_URL")
                ?? "http://localhost:8081";
+    }
+
+    public async Task<string> GetWebsiteUrlAsync()
+    {
+        BrandSettings? brand = await _db.Set<BrandSettings>().FirstOrDefaultAsync();
+        return GetWebsiteUrl(brand);
     }
 
     public async Task<BrandSettings> GetAsync()
@@ -38,7 +46,7 @@ public class BrandService(AppDbContext db, IConfiguration configuration)
         "leaf", "star", "heart", "chef-hat", "fish"
     };
 
-    public async Task SaveAsync(string? appName, string? primaryColor, string? accentColor, string? faviconIcon = null)
+    public async Task SaveAsync(string? appName, string? primaryColor, string? accentColor, string? faviconIcon = null, string? websiteUrl = null)
     {
         if (appName != null && appName.Length > 32)
         {
@@ -73,6 +81,10 @@ public class BrandService(AppDbContext db, IConfiguration configuration)
         if (faviconIcon != null)
         {
             brand.FaviconIcon = faviconIcon;
+        }
+        if (websiteUrl != null)
+        {
+            brand.WebsiteUrl = string.IsNullOrWhiteSpace(websiteUrl) ? null : websiteUrl.Trim();
         }
 
         await _db.SaveChangesAsync();

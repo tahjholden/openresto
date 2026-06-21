@@ -453,6 +453,7 @@ export interface BrandSettingsDto {
   primaryColor: string;
   accentColor?: string;
   faviconIcon?: string;
+  websiteUrl?: string;
 }
 
 export async function saveBrandSettings(

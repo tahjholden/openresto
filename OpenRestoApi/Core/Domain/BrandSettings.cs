@@ -15,4 +15,6 @@ public class BrandSettings
 
     [StringLength(32)]
     public string? FaviconIcon { get; set; }
+
+    public string? WebsiteUrl { get; set; }
 }

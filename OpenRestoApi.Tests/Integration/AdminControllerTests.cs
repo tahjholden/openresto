@@ -432,6 +432,48 @@ public class AdminControllerTests(TestWebAppFactory factory) : IClassFixture<Tes
     }
 
     [Fact]
+    public async Task SendEmail_ValidBooking_ReturnsOk_WithPlainTextBody()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+        (int r, int s, int t) = GetSeededIds();
+        HttpResponseMessage createResp = await client.PostAsJsonAsync("/api/admin/bookings", new
+        {
+            restaurantId = r, sectionId = s, tableId = t,
+            date = DateTime.UtcNow.AddDays(310).ToString("yyyy-MM-ddT12:00:00"),
+            customerEmail = "emailtest@test.com", seats = 2
+        });
+        Assert.Equal(HttpStatusCode.Created, createResp.StatusCode);
+        int id = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+
+        HttpResponseMessage response = await client.PostAsJsonAsync($"/api/admin/bookings/{id}/email",
+            new { subject = "Test message", body = "Hello, this is a test." });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains("emailtest@test.com", body.GetProperty("message").GetString());
+    }
+
+    [Fact]
+    public async Task SendEmail_ValidBooking_ReturnsOk_WithHtmlBody()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+        (int r, int s, int t) = GetSeededIds();
+        HttpResponseMessage createResp = await client.PostAsJsonAsync("/api/admin/bookings", new
+        {
+            restaurantId = r, sectionId = s, tableId = t,
+            date = DateTime.UtcNow.AddDays(311).ToString("yyyy-MM-ddT12:00:00"),
+            customerEmail = "htmltest@test.com", seats = 2
+        });
+        Assert.Equal(HttpStatusCode.Created, createResp.StatusCode);
+        int id = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+
+        HttpResponseMessage response = await client.PostAsJsonAsync($"/api/admin/bookings/{id}/email",
+            new { subject = "HTML message", body = "<p>Hello</p><p>This is a test.</p>" });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task GetRestaurants_ReturnsOk()
     {
         HttpClient client = _factory.CreateAuthenticatedClient();

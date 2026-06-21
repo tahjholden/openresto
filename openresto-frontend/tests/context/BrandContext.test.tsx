@@ -26,6 +26,7 @@ function TestConsumer() {
       <Text testID="color">{brand.primaryColor}</Text>
       <Text testID="accent">{brand.accentColor ?? "none"}</Text>
       <Text testID="logo">{brand.headerImageUrl ?? "none"}</Text>
+      <Text testID="website">{brand.websiteUrl ?? "none"}</Text>
     </>
   );
 }
@@ -187,6 +188,27 @@ describe("BrandContext", () => {
     await waitFor(() => expect(mockFetch).toHaveBeenCalled());
     expect(mockFetch.mock.calls[0][0]).toBe("http://localhost:5062/api/brand");
     process.env.EXPO_PUBLIC_API_URL = orig;
+  });
+
+  it("exposes websiteUrl from API response", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        appName: "My Resto",
+        primaryColor: "#ff5500",
+        websiteUrl: "https://bookings.example.com",
+      }),
+    });
+
+    render(
+      <BrandProvider>
+        <TestConsumer />
+      </BrandProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("website").props.children).toBe("https://bookings.example.com");
+    });
   });
 
   it("buildEndpoint appends /api when EXPO_PUBLIC_API_URL has no /api", async () => {

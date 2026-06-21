@@ -25,7 +25,7 @@ public class BrandController(BrandService brandService) : ControllerBase
             PrimaryColor = brand.PrimaryColor ?? "#0a7ea4",
             AccentColor = brand.AccentColor,
             HeaderImageUrl = brand.HeaderImageUrl,
-            WebsiteUrl = _brand.GetWebsiteUrl(),
+            WebsiteUrl = _brand.GetWebsiteUrl(brand),
             FaviconIcon = brand.FaviconIcon,
         });
     }
@@ -90,7 +90,7 @@ public class BrandController(BrandService brandService) : ControllerBase
     {
         try
         {
-            await _brand.SaveAsync(req.AppName, req.PrimaryColor, req.AccentColor, req.FaviconIcon);
+            await _brand.SaveAsync(req.AppName, req.PrimaryColor, req.AccentColor, req.FaviconIcon, req.WebsiteUrl);
             return Ok(new { message = "Brand settings saved." });
         }
         catch (ArgumentException ex)
@@ -107,6 +107,7 @@ public class BrandRequest
     public string? PrimaryColor { get; set; }
     public string? AccentColor { get; set; }
     public string? FaviconIcon { get; set; }
+    public string? WebsiteUrl { get; set; }
 }
 
 public class BrandResponse

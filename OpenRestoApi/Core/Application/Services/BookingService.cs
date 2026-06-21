@@ -134,7 +134,7 @@ public class BookingService(
                 if (settings?.SendBookingConfirmations == true)
                 {
                     var brand = await _brandService.GetAsync();
-                    string websiteUrl = _brandService.GetWebsiteUrl();
+                    string websiteUrl = _brandService.GetWebsiteUrl(brand);
                     string subject = $"Booking confirmed – {restaurant.Name}";
                     string body = BuildConfirmationEmail(newBooking, restaurant, brand, websiteUrl);
                     await _emailService.SendEmailAsync(newBooking.CustomerEmail, subject, body);

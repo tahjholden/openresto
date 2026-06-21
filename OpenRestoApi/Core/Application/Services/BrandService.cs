@@ -15,11 +15,31 @@ public class BrandService(AppDbContext db, IConfiguration configuration)
         return Regex.IsMatch(color, @"^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$");
     }
 
-    public string GetWebsiteUrl()
+    public string GetWebsiteUrl(BrandSettings? brand = null)
     {
-        return _configuration["Website:Url"]
-               ?? Environment.GetEnvironmentVariable("WEBSITE_URL")
-               ?? "http://localhost:8081";
+        if (!string.IsNullOrWhiteSpace(brand?.WebsiteUrl))
+            return brand.WebsiteUrl;
+
+        string? explicit_ = _configuration["Website:Url"] ?? Environment.GetEnvironmentVariable("WEBSITE_URL");
+        if (!string.IsNullOrWhiteSpace(explicit_))
+            return explicit_;
+
+        // Fall back to the first CORS origin — self-hosters already set this to their public domain
+        string? corsOrigins = _configuration["Cors:Origins"] ?? Environment.GetEnvironmentVariable("CORS_ORIGINS");
+        if (!string.IsNullOrWhiteSpace(corsOrigins))
+        {
+            string first = corsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[0];
+            if (!string.IsNullOrWhiteSpace(first))
+                return first;
+        }
+
+        return "http://localhost:8081";
+    }
+
+    public async Task<string> GetWebsiteUrlAsync()
+    {
+        BrandSettings? brand = await _db.Set<BrandSettings>().FirstOrDefaultAsync();
+        return GetWebsiteUrl(brand);
     }
 
     public async Task<BrandSettings> GetAsync()
@@ -38,7 +58,7 @@ public class BrandService(AppDbContext db, IConfiguration configuration)
         "leaf", "star", "heart", "chef-hat", "fish"
     };
 
-    public async Task SaveAsync(string? appName, string? primaryColor, string? accentColor, string? faviconIcon = null)
+    public async Task SaveAsync(string? appName, string? primaryColor, string? accentColor, string? faviconIcon = null, string? websiteUrl = null)
     {
         if (appName != null && appName.Length > 32)
         {
@@ -73,6 +93,10 @@ public class BrandService(AppDbContext db, IConfiguration configuration)
         if (faviconIcon != null)
         {
             brand.FaviconIcon = faviconIcon;
+        }
+        if (websiteUrl != null)
+        {
+            brand.WebsiteUrl = string.IsNullOrWhiteSpace(websiteUrl) ? null : websiteUrl.Trim();
         }
 
         await _db.SaveChangesAsync();

@@ -175,7 +175,7 @@ public class AdminController(AdminService adminService, IEmailService emailServi
                 var brand = await _brand.GetAsync();
                 string appName = brand.AppName ?? "Open Resto";
                 string primaryColor = brand.PrimaryColor ?? "#0a7ea4";
-                string websiteUrl = _brand.GetWebsiteUrl().TrimEnd('/');
+                string websiteUrl = _brand.GetWebsiteUrl(brand).TrimEnd('/');
                 htmlBody = WrapInBrandedEmail(req.Body, appName, primaryColor, websiteUrl);
             }
             await _email.SendEmailAsync(booking.CustomerEmail, req.Subject, htmlBody);

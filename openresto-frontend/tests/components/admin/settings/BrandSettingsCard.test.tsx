@@ -22,6 +22,7 @@ let mockBrandData: {
   appName: string;
   headerImageUrl: string | null;
   faviconIcon?: string;
+  websiteUrl?: string;
 } = {
   primaryColor: "#0a7ea4",
   appName: "Open Resto",
@@ -330,5 +331,69 @@ describe("BrandSettingsCard", () => {
     expect(adminApi.saveBrandSettings).toHaveBeenCalledWith(
       expect.objectContaining({ faviconIcon: "coffee" })
     );
+  });
+
+  it("renders Website URL field", () => {
+    render(<BrandSettingsCard {...baseProps} />);
+    expect(screen.getByText("Website URL")).toBeTruthy();
+    expect(screen.getByPlaceholderText("https://bookings.example.com")).toBeTruthy();
+  });
+
+  it("pre-fills Website URL from brand context", () => {
+    mockBrandData = {
+      primaryColor: "#0a7ea4",
+      appName: "Open Resto",
+      headerImageUrl: null,
+      websiteUrl: "https://mysite.example.com",
+    };
+    render(<BrandSettingsCard {...baseProps} />);
+    expect(screen.getByDisplayValue("https://mysite.example.com")).toBeTruthy();
+  });
+
+  it("passes websiteUrl to saveBrandSettings when set", async () => {
+    (adminApi.saveBrandSettings as jest.Mock).mockResolvedValue({ message: "Saved." });
+    render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.changeText(
+      screen.getByPlaceholderText("https://bookings.example.com"),
+      "https://bookings.example.com"
+    );
+    await act(async () => {
+      fireEvent.press(screen.getByText("Save"));
+    });
+    expect(adminApi.saveBrandSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ websiteUrl: "https://bookings.example.com" })
+    );
+  });
+
+  it("passes undefined websiteUrl when field is empty", async () => {
+    (adminApi.saveBrandSettings as jest.Mock).mockResolvedValue({ message: "Saved." });
+    render(<BrandSettingsCard {...baseProps} />);
+    await act(async () => {
+      fireEvent.press(screen.getByText("Save"));
+    });
+    expect(adminApi.saveBrandSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ websiteUrl: undefined })
+    );
+  });
+
+  it("syncs websiteUrl when brand context updates", async () => {
+    mockBrandData = {
+      primaryColor: "#0a7ea4",
+      appName: "Open Resto",
+      headerImageUrl: null,
+      websiteUrl: "https://v1.example.com",
+    };
+    const { rerender } = render(<BrandSettingsCard {...baseProps} />);
+    expect(screen.getByDisplayValue("https://v1.example.com")).toBeTruthy();
+    mockBrandData = {
+      primaryColor: "#0a7ea4",
+      appName: "Open Resto",
+      headerImageUrl: null,
+      websiteUrl: "https://v2.example.com",
+    };
+    await act(async () => {
+      rerender(<BrandSettingsCard {...baseProps} />);
+    });
+    expect(screen.getByDisplayValue("https://v2.example.com")).toBeTruthy();
   });
 });

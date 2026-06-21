@@ -31,6 +31,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
             accentColor: data.accentColor || undefined,
             headerImageUrl: data.headerImageUrl || undefined,
             faviconIcon: data.faviconIcon || undefined,
+            websiteUrl: data.websiteUrl || undefined,
           };
           setBrand(newBrand);
 

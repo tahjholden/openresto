@@ -28,6 +28,7 @@ export function BrandSettingsCard({
   const [appName, setAppName] = useState(brand.appName);
   const [brandPrimaryColor, setBrandPrimaryColor] = useState(brand.primaryColor);
   const [faviconIcon, setFaviconIcon] = useState<string | undefined>(brand.faviconIcon);
+  const [websiteUrl, setWebsiteUrl] = useState(brand.websiteUrl ?? "");
   const [heroPreview, setHeroPreview] = useState<string | null>(brand.headerImageUrl ?? null);
   const [heroUploading, setHeroUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -39,6 +40,7 @@ export function BrandSettingsCard({
     setAppName(brand.appName);
     setBrandPrimaryColor(brand.primaryColor);
     setFaviconIcon(brand.faviconIcon);
+    setWebsiteUrl(brand.websiteUrl ?? "");
     setHeroPreview(brand.headerImageUrl ?? null);
   }, [brand]);
 
@@ -83,6 +85,7 @@ export function BrandSettingsCard({
       appName,
       primaryColor: brandPrimaryColor,
       faviconIcon,
+      websiteUrl: websiteUrl.trim() || undefined,
     });
     setSaving(false);
     if (result) {
@@ -209,6 +212,20 @@ export function BrandSettingsCard({
                 {FAVICON_ICONS.find((i) => i.id === faviconIcon)?.label} · tap to deselect
               </ThemedText>
             )}
+          </View>
+
+          <View style={styles.field}>
+            <ThemedText style={styles.fieldLabel}>Website URL</ThemedText>
+            <Input
+              value={websiteUrl}
+              onChangeText={setWebsiteUrl}
+              placeholder="https://bookings.example.com"
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+            <ThemedText style={{ fontSize: 11, color: mutedColor, marginTop: 4 }}>
+              Used in confirmation email links and images. Must be the public URL of this app.
+            </ThemedText>
           </View>
 
           <View style={styles.field}>

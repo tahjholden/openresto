@@ -186,12 +186,3 @@ jobs:
             exit 1
           fi
 
-      - name: Generate idempotent script (sanity check)
-        if: steps.detect.outputs.has_new_migrations == 'true'
-        working-directory: OpenRestoApi
-        run: |
-          dotnet ef migrations script \
-            --idempotent \
-            --configuration Release --no-build \
-            --output /tmp/idempotent.sql
-          echo "Idempotent script generated successfully ($(wc -l < /tmp/idempotent.sql) lines)."

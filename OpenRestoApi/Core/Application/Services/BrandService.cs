@@ -19,9 +19,21 @@ public class BrandService(AppDbContext db, IConfiguration configuration)
     {
         if (!string.IsNullOrWhiteSpace(brand?.WebsiteUrl))
             return brand.WebsiteUrl;
-        return _configuration["Website:Url"]
-               ?? Environment.GetEnvironmentVariable("WEBSITE_URL")
-               ?? "http://localhost:8081";
+
+        string? explicit_ = _configuration["Website:Url"] ?? Environment.GetEnvironmentVariable("WEBSITE_URL");
+        if (!string.IsNullOrWhiteSpace(explicit_))
+            return explicit_;
+
+        // Fall back to the first CORS origin — self-hosters already set this to their public domain
+        string? corsOrigins = _configuration["Cors:Origins"] ?? Environment.GetEnvironmentVariable("CORS_ORIGINS");
+        if (!string.IsNullOrWhiteSpace(corsOrigins))
+        {
+            string first = corsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[0];
+            if (!string.IsNullOrWhiteSpace(first))
+                return first;
+        }
+
+        return "http://localhost:8081";
     }
 
     public async Task<string> GetWebsiteUrlAsync()

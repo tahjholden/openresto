@@ -27,7 +27,7 @@ public class HoldsControllerTests(TestWebAppFactory factory) : IClassFixture<Tes
         HttpClient client = _factory.CreateClient();
         (int restaurantId, int sectionId, int tableId) = GetSeededIds();
 
-        var date = "2026-10-10T12:00:00"; // A Saturday
+        var date = "2027-10-09T12:00:00"; // A Saturday, far enough ahead to avoid collision with relative-date tests
 
         HttpResponseMessage response = await client.PostAsJsonAsync("/api/holds", new
         {

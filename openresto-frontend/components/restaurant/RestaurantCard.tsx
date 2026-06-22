@@ -166,6 +166,9 @@ export default function RestaurantCard({
     restaurant.timezone ?? "UTC",
     restaurant.openDays
   );
+  const opensLabel = !open
+    ? opensLaterToday(restaurant.openTime, restaurant.timezone ?? "UTC", restaurant.openDays)
+    : null;
   const tags = restaurant.tags ?? [];
 
   const accentHex = primaryColor.replace("#", "");
@@ -265,18 +268,14 @@ export default function RestaurantCard({
               styles.badge,
               open
                 ? { backgroundColor: `rgba(${accentR},${accentG},${accentB},0.88)` }
-                : styles.badgeClosed,
+                : opensLabel
+                  ? { backgroundColor: `rgba(${accentR},${accentG},${accentB},0.72)` }
+                  : styles.badgeClosed,
             ]}
           >
             {open && <View style={styles.badgeDot} />}
             <ThemedText style={styles.badgeText}>
-              {open
-                ? `Open till ${restaurant.closeTime}`
-                : (opensLaterToday(
-                    restaurant.openTime,
-                    restaurant.timezone ?? "UTC",
-                    restaurant.openDays
-                  ) ?? "Closed")}
+              {open ? `Open till ${restaurant.closeTime}` : (opensLabel ?? "Closed")}
             </ThemedText>
           </View>
         </View>

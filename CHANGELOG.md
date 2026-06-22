@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Booking Controls in Location Manager** — new "Booking Controls" section in the admin Location Manager panel for the selected location. Includes Pause/Resume new bookings for 60 minutes (with live "Paused until HH:MM" status) and Extend all active bookings by 60 minutes (with inline result count).
+- **Location Manager redesign** — complete visual and UX overhaul of the admin Location Manager panel.
+- **Restaurant photo in confirmation emails** — booking confirmation emails now display the restaurant's photo as a full-width banner header; falls back to the brand favicon icon tile, then a text-only header.
+- **Shared email base template** — all outgoing emails now share a single `EmailTemplateBuilder` (card layout, footer with website URL and copyright). Admin custom emails sent from the booking page are also wrapped in the branded template.
+- **"Opens in X hours/minutes" on home page** — restaurant cards show an "Opens in Xh Ym" label when the restaurant is currently closed but scheduled to open later today.
+- **Configurable Website URL** — admins can set the public deployment URL from the Brand Identity settings panel. Used to generate correct absolute URLs in email links and header images. Falls back automatically to the `WEBSITE_URL` env var, then the first value in `CORS_ORIGINS`, then `localhost`. `WEBSITE_URL` is also exposed as a commented-out option in `docker-compose.release.yml` for self-hosters.
+
+### Fixed
+
+- **Active booking detection** — bookings without an `EndTime` now fall back to `booking.Date + 1 hour` as the end boundary instead of being treated as perpetually active.
+- **Email confirmation deep link** — the "Manage your booking" button now links directly to `/booking-confirmation/{ref}?email={email}` so customers land on their booking without re-entering details.
+- **Email header image URL** — relative `HeaderImageUrl` values are now resolved to absolute URLs using the configured website URL before being embedded in email HTML.
+- **HSTS header** — `Strict-Transport-Security` is now enabled in the production nginx config (was accidentally commented out).
+- **Multi-arch Docker build** — `dotnet publish` now runs on the native build platform rather than under QEMU emulation, matching the prior frontend fix and speeding up arm64 image builds.
+- **Extend Bookings button state** — the button is now disabled and visually dimmed when there are no active bookings or results have already been applied; switching locations resets previous extend results.
+
 ## [1.0.0] - 2026-06-17
 
 ### Added

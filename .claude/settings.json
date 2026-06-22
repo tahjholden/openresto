@@ -6,7 +6,8 @@
       "Bash(xargs ls -lh)",
       "WebFetch(domain:api.anthropic.com)",
       "Bash(python -c ' *)",
-      "Read(//c/Users/karan/AppData/Local/Temp/**)"
+      "Read(//c/Users/karan/AppData/Local/Temp/**)",
+      "Bash(npx tsc *)"
     ]
   },
   "enabledPlugins": {

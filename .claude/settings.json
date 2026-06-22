@@ -7,7 +7,9 @@
       "WebFetch(domain:api.anthropic.com)",
       "Bash(python -c ' *)",
       "Read(//c/Users/karan/AppData/Local/Temp/**)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(dotnet test *)",
+      "Bash(powershell -Command ' *)"
     ]
   },
   "enabledPlugins": {

@@ -79,11 +79,10 @@ function parseDayOfWeek(day: string): number {
 function opensLaterToday(openTime: string, timezone: string, openDays: string): string | null {
   const [oh, om] = openTime.split(":").map(Number);
   const { totalMins, isoDay } = getRestaurantNow(timezone || "UTC");
-  const openDaysList =
-    openDays
-      ?.split(",")
-      .map((d) => parseDayOfWeek(d.trim()))
-      .filter((d) => d > 0) ?? [1, 2, 3, 4, 5, 6, 7];
+  const openDaysList = openDays
+    ?.split(",")
+    .map((d) => parseDayOfWeek(d.trim()))
+    .filter((d) => d > 0) ?? [1, 2, 3, 4, 5, 6, 7];
   if (openDaysList.length > 0 && !openDaysList.includes(isoDay)) return null;
   const openMins = oh * 60 + (om || 0);
   if (totalMins >= openMins) return null;

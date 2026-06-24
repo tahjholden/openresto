@@ -59,7 +59,6 @@ function SubLabel({ children, mutedColor }: { children: string; mutedColor: stri
   return (
     <ThemedText
       style={{
-        fontFamily: "monospace" as const,
         fontSize: 10,
         textTransform: "uppercase" as const,
         letterSpacing: 1,
@@ -621,18 +620,7 @@ export function EmailSettingsCard({
                     paddingHorizontal: 7,
                     paddingVertical: 2,
                   }}
-                >
-                  <ThemedText
-                    style={{
-                      fontSize: 10,
-                      color: primaryColor,
-                      fontWeight: "600",
-                      letterSpacing: 0.6,
-                    }}
-                  >
-                    REC
-                  </ThemedText>
-                </View>
+                ></View>
               </View>
               <ThemedText style={{ fontSize: 12.5, color: mutedColor, marginTop: 2 }}>
                 Sent the moment a guest books a table.

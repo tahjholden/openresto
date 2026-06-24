@@ -9,7 +9,15 @@
       "Read(//c/Users/karan/AppData/Local/Temp/**)",
       "Bash(npx tsc *)",
       "Bash(dotnet test *)",
-      "Bash(powershell -Command ' *)"
+      "Bash(powershell -Command ' *)",
+      "Bash(dotnet list *)",
+      "Bash(dotnet nuget *)",
+      "Bash(nuget list *)",
+      "Bash(Invoke-RestMethod \"https://api.nuget.org/v3-flatcontainer/sqlitepclraw.lib.e_sqlite3/index.json\")",
+      "Bash(Select-Object -ExpandProperty versions)",
+      "Bash(Select-Object -Last 10)",
+      "PowerShell(\\(Invoke-RestMethod \"https://api.nuget.org/v3-flatcontainer/sqlitepclraw.lib.e_sqlite3/index.json\"\\).versions | Select-Object -Last 10)",
+      "PowerShell(\\(Invoke-RestMethod \"https://api.nuget.org/v3-flatcontainer/microsoft.entityframeworkcore.sqlite/index.json\"\\).versions | Select-Object -Last 10)"
     ]
   },
   "enabledPlugins": {

@@ -261,7 +261,6 @@ export default function AdminLocationsScreen() {
         >
           {restaurants.map((r) => {
             const active = selectedId === r.id;
-            const initial = r.name.charAt(0).toUpperCase();
             return (
               <Pressable
                 key={r.id}
@@ -278,26 +277,6 @@ export default function AdminLocationsScreen() {
                   backgroundColor: active ? primaryColor : "transparent",
                 }}
               >
-                <View
-                  style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: 9,
-                    backgroundColor: active ? "rgba(255,255,255,0.2)" : `${primaryColor}18`,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ThemedText
-                    style={{
-                      fontSize: 9,
-                      fontWeight: "700",
-                      color: active ? "rgba(255,255,255,0.9)" : primaryColor,
-                    }}
-                  >
-                    {initial}
-                  </ThemedText>
-                </View>
                 <ThemedText
                   style={{
                     fontSize: 13,

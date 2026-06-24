@@ -323,7 +323,6 @@ export function LocationCard({
       <View style={{ padding: 22 }}>
         <ThemedText
           style={{
-            fontFamily: "monospace" as const,
             fontSize: 10,
             textTransform: "uppercase" as const,
             letterSpacing: 1.5,

@@ -142,7 +142,7 @@ describe("AdminDashboardScreen", () => {
 
     await waitFor(() => expect(queryByTestId("dashboard-spinner")).toBeNull());
 
-    expect(screen.getByText("No bookings for today yet.")).toBeTruthy();
+    expect(screen.getByText("No upcoming bookings for today.")).toBeTruthy();
   });
 
   it("navigates to bookings list on View all press", async () => {

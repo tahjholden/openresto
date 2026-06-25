@@ -70,13 +70,14 @@ describe("getAdminOverview", () => {
 
 describe("getAdminDashboardStats", () => {
   it("combines overview and todayBookingsList into stats", async () => {
+    const futureDate = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
     const overview = {
       todayBookings: 5,
       totalSeats: 100,
       todayBookingsList: [
         {
           id: 1,
-          date: "2026-06-15T19:00:00Z",
+          date: futureDate,
           customerEmail: "a@b.com",
           seats: 2,
           restaurantName: "R1",
@@ -97,7 +98,7 @@ describe("getAdminDashboardStats", () => {
       recentBookings: [
         {
           id: 1,
-          date: "2026-06-15T19:00:00Z",
+          date: futureDate,
           endTime: undefined,
           customerEmail: "a@b.com",
           seats: 2,
@@ -125,13 +126,15 @@ describe("getAdminDashboardStats", () => {
   });
 
   it("includes cancelled bookings from todayBookingsList with isCancelled flag", async () => {
+    const future1 = new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString();
+    const future2 = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
     const overview = {
       todayBookings: 2,
       totalSeats: 10,
       todayBookingsList: [
         {
           id: 1,
-          date: "2026-05-12T12:00:00Z",
+          date: future1,
           customerEmail: "active@test.com",
           seats: 2,
           restaurantName: "R1",
@@ -139,7 +142,7 @@ describe("getAdminDashboardStats", () => {
         },
         {
           id: 2,
-          date: "2026-05-12T14:00:00Z",
+          date: future2,
           customerEmail: "cancelled@test.com",
           seats: 3,
           restaurantName: "R1",
@@ -154,6 +157,32 @@ describe("getAdminDashboardStats", () => {
     expect(result?.recentBookings).toHaveLength(2);
     expect(result?.recentBookings[0].isCancelled).toBe(false);
     expect(result?.recentBookings[1].isCancelled).toBe(true);
+  });
+
+  it("filters out past bookings and caps at 5", async () => {
+    const now = Date.now();
+    const pastDate = new Date(now - 3 * 60 * 60 * 1000).toISOString();
+    const futureBookings = Array.from({ length: 6 }, (_, i) => ({
+      id: i + 1,
+      date: new Date(now + (i + 1) * 60 * 60 * 1000).toISOString(),
+      customerEmail: `guest${i + 1}@test.com`,
+      seats: 2,
+      restaurantName: "R1",
+    }));
+    const overview = {
+      todayBookings: 7,
+      totalSeats: 20,
+      todayBookingsList: [
+        { id: 0, date: pastDate, customerEmail: "past@test.com", seats: 2, restaurantName: "R1" },
+        ...futureBookings,
+      ],
+    };
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => overview });
+
+    const result = await getAdminDashboardStats();
+
+    expect(result?.recentBookings).toHaveLength(5);
+    expect(result?.recentBookings.every((b) => new Date(b.date) > new Date(pastDate))).toBe(true);
   });
 
   it("returns null when fetch throws", async () => {

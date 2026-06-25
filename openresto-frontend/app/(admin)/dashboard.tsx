@@ -214,7 +214,7 @@ export default function AdminDashboardScreen() {
               {stats?.recentBookings.length === 0 ? (
                 <View style={styles.emptyRecent}>
                   <ThemedText style={[styles.emptyText, { color: colors.muted }]}>
-                    No bookings for today yet.
+                    No upcoming bookings for today.
                   </ThemedText>
                 </View>
               ) : (

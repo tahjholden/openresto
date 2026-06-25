@@ -39,23 +39,32 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats | nu
     const overview = await getAdminOverview();
     if (!overview) return null;
 
+    const now = new Date();
     return {
       todayCount: overview.todayBookings,
       activeHoldsCount: overview.activeHoldsCount ?? 0,
       pausedCount: overview.pausedRestaurantsCount ?? 0,
       totalCovers: overview.totalSeats,
       occupancyData: overview.occupancyData ?? [],
-      recentBookings: (overview.todayBookingsList ?? []).map((b) => ({
-        id: b.id,
-        date: b.date,
-        endTime: b.endTime,
-        customerEmail: b.customerEmail,
-        customerName: b.customerName,
-        seats: b.seats,
-        restaurantName: b.restaurantName,
-        bookingRef: b.bookingRef ?? "",
-        isCancelled: b.isCancelled,
-      })),
+      recentBookings: (overview.todayBookingsList ?? [])
+        .map((b) => ({
+          id: b.id,
+          date: b.date,
+          endTime: b.endTime,
+          customerEmail: b.customerEmail,
+          customerName: b.customerName,
+          seats: b.seats,
+          restaurantName: b.restaurantName,
+          bookingRef: b.bookingRef ?? "",
+          isCancelled: b.isCancelled,
+        }))
+        .filter((b) => {
+          const end = b.endTime
+            ? new Date(b.endTime)
+            : new Date(new Date(b.date).getTime() + 60 * 60 * 1000);
+          return end >= now;
+        })
+        .slice(0, 5),
     };
   } catch (err) {
     console.error("getAdminDashboardStats error:", err);

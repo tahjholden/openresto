@@ -1,11 +1,4 @@
-import {
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-  TouchableWithoutFeedback,
-} from "react-native";
+import { Modal, Pressable, StyleSheet, View, TouchableWithoutFeedback } from "react-native";
 import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/themed-text";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -56,9 +49,7 @@ export default function ConfirmModal({
               <Pressable
                 style={[styles.btn, styles.cancelBtn, { borderColor: colors.border }]}
                 onPress={() => {
-                  if (Platform.OS !== "web") {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   onCancel();
                 }}
               >
@@ -76,13 +67,11 @@ export default function ConfirmModal({
                   },
                 ]}
                 onPress={() => {
-                  if (Platform.OS !== "web") {
-                    Haptics.notificationAsync(
-                      destructive
-                        ? Haptics.NotificationFeedbackType.Warning
-                        : Haptics.NotificationFeedbackType.Success
-                    );
-                  }
+                  Haptics.notificationAsync(
+                    destructive
+                      ? Haptics.NotificationFeedbackType.Warning
+                      : Haptics.NotificationFeedbackType.Success
+                  );
                   onConfirm();
                 }}
               >

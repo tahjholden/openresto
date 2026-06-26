@@ -175,9 +175,7 @@ export default function PopularTimesPicker({
               key={cat}
               onPress={() => {
                 if (!disabled) {
-                  if (Platform.OS !== "web") {
-                    Haptics.selectionAsync();
-                  }
+                  Haptics.selectionAsync();
                   setActiveCategory(cat);
                 }
               }}
@@ -227,9 +225,7 @@ export default function PopularTimesPicker({
                 <Pressable
                   key={slot.time}
                   onPress={() => {
-                    if (Platform.OS !== "web") {
-                      Haptics.selectionAsync();
-                    }
+                    Haptics.selectionAsync();
                     onSelectTime(slot.time);
                   }}
                   style={[

@@ -59,8 +59,7 @@ export default function BookingConfirmationScreen() {
         setRestaurant(r);
       }
       setLoading(false);
-      /* istanbul ignore next */
-      if (data && Platform.OS !== "web") {
+      if (data) {
         Haptics.notificationAsync(
           data.isCancelled
             ? Haptics.NotificationFeedbackType.Error

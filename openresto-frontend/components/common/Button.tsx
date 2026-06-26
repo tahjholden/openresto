@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { Pressable, PressableProps, StyleSheet, ViewStyle, Platform } from "react-native";
+import { Pressable, PressableProps, StyleSheet, ViewStyle } from "react-native";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { COLORS, BUTTON_SIZES, BORDER_RADIUS, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
@@ -27,9 +27,7 @@ export default function Button({
   const sizeStyles = BUTTON_SIZES[size];
 
   const handlePress: PressableProps["onPress"] = (e) => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress?.(e);
   };
 

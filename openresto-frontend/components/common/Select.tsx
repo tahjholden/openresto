@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getThemeColors, COLORS, FORM_SIZES } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
+import * as Haptics from "expo-haptics";
 
 export interface SelectOption {
   label: string;
@@ -64,6 +65,7 @@ export default function Select({
                     item.value === selectedValue && { backgroundColor: `${primaryColor}14` },
                   ]}
                   onPress={() => {
+                    Haptics.selectionAsync();
                     onSelect(item.value);
                     setModalVisible(false);
                   }}

@@ -15,6 +15,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useBrand } from "@/context/BrandContext";
 import { Ionicons } from "@expo/vector-icons";
 import { getNowInTimezone } from "@/utils/date";
+import * as Haptics from "expo-haptics";
 
 interface PopularTimesPickerProps {
   slots: TimeSlotDto[];
@@ -172,7 +173,12 @@ export default function PopularTimesPicker({
           return (
             <Pressable
               key={cat}
-              onPress={() => !disabled && setActiveCategory(cat)}
+              onPress={() => {
+                if (!disabled) {
+                  Haptics.selectionAsync();
+                  setActiveCategory(cat);
+                }
+              }}
               disabled={disabled}
               style={[
                 styles.tab,
@@ -218,7 +224,10 @@ export default function PopularTimesPicker({
               return (
                 <Pressable
                   key={slot.time}
-                  onPress={() => onSelectTime(slot.time)}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    onSelectTime(slot.time);
+                  }}
                   style={[
                     styles.slotChip,
                     { borderColor: colors.border, backgroundColor: isDark ? "#1e1e1e" : "#fff" },

@@ -22,17 +22,24 @@ A self-hosted, zero-dependency restaurant booking system. Customers browse resta
 
 The Restaurant business has changed. Indie restaurants run on razor thin margins, and the cost of SaaS booking platforms only adds to the burden. Users don't want to install another app, give up their phone number to the cloud, or create another account to remember. OpenResto was designed to be as simple as possible for both customers and restaurant owners, while still being fully self-hosted, secure and customisable. Owners can manage bookings easily without friction. Customers book instantly without giving up any personal information, and can easily save their reservations to their calendar. Nothing in between.
 
-<img width="1008" height="872" alt="image" src="https://github.com/user-attachments/assets/5e6d1099-8c4b-4163-b037-d71816726136" />
+## Screenshots
 
-<img width="1313" height="820" alt="image" src="https://github.com/user-attachments/assets/ce52d6ed-6989-490c-b950-81777eefa14a" />
+### Desktop
 
-<img width="997" height="960" alt="image" src="https://github.com/user-attachments/assets/3b5b5892-869f-413d-89ef-ee96d78aaa99" />
+<img src="https://github.com/user-attachments/assets/5e6d1099-8c4b-4163-b037-d71816726136" width="700" alt="Dashboard overview">
 
-<img width="982" height="946" alt="image" src="https://github.com/user-attachments/assets/b05051e5-abf7-45b6-b093-4d8329730a36" />
+<img src="https://github.com/user-attachments/assets/ce52d6ed-6989-490c-b950-81777eefa14a" width="750" alt="Booking interface">
 
-<img width="304" height="682" alt="image" src="https://github.com/user-attachments/assets/e24084f2-ca02-4740-9900-101bbfbe1203" />
+<img src="https://github.com/user-attachments/assets/3b5b5892-869f-413d-89ef-ee96d78aaa99" width="700" alt="Restaurant search">
 
-<img width="303" height="676" alt="image" src="https://github.com/user-attachments/assets/f6462b92-d45c-467d-9ed3-8852ff7c0d45" />
+<img width="700" alt="Screenshot 2026-06-26 154244" src="https://github.com/user-attachments/assets/72242735-468b-42a3-9f3a-7a1261bc70c4" />
+
+### Mobile
+
+<img src="https://github.com/user-attachments/assets/e24084f2-ca02-4740-9900-101bbfbe1203" width="320" alt="Mobile dashboard">
+
+<img src="https://github.com/user-attachments/assets/f6462b92-d45c-467d-9ed3-8852ff7c0d45" width="320" alt="Mobile booking">
+
 
 ## Tech Stack
 

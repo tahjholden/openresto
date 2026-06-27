@@ -99,6 +99,11 @@ jest.mock("@/components/common/DatePicker", () => ({
 }));
 
 // Select mock: exposes section selector via testID
+jest.mock("@/utils/date", () => ({
+  getNowInTimezone: jest.fn(() => ({ dateStr: "2026-06-23", hours: 10, minutes: 0 })),
+  formatCurrentTimeInTimezone: jest.fn(() => "10:00 AM"),
+}));
+
 jest.mock("@/components/common/Select", () => ({
   __esModule: true,
   default: ({ onSelect, placeholder, selectedValue }: any) => {

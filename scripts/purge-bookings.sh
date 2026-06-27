@@ -5,9 +5,15 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/../.env"
-CONTAINER="openresto-backend-1"
 DB="/data/openresto.db"
 LOG_TAG="purge-bookings"
+
+COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.vps.yml"
+CONTAINER="$(docker compose -f "$COMPOSE_FILE" ps -q backend 2>/dev/null | head -1)"
+if [[ -z "$CONTAINER" ]]; then
+  echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') [$LOG_TAG] ERROR: backend container not running." >&2
+  exit 1
+fi
 
 log() { echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') [$LOG_TAG] $*"; }
 

@@ -18,24 +18,9 @@ A self-hosted, zero-dependency restaurant booking system. Customers browse resta
 
 **[Live Demo](https://openres.to)** — admin: `example@example.com` / `password` · resets every 2 hours
 
-## Screenshots
-
-| Customer                                                     | Mobile                                                               |
-| ------------------------------------------------------------ | -------------------------------------------------------------------- |
-| ![Booking form](docs/screenshots/booking-form.png)           | ![Mobile listing](docs/screenshots/mobile-listing.png)               |
-| ![Booking confirmed](docs/screenshots/booking-confirmed.png) | ![Mobile listing narrow](docs/screenshots/mobile-listing-narrow.png) |
-
-| Admin                                                            |
-| ---------------------------------------------------------------- |
-| ![Admin dashboard](docs/screenshots/admin-dashboard.png)         |
-| ![Admin notifications](docs/screenshots/admin-notifications.png) |
-| ![Admin locations](docs/screenshots/admin-locations.png)         |
-
 ## Philosophy
 
 The Restaurant business has changed. Indie restaurants run on razor thin margins, and the cost of SaaS booking platforms only adds to the burden. Users don't want to install another app, give up their phone number to the cloud, or create another account to remember. OpenResto was designed to be as simple as possible for both customers and restaurant owners, while still being fully self-hosted, secure and customisable. Owners can manage bookings easily without friction. Customers book instantly without giving up any personal information, and can easily save their reservations to their calendar. Nothing in between.
-
-## Screenshots
 
 <img width="1008" height="872" alt="image" src="https://github.com/user-attachments/assets/5e6d1099-8c4b-4163-b037-d71816726136" />
 

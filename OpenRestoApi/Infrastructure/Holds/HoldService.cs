@@ -11,6 +11,8 @@ namespace OpenRestoApi.Infrastructure.Holds;
 /// Redis if multi-instance scaling is ever needed.
 /// </summary>
 [OnlyAccessibleBy("OpenRestoApi.Extensions.ServiceCollectionExtensions")]
+[OnlyAccessibleBy("OpenRestoApi.Tests.Holds.HoldServiceTests")]
+[ExternalAccessAllowed]
 internal class HoldService(ISystemClock clock) : IHoldService
 {
     private const int _holdDurationMinutes = 5;

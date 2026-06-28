@@ -24,7 +24,7 @@ public class BookingsControllerUnitTests
         var mockEnv = new Mock<IWebHostEnvironment>();
         
         _mockRecentCookie = new Mock<RecentBookingsCookie>(mockProvider.Object, mockEnv.Object);
-        _controller = new BookingsController(_mockBookingService.Object, _mockRecentCookie.Object);
+        _controller = new BookingsController(_mockBookingService.Object, _mockRecentCookie.Object, null!);
     }
 
     [Fact]

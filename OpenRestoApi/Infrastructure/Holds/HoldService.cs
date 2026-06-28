@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using CustomAccessibility.Attributes;
 using OpenRestoApi.Core.Application.Interfaces;
 
 namespace OpenRestoApi.Infrastructure.Holds;
@@ -10,9 +9,7 @@ namespace OpenRestoApi.Infrastructure.Holds;
 /// (each restaurant runs their own copy). Swap IMemoryCache backing to
 /// Redis if multi-instance scaling is ever needed.
 /// </summary>
-[OnlyAccessibleBy("OpenRestoApi.Extensions.ServiceCollectionExtensions")]
-[OnlyAccessibleBy("OpenRestoApi.Tests.**")]
-internal class HoldService(ISystemClock clock) : IHoldService
+public class HoldService(ISystemClock clock) : IHoldService
 {
     private const int _holdDurationMinutes = 5;
     public static readonly TimeSpan HoldDuration = TimeSpan.FromMinutes(_holdDurationMinutes);

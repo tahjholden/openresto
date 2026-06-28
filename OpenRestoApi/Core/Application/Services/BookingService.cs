@@ -344,12 +344,6 @@ public class BookingService(
         return EmailTemplateBuilder.Wrap(primaryColor, appName, cleanWebsiteUrl, headerHtml, contentHtml);
     }
 
-    public virtual async Task<string?> GetRestaurantNameAsync(int restaurantId)
-    {
-        Restaurant? restaurant = await _restaurantRepository.GetByIdAsync(restaurantId);
-        return restaurant?.Name;
-    }
-
     public virtual async Task<bool> CancelBookingAsync(string bookingRef, string email)
     {
         Booking? booking = await _bookingRepository.GetByRefAsync(bookingRef);

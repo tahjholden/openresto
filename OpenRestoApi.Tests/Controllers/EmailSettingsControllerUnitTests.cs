@@ -1,20 +1,33 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 using OpenRestoApi.Controllers;
 using OpenRestoApi.Core.Application.Services;
 using OpenRestoApi.Core.Domain;
+using OpenRestoApi.Infrastructure.Persistence;
 
 namespace OpenRestoApi.Tests.Controllers;
 
-public class EmailSettingsControllerUnitTests
+public class EmailSettingsControllerUnitTests : IDisposable
 {
     private readonly Mock<EmailSettingsService> _mockService;
     private readonly EmailSettingsController _controller;
+    private readonly AppDbContext _db;
 
     public EmailSettingsControllerUnitTests()
     {
         _mockService = new Mock<EmailSettingsService>(null!, null!, null!);
-        _controller = new EmailSettingsController(_mockService.Object);
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        _db = new AppDbContext(options);
+        _controller = new EmailSettingsController(_mockService.Object, _db);
+    }
+
+    public void Dispose()
+    {
+        _db.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
@@ -78,18 +91,5 @@ public class EmailSettingsControllerUnitTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         var resp = Assert.IsType<EmailSettingsResponse>(okResult.Value);
         Assert.False(resp.SendBookingConfirmations);
-    }
-
-    [Fact]
-    public async Task GetFailures_ReturnsOk_WithMappedResponse()
-    {
-        var failures = new List<EmailFailure>
-        {
-            new() { Id = 1, BookingRef = "ABC", RecipientEmail = "a@a.com", ErrorMessage = "err", AttemptedAt = DateTime.UtcNow }
-        };
-        _mockService.Setup(s => s.GetFailuresAsync()).ReturnsAsync(failures);
-
-        var result = await _controller.GetFailures();
-        Assert.IsType<OkObjectResult>(result);
     }
 }

@@ -5,6 +5,7 @@ using OpenRestoApi.Core.Domain;
 namespace OpenRestoApi.Infrastructure.Persistence.Repositories;
 
 [OnlyAccessibleBy("OpenRestoApi.Extensions.ServiceCollectionExtensions")]
+[OnlyAccessibleBy("OpenRestoApi.Tests.**")]
 internal class SectionRepository(AppDbContext db) : ISectionRepository
 {
     private readonly AppDbContext _db = db;

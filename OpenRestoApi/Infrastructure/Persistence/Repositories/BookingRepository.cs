@@ -6,6 +6,10 @@ using OpenRestoApi.Core.Domain;
 namespace OpenRestoApi.Infrastructure.Persistence.Repositories
 {
     [OnlyAccessibleBy("OpenRestoApi.Extensions.ServiceCollectionExtensions")]
+    [OnlyAccessibleBy("OpenRestoApi.Tests.Services.AvailabilityServiceTests")]
+    [OnlyAccessibleBy("OpenRestoApi.Tests.Services.BookingServiceTests")]
+    [OnlyAccessibleBy("OpenRestoApi.Tests.Integration.RepositoryTests")]
+    [ExternalAccessAllowed]
     internal class BookingRepository(AppDbContext db) : IBookingRepository
     {
         private readonly AppDbContext _db = db;

@@ -1,10 +1,12 @@
+using CustomAccessibility.Attributes;
 using Microsoft.EntityFrameworkCore;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Domain;
 
 namespace OpenRestoApi.Infrastructure.Persistence.Repositories;
 
-public class RestaurantRepository(AppDbContext db) : IRestaurantRepository
+[OnlyAccessibleBy("OpenRestoApi.Extensions.ServiceCollectionExtensions")]
+internal class RestaurantRepository(AppDbContext db) : IRestaurantRepository
 {
     private readonly AppDbContext _db = db;
 

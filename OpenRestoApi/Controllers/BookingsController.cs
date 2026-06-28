@@ -1,22 +1,19 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 using OpenRestoApi.Core.Application.DTOs;
 using OpenRestoApi.Core.Application.Services;
 using OpenRestoApi.Infrastructure.Cookies;
-using OpenRestoApi.Infrastructure.Persistence;
 
 namespace OpenRestoApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [EnableRateLimiting("public")]
-    public class BookingsController(BookingService bookingService, RecentBookingsCookie recentCookie, AppDbContext db) : ControllerBase
+    public class BookingsController(BookingService bookingService, RecentBookingsCookie recentCookie) : ControllerBase
     {
         private readonly BookingService _bookingService = bookingService;
         private readonly RecentBookingsCookie _recentCookie = recentCookie;
-        private readonly AppDbContext _db = db;
 
         [HttpGet("/api/restaurants/{restaurantId}/bookings")]
         [Authorize]
@@ -66,11 +63,7 @@ namespace OpenRestoApi.Controllers
             {
                 BookingDto newBooking = await _bookingService.CreateBookingAsync(bookingDto);
 
-                // Append to the encrypted recent-bookings cookie
-                string? restaurantName = await _db.Restaurants
-                    .Where(r => r.Id == bookingDto.RestaurantId)
-                    .Select(r => r.Name)
-                    .FirstOrDefaultAsync();
+                string? restaurantName = await _bookingService.GetRestaurantNameAsync(bookingDto.RestaurantId);
 
                 _recentCookie.Append(Request, Response, new CachedBookingEntry(
                     BookingRef: newBooking.BookingRef ?? "",

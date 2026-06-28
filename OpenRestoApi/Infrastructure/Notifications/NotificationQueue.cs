@@ -1,10 +1,13 @@
 using System.Threading.Channels;
+using CustomAccessibility.Attributes;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Domain;
 
 namespace OpenRestoApi.Infrastructure.Notifications;
 
-public sealed class NotificationQueue : INotificationQueue
+[OnlyAccessibleBy("OpenRestoApi.Extensions.ServiceCollectionExtensions")]
+[OnlyAccessibleBy("OpenRestoApi.Infrastructure.Notifications.*")]
+internal sealed class NotificationQueue : INotificationQueue
 {
     internal readonly Channel<NotificationWorkItem> Channel =
         System.Threading.Channels.Channel.CreateBounded<NotificationWorkItem>(

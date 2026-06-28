@@ -2,7 +2,7 @@ using OpenRestoApi.Core.Application.Interfaces;
 
 namespace OpenRestoApi.Infrastructure.Notifications;
 
-public sealed class NotificationWorker(
+internal sealed class NotificationWorker(
     NotificationQueue queue,
     IServiceScopeFactory scopeFactory,
     ILogger<NotificationWorker> logger) : BackgroundService

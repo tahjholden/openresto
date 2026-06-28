@@ -49,4 +49,12 @@ public class EmailSettingsService(AppDbContext db, CredentialProtector protector
     {
         return await _emailService.TestConnectionAsync();
     }
+
+    public virtual async Task<IReadOnlyList<EmailFailure>> GetFailuresAsync()
+    {
+        return await _db.EmailFailures
+            .OrderByDescending(f => f.AttemptedAt)
+            .Take(50)
+            .ToListAsync();
+    }
 }

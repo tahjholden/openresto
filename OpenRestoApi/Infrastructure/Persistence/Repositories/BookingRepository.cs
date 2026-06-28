@@ -1,10 +1,12 @@
+using CustomAccessibility.Attributes;
 using Microsoft.EntityFrameworkCore;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Domain;
 
 namespace OpenRestoApi.Infrastructure.Persistence.Repositories
 {
-    public class BookingRepository(AppDbContext db) : IBookingRepository
+    [OnlyAccessibleBy("OpenRestoApi.Extensions.ServiceCollectionExtensions")]
+    internal class BookingRepository(AppDbContext db) : IBookingRepository
     {
         private readonly AppDbContext _db = db;
 

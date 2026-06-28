@@ -1,19 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using OpenRestoApi.Core.Application.Services;
 using OpenRestoApi.Core.Domain;
-using OpenRestoApi.Infrastructure.Persistence;
 
 namespace OpenRestoApi.Controllers;
 
 [ApiController]
 [Route("api/admin/email-settings")]
 [Authorize]
-public class EmailSettingsController(EmailSettingsService emailSettings, AppDbContext db) : ControllerBase
+public class EmailSettingsController(EmailSettingsService emailSettings) : ControllerBase
 {
     private readonly EmailSettingsService _emailSettings = emailSettings;
-    private readonly AppDbContext _db = db;
 
     [HttpGet]
     public async Task<IActionResult> Get()
@@ -50,19 +47,16 @@ public class EmailSettingsController(EmailSettingsService emailSettings, AppDbCo
     [HttpGet("failures")]
     public async Task<IActionResult> GetFailures()
     {
-        var failures = await _db.EmailFailures
-            .OrderByDescending(f => f.AttemptedAt)
-            .Take(50)
-            .Select(f => new EmailFailureResponse
-            {
-                Id = f.Id,
-                BookingRef = f.BookingRef,
-                RecipientEmail = f.RecipientEmail,
-                ErrorMessage = f.ErrorMessage,
-                AttemptedAt = f.AttemptedAt,
-            })
-            .ToListAsync();
-        return Ok(failures);
+        IReadOnlyList<EmailFailure> failures = await _emailSettings.GetFailuresAsync();
+        var response = failures.Select(f => new EmailFailureResponse
+        {
+            Id = f.Id,
+            BookingRef = f.BookingRef,
+            RecipientEmail = f.RecipientEmail,
+            ErrorMessage = f.ErrorMessage,
+            AttemptedAt = f.AttemptedAt,
+        });
+        return Ok(response);
     }
 
     [HttpPost("test")]

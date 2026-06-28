@@ -1,9 +1,11 @@
+using CustomAccessibility.Attributes;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Domain;
 
 namespace OpenRestoApi.Infrastructure.Persistence.Repositories;
 
-public class SectionRepository(AppDbContext db) : ISectionRepository
+[OnlyAccessibleBy("OpenRestoApi.Extensions.ServiceCollectionExtensions")]
+internal class SectionRepository(AppDbContext db) : ISectionRepository
 {
     private readonly AppDbContext _db = db;
 

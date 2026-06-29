@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 # Deletes all bookings and customer PII, then resets admin credentials from .env.
-# Safe to run against a live container — preserves all restaurant config.
+# Wipes all uploaded media and restores from scripts/media-snapshot/ if it exists.
+# Preserves all restaurant config (via config-snapshot.sql).
+#
+# BEFORE RUNNING: snapshot your current uploaded media so it gets restored afterwards:
+#
+#   mkdir -p scripts/media-snapshot
+#   CONTAINER=$(docker compose -f docker-compose.vps.yml ps -q backend | head -1)
+#   docker cp "$CONTAINER:/app/wwwroot/media/." scripts/media-snapshot/
+#
+# Commit scripts/media-snapshot/ alongside config-snapshot.sql to keep both in sync.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

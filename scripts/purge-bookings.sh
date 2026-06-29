@@ -39,6 +39,11 @@ log "Purging bookings and PII..."
 docker exec "$CONTAINER" sqlite3 "$DB" "$SQL"
 log "Purge done. Bookings remaining: $(docker exec "$CONTAINER" sqlite3 "$DB" 'SELECT COUNT(*) FROM Bookings;')"
 
+# --- Purge uploaded media ---
+log "Purging uploaded media..."
+docker exec "$CONTAINER" sh -c 'find /app/wwwroot/media -maxdepth 1 -type f -delete'
+log "Media purged. Files remaining: $(docker exec "$CONTAINER" sh -c 'find /app/wwwroot/media -maxdepth 1 -type f | wc -l')"
+
 # --- Reset admin credentials from .env ---
 if [[ ! -f "$ENV_FILE" ]]; then
   log "WARNING: .env not found at $ENV_FILE — skipping credential reset."
@@ -202,4 +207,19 @@ if [[ -f "$SNAPSHOT" ]]; then
   log "Config restored. Restaurants: $(docker exec "$CONTAINER" sqlite3 "$DB" 'SELECT COUNT(*) FROM Restaurants;')"
 else
   log "WARNING: config-snapshot.sql not found — skipping config restore."
+fi
+
+# --- Restore media snapshot ---
+MEDIA_SNAPSHOT="$SCRIPT_DIR/media-snapshot"
+if [[ -d "$MEDIA_SNAPSHOT" ]]; then
+  log "Restoring media snapshot..."
+  FILE_COUNT=0
+  for f in "$MEDIA_SNAPSHOT"/*; do
+    [[ -f "$f" ]] || continue
+    docker cp "$f" "$CONTAINER:/app/wwwroot/media/"
+    FILE_COUNT=$((FILE_COUNT + 1))
+  done
+  log "Media restored. Files copied: $FILE_COUNT"
+else
+  log "WARNING: media-snapshot/ not found at $MEDIA_SNAPSHOT — skipping media restore."
 fi

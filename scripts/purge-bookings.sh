@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 # Deletes all bookings and customer PII, then resets admin credentials from .env.
-# Wipes all uploaded media and restores from scripts/media-snapshot/ if it exists.
+# Wipes all uploaded media and restores from data/media-snapshot/ if it exists.
 # Preserves all restaurant config (via config-snapshot.sql).
 #
-# BEFORE RUNNING: snapshot your current uploaded media so it gets restored afterwards:
+# BEFORE RUNNING: snapshot your current uploaded media so it gets restored afterwards.
+# The snapshot lives in ./data/media-snapshot/ (the bind-mounted data directory —
+# persists across code updates and redeploys, no git commit needed):
 #
-#   mkdir -p scripts/media-snapshot
+#   mkdir -p data/media-snapshot
 #   CONTAINER=$(docker compose -f docker-compose.vps.yml ps -q backend | head -1)
-#   docker cp "$CONTAINER:/app/wwwroot/media/." scripts/media-snapshot/
+#   docker cp "$CONTAINER:/app/wwwroot/media/." data/media-snapshot/
 #
-# Commit scripts/media-snapshot/ alongside config-snapshot.sql to keep both in sync.
+# Run this once from your docker-compose.vps.yml directory before the first purge.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -219,7 +221,7 @@ else
 fi
 
 # --- Restore media snapshot ---
-MEDIA_SNAPSHOT="$SCRIPT_DIR/media-snapshot"
+MEDIA_SNAPSHOT="$SCRIPT_DIR/../data/media-snapshot"
 if [[ -d "$MEDIA_SNAPSHOT" ]]; then
   log "Restoring media snapshot..."
   FILE_COUNT=0

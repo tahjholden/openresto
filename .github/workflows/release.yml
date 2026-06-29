@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: write
@@ -140,7 +140,8 @@ jobs:
       - name: Generate pinned docker-compose.yml for this release
         run: |
           VERSION="${{ github.ref_name }}"
-          sed "s|\${OPENRESTO_VERSION:-latest}|${VERSION}|g" docker-compose.release.yml \
+          VERSION_NUM="${VERSION#v}"
+          sed "s|\${OPENRESTO_VERSION:-latest}|${VERSION_NUM}|g" docker-compose.release.yml \
             > /tmp/docker-compose.yml
 
       - name: Create GitHub Release

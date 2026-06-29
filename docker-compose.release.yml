@@ -6,7 +6,7 @@
 #   3. docker compose -f docker-compose.release.yml up -d
 #
 # To pin a specific release version instead of latest:
-#   OPENRESTO_VERSION=v1.0.0 docker compose -f docker-compose.release.yml up -d
+#   OPENRESTO_VERSION=1.0.0 docker compose -f docker-compose.release.yml up -d
 #
 # Backup: see docs/backup-restore.md
 # This file uses pre-built images from GHCR — no local build required.

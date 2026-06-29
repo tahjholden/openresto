@@ -51,7 +51,7 @@ This triggers `.github/workflows/release.yml`, which builds `linux/amd64` + `lin
 `docker-compose.release.yml` in the repo is the self-hoster install template. It references `${OPENRESTO_VERSION:-latest}` — the release workflow substitutes the actual tag before attaching it to the release. Self-hosters can also run any version directly:
 
 ```bash
-OPENRESTO_VERSION=v1.0.0 docker compose -f docker-compose.release.yml up -d
+OPENRESTO_VERSION=1.0.0 docker compose -f docker-compose.release.yml up -d
 ```
 
 ## Architecture

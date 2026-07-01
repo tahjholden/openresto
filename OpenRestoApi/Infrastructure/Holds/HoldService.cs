@@ -23,14 +23,14 @@ internal class HoldService(ISystemClock clock) : IHoldService
 
     private readonly object _placeLock = new();
 
-    public HoldResult? PlaceHold(int restaurantId, int tableId, int sectionId, DateTime bookingDate, string? currentHoldId = null)
+    public HoldResult? PlaceHold(int restaurantId, int tableId, int sectionId, DateTime bookingDate, string? currentHoldId = null, int durationMinutes = 60)
     {
         lock (_placeLock)
         {
             Cleanup();
 
             // Pessimistic: assume held; only proceed if the sole blocker is the caller's own current hold
-            if (IsTableHeld(tableId, bookingDate, excludeHoldId: currentHoldId))
+            if (IsTableHeld(tableId, bookingDate, excludeHoldId: currentHoldId, durationMinutes: durationMinutes))
             {
                 return null;
             }
@@ -56,10 +56,10 @@ internal class HoldService(ISystemClock clock) : IHoldService
         _holds.TryRemove(holdId, out _);
     }
 
-    public bool IsTableHeld(int tableId, DateTime bookingDate, string? excludeHoldId = null)
+    public bool IsTableHeld(int tableId, DateTime bookingDate, string? excludeHoldId = null, int durationMinutes = 60)
     {
         DateTime start = bookingDate.ToUniversalTime();
-        DateTime end = start.AddHours(1);
+        DateTime end = start.AddMinutes(durationMinutes);
 
         foreach (HoldEntry entry in _holds.Values)
         {
@@ -77,7 +77,7 @@ internal class HoldService(ISystemClock clock) : IHoldService
             }
 
             DateTime entryStart = entry.Date.ToUniversalTime();
-            DateTime entryEnd = entryStart.AddHours(1);
+            DateTime entryEnd = entryStart.AddMinutes(durationMinutes);
 
             // Overlap check: (StartA < EndB) and (EndA > StartB)
             if (entryStart < end && entryEnd > start)

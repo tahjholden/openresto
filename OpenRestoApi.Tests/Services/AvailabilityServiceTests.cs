@@ -80,6 +80,41 @@ public class AvailabilityServiceTests
     }
 
     [Fact]
+    public async Task GetAvailabilityAsync_UsesRestaurantConfiguredDuration_ForConflictWindow()
+    {
+        using AppDbContext db = CreateDb(nameof(GetAvailabilityAsync_UsesRestaurantConfiguredDuration_ForConflictWindow));
+        db.Restaurants.Add(new Restaurant
+        {
+            Id = 1, Name = "Test", OpenTime = "11:00", CloseTime = "13:00", Timezone = "UTC",
+            DefaultBookingDurationMinutes = 90
+        });
+        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 2, SectionId = 1 });
+        db.SaveChanges();
+
+        // Booking at 12:00 with no explicit EndTime -> should fall back to the
+        // restaurant's configured 90-minute duration, occupying 12:00-13:30.
+        var bookingStart = new DateTime(2026, 10, 10, 12, 0, 0, DateTimeKind.Utc);
+        db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, TableId = 1, SectionId = 1, Date = bookingStart, BookingRef = "B1" });
+        db.SaveChanges();
+
+        var bookingRepo = new BookingRepository(db);
+        var restRepo = new RestaurantRepository(db);
+        var holdSvc = new Mock<IHoldService>();
+        var svc = new AvailabilityService(bookingRepo, restRepo, holdSvc.Object);
+
+        AvailabilityResponseDto result = await svc.GetAvailabilityAsync(1, bookingStart, 2);
+
+        // With a 90-minute duration, the 11:00 slot (11:00-12:30) should now conflict
+        // with the 12:00 booking, whereas with the old fixed 1-hour assumption it would not.
+        TimeSlotDto slot1100 = result.Slots.First(s => s.Time == "11:00");
+        Assert.False(slot1100.IsAvailable);
+
+        TimeSlotDto slot1200 = result.Slots.First(s => s.Time == "12:00");
+        Assert.False(slot1200.IsAvailable);
+    }
+
+    [Fact]
     public async Task GetAvailabilityAsync_ConsidersHolds()
     {
         using AppDbContext db = CreateDb(nameof(GetAvailabilityAsync_ConsidersHolds));

@@ -217,6 +217,138 @@ public class BookingServiceTests
         holdMock.Verify(h => h.ReleaseHold("my-hold-id"), Times.Once);
     }
 
+    // ── Configurable booking duration (#135) ────────────────────────────────
+
+    [Theory]
+    [InlineData(30)]
+    [InlineData(90)]
+    [InlineData(120)]
+    [InlineData(480)]
+    public async Task CreateBookingAsync_EndTime_UsesRestaurantConfiguredDuration(int durationMinutes)
+    {
+        using AppDbContext db = CreateDb($"{nameof(CreateBookingAsync_EndTime_UsesRestaurantConfiguredDuration)}_{durationMinutes}");
+        db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", DefaultBookingDurationMinutes = durationMinutes });
+        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        db.SaveChanges();
+
+        BookingService svc = CreateService(db);
+        DateTime date = DateTime.UtcNow.AddDays(7);
+        var dto = new BookingDto
+        {
+            RestaurantId = 1,
+            SectionId = 1,
+            TableId = 1,
+            CustomerEmail = "guest@example.com",
+            Seats = 2,
+            Date = date
+        };
+
+        BookingDto result = await svc.CreateBookingAsync(dto);
+
+        Assert.Equal(result.Date.AddMinutes(durationMinutes), result.EndTime);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_EndTime_DefaultsToOneHour_WhenRestaurantDurationNotSet()
+    {
+        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_EndTime_DefaultsToOneHour_WhenRestaurantDurationNotSet));
+        Seed(db);
+
+        BookingService svc = CreateService(db);
+        DateTime date = DateTime.UtcNow.AddDays(7);
+        BookingDto result = await svc.CreateBookingAsync(new BookingDto
+        {
+            RestaurantId = 1,
+            SectionId = 1,
+            TableId = 1,
+            CustomerEmail = "guest@example.com",
+            Seats = 2,
+            Date = date
+        });
+
+        Assert.Equal(result.Date.AddHours(1), result.EndTime);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_Throws_WhenNewBookingDurationOverlapsLaterBooking()
+    {
+        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Throws_WhenNewBookingDurationOverlapsLaterBooking));
+        db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", DefaultBookingDurationMinutes = 120 });
+        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        DateTime firstStart = DateTime.UtcNow.AddDays(7);
+        // Existing booking starts 100 minutes after the new one — outside a fixed 60-minute
+        // window, but inside the restaurant's configured 120-minute occupancy window.
+        db.Bookings.Add(new Booking
+        {
+            RestaurantId = 1,
+            SectionId = 1,
+            TableId = 1,
+            Date = firstStart.AddMinutes(100),
+            EndTime = firstStart.AddMinutes(100).AddMinutes(120),
+            CustomerEmail = "later@x.com",
+            Seats = 2,
+            BookingRef = "LATER1"
+        });
+        await db.SaveChangesAsync();
+
+        BookingService svc = CreateService(db);
+        var dto = new BookingDto
+        {
+            RestaurantId = 1,
+            SectionId = 1,
+            TableId = 1,
+            CustomerEmail = "guest@example.com",
+            Seats = 2,
+            Date = firstStart
+        };
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            svc.CreateBookingAsync(dto));
+        Assert.Contains("already booked", ex.Message);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_Throws_WhenOverlapsLegacyBookingWithoutEndTime_UsingConfiguredDuration()
+    {
+        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Throws_WhenOverlapsLegacyBookingWithoutEndTime_UsingConfiguredDuration));
+        db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", DefaultBookingDurationMinutes = 90 });
+        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        DateTime legacyStart = DateTime.UtcNow.AddDays(7);
+        // Legacy booking with no EndTime at all (pre-migration data)
+        db.Bookings.Add(new Booking
+        {
+            RestaurantId = 1,
+            SectionId = 1,
+            TableId = 1,
+            Date = legacyStart,
+            EndTime = null,
+            CustomerEmail = "legacy@x.com",
+            Seats = 2,
+            BookingRef = "LEGACY1"
+        });
+        await db.SaveChangesAsync();
+
+        BookingService svc = CreateService(db);
+        // 70 minutes after the legacy booking — outside the old fixed 60-minute fallback,
+        // but inside the restaurant's configured 90-minute window.
+        var dto = new BookingDto
+        {
+            RestaurantId = 1,
+            SectionId = 1,
+            TableId = 1,
+            CustomerEmail = "guest@example.com",
+            Seats = 2,
+            Date = legacyStart.AddMinutes(70)
+        };
+
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            svc.CreateBookingAsync(dto));
+        Assert.Contains("already booked", ex.Message);
+    }
+
     [Fact]
     public async Task CreateBookingAsync_StoresSpecialRequests()
     {
@@ -450,6 +582,46 @@ public class BookingServiceTests
         await svc.UpdateBookingAsync(created.Id, dto);
         Booking inDb = await db.Bookings.FirstAsync(b => b.Id == created.Id);
         Assert.Equal(date.AddHours(1), inDb.EndTime);
+    }
+
+    [Fact]
+    public async Task UpdateBookingAsync_SetsDefaultEndTime_UsingRestaurantConfiguredDuration_WhenMissing()
+    {
+        using AppDbContext db = CreateDb(nameof(UpdateBookingAsync_SetsDefaultEndTime_UsingRestaurantConfiguredDuration_WhenMissing));
+        db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", DefaultBookingDurationMinutes = 90 });
+        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        db.SaveChanges();
+
+        BookingService svc = CreateService(db);
+        DateTime date = DateTime.UtcNow.AddHours(1);
+        BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, Seats = 2 });
+        db.Entry((await db.Bookings.FindAsync(created.Id))!).State = EntityState.Detached;
+
+        var dto = new BookingDto { Id = created.Id, RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, Seats = 2, EndTime = null };
+        await svc.UpdateBookingAsync(created.Id, dto);
+        Booking inDb = await db.Bookings.FirstAsync(b => b.Id == created.Id);
+        Assert.Equal(date.AddMinutes(90), inDb.EndTime);
+    }
+
+    [Fact]
+    public async Task UpdateBookingAsync_FixesInvalidEndTime_UsingRestaurantConfiguredDuration()
+    {
+        using AppDbContext db = CreateDb(nameof(UpdateBookingAsync_FixesInvalidEndTime_UsingRestaurantConfiguredDuration));
+        db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", DefaultBookingDurationMinutes = 90 });
+        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        db.SaveChanges();
+
+        BookingService svc = CreateService(db);
+        DateTime date = DateTime.UtcNow.AddHours(1);
+        BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, Seats = 2 });
+        db.Entry((await db.Bookings.FindAsync(created.Id))!).State = EntityState.Detached;
+
+        var dto = new BookingDto { Id = created.Id, RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, EndTime = date.AddHours(-1), Seats = 2 };
+        await svc.UpdateBookingAsync(created.Id, dto);
+        Booking inDb = await db.Bookings.FirstAsync(b => b.Id == created.Id);
+        Assert.Equal(date.AddMinutes(90), inDb.EndTime);
     }
 
     [Fact]

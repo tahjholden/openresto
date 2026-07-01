@@ -1,4 +1,4 @@
-import { get, post, patch, del, put } from "./client";
+import { get, post, patch, del, put, buildUrl } from "./client";
 
 // ---------- Types ----------
 
@@ -484,7 +484,7 @@ export async function uploadHeroImage(file: File): Promise<string | null> {
   try {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL ?? "/api"}/media/hero`, {
+    const res = await fetch(buildUrl("/media/hero"), {
       method: "POST",
       credentials: "include",
       body: form,
@@ -497,14 +497,15 @@ export async function uploadHeroImage(file: File): Promise<string | null> {
   }
 }
 
-export async function deleteHeroImage(): Promise<void> {
+export async function deleteHeroImage(): Promise<boolean> {
   try {
-    await fetch(`${process.env.EXPO_PUBLIC_API_URL ?? "/api"}/media/hero`, {
+    const res = await fetch(buildUrl("/media/hero"), {
       method: "DELETE",
       credentials: "include",
     });
+    return res.ok;
   } catch {
-    // ignore
+    return false;
   }
 }
 

@@ -9,6 +9,9 @@ public class RestaurantManagementService(AppDbContext db)
 {
     private readonly AppDbContext _db = db;
 
+    private static readonly HashSet<int> _allowedBookingDurationsMinutes =
+        [30, 60, 90, 120, 150, 180, 240, 300, 360, 420, 480];
+
     // ── Restaurants ─────────────────────────────────────────────────────────
 
     public async Task<List<RestaurantDto>> GetAllAsync()
@@ -38,6 +41,7 @@ public class RestaurantManagementService(AppDbContext db)
         {
             Name = dto.Name,
             Address = dto.Address,
+            DefaultBookingDurationMinutes = dto.DefaultBookingDurationMinutes,
             Sections = dto.Sections.Select(s => new Section
             {
                 Name = s.Name,
@@ -85,6 +89,17 @@ public class RestaurantManagementService(AppDbContext db)
             r.Tags = req.Tags;
         }
 
+        if (req.DefaultBookingDurationMinutes.HasValue)
+        {
+            if (!_allowedBookingDurationsMinutes.Contains(req.DefaultBookingDurationMinutes.Value))
+            {
+                throw new ArgumentException(
+                    $"DefaultBookingDurationMinutes must be one of: {string.Join(", ", _allowedBookingDurationsMinutes.Order())}.");
+            }
+
+            r.DefaultBookingDurationMinutes = req.DefaultBookingDurationMinutes.Value;
+        }
+
         await _db.SaveChangesAsync();
 
         return new RestaurantDto
@@ -100,6 +115,7 @@ public class RestaurantManagementService(AppDbContext db)
                 ? []
                 : r.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
             ImageUrl = r.ImageUrl,
+            DefaultBookingDurationMinutes = r.DefaultBookingDurationMinutes,
             Sections = []
         };
     }
@@ -235,6 +251,7 @@ public class RestaurantManagementService(AppDbContext db)
             : r.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
         ImageUrl = r.ImageUrl,
         IsArchived = r.IsArchived,
+        DefaultBookingDurationMinutes = r.DefaultBookingDurationMinutes,
         Sections = r.Sections.Select(s => new SectionDto
         {
             Id = s.Id,

@@ -326,6 +326,63 @@ public class AdminServiceTests : IDisposable
         await Assert.ThrowsAsync<InvalidOperationException>(() => svc.CreateBookingAsync(req));
     }
 
+    // ── Configurable booking duration (#135) ────────────────────────────────
+
+    [Theory]
+    [InlineData(30)]
+    [InlineData(90)]
+    [InlineData(120)]
+    [InlineData(480)]
+    public async Task CreateBookingAsync_EndTime_UsesRestaurantConfiguredDuration(int durationMinutes)
+    {
+        AdminService svc = CreateService();
+        _db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test", Timezone = "UTC", DefaultBookingDurationMinutes = durationMinutes });
+        _db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        _db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        await _db.SaveChangesAsync();
+
+        DateTime date = new DateTime(2026, 10, 10, 12, 0, 0, DateTimeKind.Utc);
+        var req = new AdminCreateBookingRequest { RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, Seats = 2 };
+
+        BookingDetailDto result = await svc.CreateBookingAsync(req);
+
+        Assert.Equal(date.AddMinutes(durationMinutes), result.EndTime);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_ConflictCheck_UsesRestaurantConfiguredDuration()
+    {
+        AdminService svc = CreateService();
+        _db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test", Timezone = "UTC", DefaultBookingDurationMinutes = 120 });
+        _db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        _db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        DateTime newStart = new DateTime(2026, 10, 10, 12, 0, 0, DateTimeKind.Utc);
+        // Existing (later) booking starts 100 minutes after the new booking's requested start —
+        // outside a fixed 60-minute conflict window, but inside the restaurant's configured
+        // 120-minute occupancy window for the new booking.
+        _db.Bookings.Add(new Booking { RestaurantId = 1, SectionId = 1, TableId = 1, Date = newStart.AddMinutes(100), EndTime = newStart.AddMinutes(100).AddMinutes(120), BookingRef = "LATER1" });
+        await _db.SaveChangesAsync();
+
+        var req = new AdminCreateBookingRequest { RestaurantId = 1, SectionId = 1, TableId = 1, Date = newStart, Seats = 2 };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.CreateBookingAsync(req));
+    }
+
+    [Fact]
+    public async Task ExtendBookingAsync_FallsBackToRestaurantConfiguredDuration_WhenEndTimeInvalid()
+    {
+        AdminService svc = CreateService();
+        _db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test", Timezone = "UTC", DefaultBookingDurationMinutes = 90 });
+        _db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        _db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        DateTime date = DateTime.UtcNow;
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, EndTime = date.AddHours(-1), BookingRef = "B1" });
+        await _db.SaveChangesAsync();
+
+        DateTime? newEnd = await svc.ExtendBookingAsync(1, 30);
+        Assert.Equal(date.AddMinutes(90).AddMinutes(30), newEnd);
+    }
+
     [Fact]
     public async Task AdminUpdateBookingAsync_Throws_WhenSeatsExceedCapacity()
     {
@@ -401,6 +458,110 @@ public class AdminServiceTests : IDisposable
 
         BookingDetailDto? result = await svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { CustomerEmail = "new@test.com" });
         Assert.True(result!.EndTime > result.Date);
+    }
+
+    [Fact]
+    public async Task AdminUpdateBookingAsync_SetsDefaultEndTime_UsingRestaurantConfiguredDuration()
+    {
+        AdminService svc = CreateService();
+        _db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test", Timezone = "UTC", DefaultBookingDurationMinutes = 90 });
+        _db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        _db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        DateTime original = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = original, EndTime = null, BookingRef = "B1" });
+        await _db.SaveChangesAsync();
+
+        DateTime newDate = original.AddDays(1);
+        BookingDetailDto? result = await svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { Date = newDate });
+        Assert.Equal(newDate.AddMinutes(90), result!.EndTime);
+    }
+
+    [Fact]
+    public async Task AdminUpdateBookingAsync_FixesInvalidEndTime_UsingRestaurantConfiguredDuration()
+    {
+        AdminService svc = CreateService();
+        _db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test", Timezone = "UTC", DefaultBookingDurationMinutes = 90 });
+        _db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        _db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        DateTime date = DateTime.UtcNow;
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, EndTime = date.AddHours(-1), BookingRef = "B1" });
+        await _db.SaveChangesAsync();
+
+        BookingDetailDto? result = await svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { CustomerEmail = "new@test.com" });
+        Assert.Equal(date.AddMinutes(90), result!.EndTime);
+    }
+
+    [Fact]
+    public async Task AdminUpdateBookingAsync_ConflictCheckGuard_IsUnreachable_DueToPreExistingDeadCodeBug()
+    {
+        // KNOWN PRE-EXISTING BUG — out of scope for #135, not introduced or fixed by it
+        // (see .claude/investigations/135-reexamine.md, Gaps #2). AdminUpdateBookingAsync
+        // mutates `booking.Date`/`booking.TableId` in place *before* the conflict-check
+        // guard compares `req.Date.Value != booking.Date` / `req.TableId.Value !=
+        // booking.TableId`. Both comparisons are always false by the time they run
+        // (the fields were just set to those exact values), so the conflict-check block
+        // is unreachable dead code today.
+        //
+        // This test PINS that current (buggy-but-harmless-here) behaviour — an update
+        // that *should* conflict with an existing booking on the same table currently
+        // succeeds instead of throwing — so a future refactor doesn't silently change it
+        // unnoticed. It does NOT assert this is correct behaviour; the real fix (compare
+        // against the pre-mutation values) is a separate, unrelated follow-up.
+        AdminService svc = CreateService();
+        _db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test", Timezone = "UTC", DefaultBookingDurationMinutes = 60 });
+        _db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        _db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+
+        DateTime original = new DateTime(2026, 1, 1, 10, 0, 0, DateTimeKind.Utc);
+        DateTime conflictingSlot = new DateTime(2026, 1, 2, 10, 0, 0, DateTimeKind.Utc);
+
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = original, EndTime = original.AddMinutes(60), BookingRef = "MOVING" });
+        _db.Bookings.Add(new Booking { Id = 2, RestaurantId = 1, SectionId = 1, TableId = 1, Date = conflictingSlot, EndTime = conflictingSlot.AddMinutes(60), BookingRef = "EXISTING" });
+        await _db.SaveChangesAsync();
+
+        // Moving booking 1 onto exactly booking 2's slot on the same table would throw if
+        // the conflict-check guard above were actually reachable. It isn't, so this
+        // currently succeeds — pinning the bug's observable effect, not endorsing it.
+        BookingDetailDto? result = await svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { Date = conflictingSlot });
+
+        Assert.NotNull(result);
+        Assert.Equal(conflictingSlot, result!.Date);
+    }
+
+    [Fact]
+    public async Task GetRestaurantsAsync_ActiveBookingsCount_UsesRestaurantConfiguredDuration()
+    {
+        AdminService svc = CreateService();
+        _db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test", Timezone = "UTC", DefaultBookingDurationMinutes = 120 });
+        _db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        _db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        DateTime nowUtc = DateTime.UtcNow;
+        // Started 90 minutes ago, no EndTime — still active under the restaurant's configured
+        // 120-minute duration, but would have already "ended" under the old fixed 60-minute assumption.
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.AddMinutes(-90), EndTime = null, BookingRef = "ACTIVE1" });
+        await _db.SaveChangesAsync();
+
+        List<LookupDto> restaurants = await svc.GetRestaurantsAsync();
+
+        Assert.Equal(1, restaurants.Single(r => r.Id == 1).ActiveBookingsCount);
+    }
+
+    [Fact]
+    public async Task ExtendAllActiveBookingsAsync_UsesRestaurantConfiguredDuration_ForMissingEndTimeFallback()
+    {
+        AdminService svc = CreateService();
+        _db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test", Timezone = "UTC", DefaultBookingDurationMinutes = 120 });
+        _db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
+        _db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
+        DateTime nowUtc = DateTime.UtcNow;
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = nowUtc.AddMinutes(-90), EndTime = null, BookingRef = "ACTIVE1" });
+        await _db.SaveChangesAsync();
+
+        List<BookingDetailDto>? result = await svc.ExtendAllActiveBookingsAsync(1, 15);
+
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Equal(nowUtc.AddMinutes(-90).AddMinutes(120).AddMinutes(15), result[0].EndTime);
     }
 
     [Fact]

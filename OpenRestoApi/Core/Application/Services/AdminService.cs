@@ -222,13 +222,14 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
             newStart = req.Date.ToUniversalTime();
         }
 
-        DateTime newEnd = newStart.AddHours(1);
+        int durationMinutes = table.Section!.Restaurant!.DefaultBookingDurationMinutes;
+        DateTime newEnd = newStart.AddMinutes(durationMinutes);
 
         bool conflict = await _db.Bookings.AnyAsync(b =>
             b.TableId == req.TableId &&
             !b.IsCancelled &&
             b.Date < newEnd &&
-            (b.EndTime != null ? b.EndTime > newStart : b.Date.AddHours(1) > newStart));
+            (b.EndTime != null ? b.EndTime > newStart : b.Date.AddMinutes(durationMinutes) > newStart));
 
         if (conflict)
         {
@@ -246,7 +247,7 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
             SectionId = req.SectionId,
             TableId = req.TableId,
             Date = newStart,
-            EndTime = newStart.AddHours(1),
+            EndTime = newStart.AddMinutes(durationMinutes),
             CustomerEmail = req.CustomerEmail,
             CustomerName = req.CustomerName,
             Seats = req.Seats,
@@ -278,10 +279,18 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
             return null;
         }
 
-        // Use EndTime if it's valid (after Date), otherwise fall back to Date + 1h
-        DateTime from = (booking.EndTime.HasValue && booking.EndTime.Value > booking.Date)
-            ? booking.EndTime.Value
-            : booking.Date.AddHours(1);
+        // Use EndTime if it's valid (after Date), otherwise fall back to the
+        // restaurant's configured booking duration.
+        DateTime from;
+        if (booking.EndTime.HasValue && booking.EndTime.Value > booking.Date)
+        {
+            from = booking.EndTime.Value;
+        }
+        else
+        {
+            Restaurant? restaurant = await _db.Restaurants.FindAsync(booking.RestaurantId);
+            from = booking.Date.AddMinutes(restaurant?.DefaultBookingDurationMinutes ?? 60);
+        }
 
         booking.EndTime = from.AddMinutes(minutes);
         await _db.SaveChangesAsync();
@@ -356,15 +365,19 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
         }
 
         // Validate restaurant exists if changing
+        Restaurant? restaurant = booking.Restaurant;
         if (req.RestaurantId.HasValue && req.RestaurantId.Value != booking.RestaurantId)
         {
-            var restaurantExists = await _db.Restaurants.AnyAsync(r => r.Id == req.RestaurantId.Value);
-            if (!restaurantExists)
+            Restaurant? newRestaurant = await _db.Restaurants.FindAsync(req.RestaurantId.Value);
+            if (newRestaurant == null)
             {
                 throw new ArgumentException("Invalid restaurant.");
             }
             booking.RestaurantId = req.RestaurantId.Value;
+            restaurant = newRestaurant;
         }
+
+        int durationMinutes = restaurant?.DefaultBookingDurationMinutes ?? 60;
 
         // Validate table exists and belongs to the (possibly new) restaurant
         if (req.TableId.HasValue && req.TableId.Value != booking.TableId)
@@ -396,8 +409,8 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
             }
             else
             {
-                // Default to 1 hour if EndTime was missing for some reason
-                booking.EndTime = req.Date.Value.AddHours(1);
+                // Default to the restaurant's configured booking duration if EndTime was missing for some reason
+                booking.EndTime = req.Date.Value.AddMinutes(durationMinutes);
             }
             booking.Date = req.Date.Value;
         }
@@ -405,7 +418,7 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
         // Final safety check: EndTime should never be before Date
         if (booking.EndTime.HasValue && booking.EndTime.Value < booking.Date)
         {
-            booking.EndTime = booking.Date.AddHours(1);
+            booking.EndTime = booking.Date.AddMinutes(durationMinutes);
         }
 
         // --- CONFLICT CHECK ---
@@ -413,14 +426,14 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
         if ((req.Date.HasValue && req.Date.Value != booking.Date) || (req.TableId.HasValue && req.TableId.Value != booking.TableId))
         {
             DateTime newStart = booking.Date.ToUniversalTime();
-            DateTime newEnd = booking.EndTime ?? newStart.AddHours(1);
+            DateTime newEnd = booking.EndTime ?? newStart.AddMinutes(durationMinutes);
 
             bool conflict = await _db.Bookings.AnyAsync(b =>
                 b.Id != id && // Exclude the current booking itself
                 b.TableId == booking.TableId &&
                 !b.IsCancelled &&
                 b.Date < newEnd &&
-                (b.EndTime != null ? b.EndTime > newStart : b.Date.AddHours(1) > newStart));
+                (b.EndTime != null ? b.EndTime > newStart : b.Date.AddMinutes(durationMinutes) > newStart));
 
             if (conflict)
             {
@@ -480,7 +493,7 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
                     b.RestaurantId == r.Id &&
                     !b.IsCancelled &&
                     b.Date <= nowUtc &&
-                    (b.EndTime.HasValue ? b.EndTime.Value > nowUtc : b.Date.AddHours(1) > nowUtc))
+                    (b.EndTime.HasValue ? b.EndTime.Value > nowUtc : b.Date.AddMinutes(r.DefaultBookingDurationMinutes) > nowUtc))
             })
             .ToListAsync();
     }
@@ -540,12 +553,12 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
             .Where(b => b.RestaurantId == restaurantId &&
                         !b.IsCancelled &&
                         b.Date <= nowUtc &&
-                        (b.EndTime.HasValue ? b.EndTime.Value > nowUtc : b.Date.AddHours(1) > nowUtc))
+                        (b.EndTime.HasValue ? b.EndTime.Value > nowUtc : b.Date.AddMinutes(restaurant.DefaultBookingDurationMinutes) > nowUtc))
             .ToListAsync();
 
         foreach (Booking? booking in activeBookings)
         {
-            DateTime currentEndTime = booking.EndTime ?? booking.Date.AddHours(1);
+            DateTime currentEndTime = booking.EndTime ?? booking.Date.AddMinutes(restaurant.DefaultBookingDurationMinutes);
             booking.EndTime = currentEndTime.AddMinutes(extensionMinutes);
         }
 
@@ -564,6 +577,7 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
             Id = restaurant.Id,
             Name = restaurant.Name,
             Address = restaurant.Address,
+            DefaultBookingDurationMinutes = restaurant.DefaultBookingDurationMinutes,
             Sections = [],
         };
     }

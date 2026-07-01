@@ -225,7 +225,7 @@ describe("LocationCard", () => {
   });
 
   it("calls deleteLocationImage when Remove is pressed", async () => {
-    (restaurantsApi.deleteLocationImage as jest.Mock).mockResolvedValue(undefined);
+    (restaurantsApi.deleteLocationImage as jest.Mock).mockResolvedValue(true);
     render(
       <LocationCard
         {...baseProps}
@@ -239,7 +239,7 @@ describe("LocationCard", () => {
   });
 
   it("calls onSaved with null imageUrl after removing image", async () => {
-    (restaurantsApi.deleteLocationImage as jest.Mock).mockResolvedValue(undefined);
+    (restaurantsApi.deleteLocationImage as jest.Mock).mockResolvedValue(true);
     render(
       <LocationCard
         {...baseProps}
@@ -253,7 +253,7 @@ describe("LocationCard", () => {
   });
 
   it("shows Image removed message after removing image", async () => {
-    (restaurantsApi.deleteLocationImage as jest.Mock).mockResolvedValue(undefined);
+    (restaurantsApi.deleteLocationImage as jest.Mock).mockResolvedValue(true);
     render(
       <LocationCard
         {...baseProps}

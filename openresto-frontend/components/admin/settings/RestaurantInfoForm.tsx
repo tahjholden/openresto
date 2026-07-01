@@ -66,6 +66,16 @@ const TIMEZONES = [
 
 const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+const DURATION_OPTIONS = [30, 60, 90, 120, 150, 180, 240, 300, 360, 420, 480];
+
+function formatDurationLabel(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  if (hours === 0) return `${remainder}m`;
+  if (remainder === 0) return `${hours}h`;
+  return `${hours}h ${remainder}m`;
+}
+
 export function RestaurantInfoForm({
   restaurant,
   onSaved,
@@ -90,6 +100,9 @@ export function RestaurantInfoForm({
     (restaurant.openDays ?? "1,2,3,4,5,6,7").split(",").map(Number)
   );
   const [timezone, setTimezone] = useState(restaurant.timezone ?? "UTC");
+  const [defaultBookingDurationMinutes, setDefaultBookingDurationMinutes] = useState(
+    restaurant.defaultBookingDurationMinutes ?? 60
+  );
   const [tags, setTags] = useState<string[]>(restaurant.tags ?? []);
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -119,6 +132,7 @@ export function RestaurantInfoForm({
     closeTime !== (restaurant.closeTime ?? "22:00") ||
     openDays.join(",") !== (restaurant.openDays ?? "1,2,3,4,5,6,7") ||
     timezone !== (restaurant.timezone ?? "UTC") ||
+    defaultBookingDurationMinutes !== (restaurant.defaultBookingDurationMinutes ?? 60) ||
     tags.join(",") !== (restaurant.tags ?? []).join(",");
 
   const discard = () => {
@@ -128,6 +142,7 @@ export function RestaurantInfoForm({
     setCloseTime(restaurant.closeTime ?? "22:00");
     setOpenDays((restaurant.openDays ?? "1,2,3,4,5,6,7").split(",").map(Number));
     setTimezone(restaurant.timezone ?? "UTC");
+    setDefaultBookingDurationMinutes(restaurant.defaultBookingDurationMinutes ?? 60);
     setTags(restaurant.tags ?? []);
     setTagInput("");
   };
@@ -145,6 +160,7 @@ export function RestaurantInfoForm({
       closeTime,
       openDays: openDays.join(","),
       timezone,
+      defaultBookingDurationMinutes,
       tags: finalTags.join(","),
     });
     setSaving(false);
@@ -156,6 +172,7 @@ export function RestaurantInfoForm({
         closeTime: result.closeTime,
         openDays: result.openDays,
         timezone: result.timezone,
+        defaultBookingDurationMinutes: result.defaultBookingDurationMinutes,
         tags: result.tags,
       });
     }
@@ -255,44 +272,84 @@ export function RestaurantInfoForm({
           </View>
         </View>
 
-        <View style={{ gap: 6 }}>
-          <ThemedText style={{ fontSize: 12, color: mutedColor, fontWeight: "500" }}>
-            Open days
-          </ThemedText>
-          <View style={{ flexDirection: "row", gap: 6 }}>
-            {DAY_LABELS.map((label, i) => {
-              const day = i + 1;
-              const active = openDays.includes(day);
-              return (
-                <Pressable
-                  key={day}
-                  onPress={() => toggleDay(day)}
-                  style={{
-                    flex: 1,
-                    backgroundColor: active ? primaryColor : surface2,
-                    borderWidth: 1,
-                    borderColor: active ? primaryColor : borderColor,
-                    borderRadius: 9,
-                    paddingVertical: 10,
-                    alignItems: "center",
-                  }}
-                >
-                  <ThemedText
+        <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", gap: 24 }}>
+          <View style={{ gap: 6 }}>
+            <ThemedText style={{ fontSize: 12, color: mutedColor, fontWeight: "500" }}>
+              Default Booking duration
+            </ThemedText>
+            <select
+              data-testid="booking-duration-select"
+              value={defaultBookingDurationMinutes}
+              onChange={
+                /* istanbul ignore next */ (e) =>
+                  setDefaultBookingDurationMinutes(Number(e.target.value))
+              }
+              style={{
+                height: 44,
+                borderWidth: 1,
+                borderStyle: "solid" as const,
+                borderColor: colors.border,
+                borderRadius: 8,
+                paddingLeft: 12,
+                paddingRight: 12,
+                fontSize: 14,
+                backgroundColor: colors.input,
+                color: colors.text,
+                cursor: "pointer",
+              }}
+            >
+              {DURATION_OPTIONS.map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  {formatDurationLabel(minutes)}
+                </option>
+              ))}
+            </select>
+            <ThemedText style={{ fontSize: 11, color: mutedColor }}>
+              How long each new booking occupies a table by default
+            </ThemedText>
+          </View>
+
+          <View style={{ gap: 6, flexGrow: 1, minWidth: 280 }}>
+            <ThemedText style={{ fontSize: 12, color: mutedColor, fontWeight: "500" }}>
+              Open days
+            </ThemedText>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {DAY_LABELS.map((label, i) => {
+                const day = i + 1;
+                const active = openDays.includes(day);
+                return (
+                  <Pressable
+                    key={day}
+                    onPress={() => toggleDay(day)}
                     style={{
-                      fontSize: 12,
-                      fontWeight: "500",
-                      color: active ? "#fff" : colors.text,
+                      minWidth: 96,
+                      flexGrow: 1,
+                      backgroundColor: active ? primaryColor : surface2,
+                      borderWidth: 1,
+                      borderColor: active ? primaryColor : borderColor,
+                      borderRadius: 9,
+                      paddingVertical: 10,
+                      paddingHorizontal: 12,
+                      alignItems: "center",
                     }}
                   >
-                    {label}
-                  </ThemedText>
-                </Pressable>
-              );
-            })}
+                    <ThemedText
+                      style={{
+                        fontSize: 12,
+                        fontWeight: "500",
+                        color: active ? "#fff" : colors.text,
+                      }}
+                    >
+                      {label}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <ThemedText style={{ fontSize: 11, color: mutedColor }}>
+              {openDays.length} of 7 days open
+            </ThemedText>
           </View>
-          <ThemedText style={{ fontSize: 11, color: mutedColor }}>
-            {openDays.length} of 7 days open
-          </ThemedText>
         </View>
 
         {/* Location tags */}
@@ -414,7 +471,6 @@ export function RestaurantInfoForm({
               gap: 6,
             }}
           >
-            <Ionicons name="checkmark" size={14} color="#fff" />
             <ThemedText style={{ fontSize: 14, fontWeight: "600", color: "#fff" }}>
               {saving ? "Saving…" : "Save changes"}
             </ThemedText>

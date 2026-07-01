@@ -112,10 +112,14 @@ export function LocationCard({
 
   const handleDeleteImage = async () => {
     setImgUploading(true);
-    await deleteLocationImage(restaurant.id);
+    const ok = await deleteLocationImage(restaurant.id);
     setImgUploading(false);
-    onSaved({ imageUrl: null });
-    setImgMsg({ text: "Image removed.", ok: true });
+    if (ok) {
+      onSaved({ imageUrl: null });
+      setImgMsg({ text: "Image removed.", ok: true });
+    } else {
+      setImgMsg({ text: "Failed to remove image.", ok: false });
+    }
   };
 
   const tableCount = restaurant.sections.reduce((acc, s) => acc + s.tables.length, 0);

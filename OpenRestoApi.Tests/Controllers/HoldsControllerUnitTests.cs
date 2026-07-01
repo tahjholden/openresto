@@ -50,4 +50,28 @@ public class HoldsControllerUnitTests
         var result = await _controller.PlaceHold(new PlaceHoldRequest());
         Assert.IsType<BadRequestObjectResult>(result);
     }
+
+    [Fact]
+    public async Task PlaceHold_PassesRestaurantConfiguredDuration_ToBookingConflictCheck()
+    {
+        var testDate = DateTime.UtcNow.Date.AddDays(1).AddHours(12);
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "UTC",
+                OpenTime = "00:00",
+                CloseTime = "23:59",
+                DefaultBookingDurationMinutes = 90
+            });
+        _mockBookingRepo.Setup(b => b.IsTableBookedOnDateAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+        _mockService.Setup(s => s.PlaceHold(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<string?>(), It.IsAny<int>()))
+            .Returns(new HoldResult("hold-1", DateTime.UtcNow.AddMinutes(5)));
+
+        await _controller.PlaceHold(new PlaceHoldRequest { Date = testDate });
+
+        _mockBookingRepo.Verify(b => b.IsTableBookedOnDateAsync(It.IsAny<int>(), It.IsAny<DateTime>(), 90), Times.Once);
+        _mockService.Verify(s => s.PlaceHold(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<string?>(), 90), Times.Once);
+    }
 }

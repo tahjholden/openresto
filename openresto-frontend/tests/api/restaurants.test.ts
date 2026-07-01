@@ -295,8 +295,9 @@ describe("uploadLocationImage", () => {
 
     expect(result).toBe("/uploads/img.png");
     const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toContain("/media/location/1");
+    expect(url).toContain("/api/media/location/1");
     expect(opts.method).toBe("POST");
+    expect(opts.credentials).toBe("include");
   });
 
   it("returns null when response is not ok", async () => {
@@ -321,18 +322,25 @@ describe("uploadLocationImage", () => {
 // ---------- deleteLocationImage ----------
 
 describe("deleteLocationImage", () => {
-  it("sends DELETE to media endpoint", async () => {
+  it("sends DELETE to media endpoint and returns true on success", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
-    await deleteLocationImage(1);
+    const result = await deleteLocationImage(1);
 
+    expect(result).toBe(true);
     const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toContain("/media/location/1");
+    expect(url).toContain("/api/media/location/1");
     expect(opts.method).toBe("DELETE");
+    expect(opts.credentials).toBe("include");
   });
 
-  it("silently ignores network errors", async () => {
+  it("returns false on non-ok response", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false });
+    expect(await deleteLocationImage(1)).toBe(false);
+  });
+
+  it("returns false on network error", async () => {
     mockFetch.mockRejectedValueOnce(new Error("offline"));
-    await expect(deleteLocationImage(1)).resolves.toBeUndefined();
+    expect(await deleteLocationImage(1)).toBe(false);
   });
 });

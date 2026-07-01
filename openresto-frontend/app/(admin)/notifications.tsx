@@ -5,6 +5,7 @@ import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedText } from "@/components/themed-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { usePersistedState } from "@/hooks/use-persisted-state";
 import { hexToRgba } from "@/utils/colors";
 import { COLORS, BORDER_RADIUS, SPACING, TYPOGRAPHY, SHADOWS } from "@/theme/theme";
 import { fetchRestaurants } from "@/api/restaurants";
@@ -233,8 +234,13 @@ export default function NotificationsScreen() {
   const router = useRouter();
 
   const [restaurants, setRestaurants] = useState<{ id: number; name: string }[]>([]);
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState<number | null>(null);
-  const [selectedType, setSelectedType] = useState("");
+  const [selectedRestaurantId, setSelectedRestaurantId] = usePersistedState<number | null>(
+    "notifications:restaurantId",
+    null
+  );
+  const [selectedType, setSelectedType] = usePersistedState<string>("notifications:type", "");
+  // Intentionally not persisted — "unread only" is transient: once items are
+  // read, the filter would show nothing on the next visit.
   const [unreadOnly, setUnreadOnly] = useState(false);
 
   const [items, setItems] = useState<AdminNotificationDto[]>([]);
@@ -282,7 +288,15 @@ export default function NotificationsScreen() {
   const mutedColor = colors.muted;
 
   useEffect(() => {
-    fetchRestaurants().then((data) => setRestaurants(data));
+    fetchRestaurants().then((data) => {
+      setRestaurants(data);
+      // Drop a persisted selection whose restaurant was since deleted.
+      if (selectedRestaurantId != null && !data.some((r) => r.id === selectedRestaurantId)) {
+        setSelectedRestaurantId(null);
+      }
+    });
+    // selectedRestaurantId seeds the initial filter only; omitting it avoids a refetch loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPage = useCallback(

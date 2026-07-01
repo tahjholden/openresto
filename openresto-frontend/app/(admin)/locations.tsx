@@ -53,6 +53,10 @@ function useConfirmLocal() {
 export default function AdminLocationsScreen() {
   const [restaurants, setRestaurants] = useState<RestaurantDto[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [persistedSelectedId, setPersistedSelectedId] = usePersistedState<number | null>(
+    "locations:selectedId",
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [addingLocation, setAddingLocation] = useState(false);
   const [newLocationName, setNewLocationName] = useState("");
@@ -104,7 +108,11 @@ export default function AdminLocationsScreen() {
     Promise.all([fetchRestaurants(), adminGetRestaurants()]).then(([active, all]) => {
       if (cancelled) return;
       setRestaurants(active);
-      if (active.length > 0) setSelectedId(active[0].id);
+      const persistedMatch =
+        persistedSelectedId != null ? active.find((r) => r.id === persistedSelectedId) : undefined;
+      const nextId = persistedMatch ? persistedMatch.id : (active[0]?.id ?? null);
+      if (nextId !== null) setSelectedId(nextId);
+      setPersistedSelectedId(nextId);
       setAllRestaurants(all);
       setLoading(false);
     });
@@ -112,6 +120,8 @@ export default function AdminLocationsScreen() {
     return () => {
       cancelled = true;
     };
+    // persistedSelectedId seeds the initial selection only; omitting it avoids a refetch loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selectedRestaurant = restaurants.find((r) => r.id === selectedId) ?? null;
@@ -128,8 +138,15 @@ export default function AdminLocationsScreen() {
           minute: "2-digit",
         })
       : null;
-  function handleSelectLocation(id: number) {
+  // Keeps the transient selectedId and its persisted counterpart in sync so the
+  // next visit lands on the restaurant the admin was last viewing.
+  const selectLocation = (id: number | null) => {
     setSelectedId(id);
+    setPersistedSelectedId(id);
+  };
+
+  function handleSelectLocation(id: number) {
+    selectLocation(id);
     setExtendedBookings(null);
     setExtendNoActive(false);
   }
@@ -221,7 +238,7 @@ export default function AdminLocationsScreen() {
               setSavingLocation(false);
               if (created) {
                 setRestaurants((prev) => [...prev, { ...created, sections: [] }]);
-                setSelectedId(created.id);
+                selectLocation(created.id);
               }
               setNewLocationName("");
               setAddingLocation(false);
@@ -618,14 +635,14 @@ export default function AdminLocationsScreen() {
                                 (r) => r.id !== dangerSelectedRestaurant.id
                               );
                               if (selectedId === dangerSelectedRestaurant.id) {
-                                setSelectedId(remaining.length > 0 ? remaining[0].id : null);
+                                selectLocation(remaining.length > 0 ? remaining[0].id : null);
                               }
                               return remaining;
                             });
                           } else {
                             fetchRestaurants().then((active) => {
                               setRestaurants(active);
-                              setSelectedId(dangerSelectedRestaurant.id);
+                              selectLocation(dangerSelectedRestaurant.id);
                             });
                           }
                         } else {
@@ -736,7 +753,7 @@ export default function AdminLocationsScreen() {
                                 setAllRestaurants((prev) => prev.filter((r) => r.id !== deletedId));
                                 setRestaurants((prev) => {
                                   const remaining = prev.filter((r) => r.id !== deletedId);
-                                  setSelectedId(remaining.length > 0 ? remaining[0].id : null);
+                                  selectLocation(remaining.length > 0 ? remaining[0].id : null);
                                   return remaining;
                                 });
                                 setDangerSelectedId(null);

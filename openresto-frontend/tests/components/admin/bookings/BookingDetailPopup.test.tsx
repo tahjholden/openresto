@@ -232,7 +232,7 @@ const cancelledBooking: adminApi.BookingDetailDto = {
 const baseProps = {
   bookingId: 1,
   onClose: jest.fn(),
-  onDeleted: jest.fn(),
+  onMutated: jest.fn(),
 };
 
 describe("BookingDetailPopup", () => {
@@ -325,7 +325,7 @@ describe("BookingDetailPopup", () => {
     });
   });
 
-  it("calls adminDeleteBooking and onDeleted when cancel is confirmed", async () => {
+  it("calls adminDeleteBooking and onMutated when cancel is confirmed", async () => {
     (adminApi.adminDeleteBooking as jest.Mock).mockResolvedValue(true);
     render(<BookingDetailPopup {...baseProps} />);
     await waitFor(() => expect(screen.getByTestId("cancel-btn")).toBeTruthy());
@@ -335,7 +335,7 @@ describe("BookingDetailPopup", () => {
       fireEvent.press(screen.getByTestId("confirm-btn"));
     });
     expect(adminApi.adminDeleteBooking).toHaveBeenCalledWith(1);
-    expect(baseProps.onDeleted).toHaveBeenCalled();
+    expect(baseProps.onMutated).toHaveBeenCalled();
     expect(baseProps.onClose).toHaveBeenCalled();
   });
 
@@ -383,7 +383,7 @@ describe("BookingDetailPopup", () => {
       fireEvent.press(screen.getByTestId("confirm-btn"));
     });
     expect(adminApi.adminPurgeBooking).toHaveBeenCalledWith(1);
-    expect(baseProps.onDeleted).toHaveBeenCalled();
+    expect(baseProps.onMutated).toHaveBeenCalled();
     expect(baseProps.onClose).toHaveBeenCalled();
   });
 
@@ -767,5 +767,46 @@ describe("BookingDetailPopup", () => {
       expect(screen.getByText("Date and time are required")).toBeTruthy();
     });
     expect(adminApi.adminUpdateBookingFull).not.toHaveBeenCalled();
+  });
+
+  it("calls onMutated after a successful extend", async () => {
+    (adminApi.adminExtendBooking as jest.Mock).mockResolvedValue({
+      endTime: "2026-06-01T20:00:00Z",
+    });
+    render(<BookingDetailPopup {...baseProps} />);
+    await waitFor(() => expect(screen.getByTestId("extend-btn")).toBeTruthy());
+    await act(async () => {
+      fireEvent.press(screen.getByTestId("extend-btn"));
+    });
+    await waitFor(() => expect(baseProps.onMutated).toHaveBeenCalled());
+  });
+
+  it("calls onMutated after a successful restore", async () => {
+    (adminApi.getAdminBooking as jest.Mock).mockResolvedValueOnce(cancelledBooking);
+    (adminApi.adminRestoreBooking as jest.Mock).mockResolvedValue(true);
+    (adminApi.getAdminBooking as jest.Mock).mockResolvedValue({
+      ...cancelledBooking,
+      isCancelled: false,
+    });
+    render(<BookingDetailPopup {...baseProps} />);
+    await waitFor(() => expect(screen.getByTestId("uncancel-btn")).toBeTruthy());
+    fireEvent.press(screen.getByTestId("uncancel-btn"));
+    await waitFor(() => expect(screen.getByTestId("confirm-btn")).toBeTruthy());
+    await act(async () => {
+      fireEvent.press(screen.getByTestId("confirm-btn"));
+    });
+    await waitFor(() => expect(baseProps.onMutated).toHaveBeenCalled());
+  });
+
+  it("calls onMutated after a successful edit save", async () => {
+    (adminApi.adminUpdateBookingFull as jest.Mock).mockResolvedValue({ ...mockBooking });
+    render(<BookingDetailPopup {...baseProps} />);
+    await waitFor(() => expect(screen.getByText("Edit")).toBeTruthy());
+    fireEvent.press(screen.getByText("Edit"));
+    await waitFor(() => expect(screen.getByText("Save Changes")).toBeTruthy());
+    await act(async () => {
+      fireEvent.press(screen.getByText("Save Changes"));
+    });
+    await waitFor(() => expect(baseProps.onMutated).toHaveBeenCalled());
   });
 });

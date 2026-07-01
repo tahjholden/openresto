@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 import React from "react";
+import { Platform } from "react-native";
 import { render, screen, waitFor, fireEvent, act } from "@testing-library/react-native";
 import AdminBookingsScreen from "@/app/(admin)/bookings/index";
 import {
@@ -56,15 +57,15 @@ jest.mock("@/components/admin/bookings/AvailabilityGrid", () => ({
 }));
 
 jest.mock("@/components/admin/bookings/BookingDetailPopup", () => ({
-  BookingDetailPopup: ({ onClose, onDeleted }: any) => {
+  BookingDetailPopup: ({ onClose, onMutated }: any) => {
     const { Pressable, Text } = require("react-native");
     return (
       <>
         <Pressable testID="popup-close" onPress={onClose}>
           <Text>ClosePopup</Text>
         </Pressable>
-        <Pressable testID="popup-deleted" onPress={onDeleted}>
-          <Text>DeletedPopup</Text>
+        <Pressable testID="popup-mutated" onPress={onMutated}>
+          <Text>MutatedPopup</Text>
         </Pressable>
       </>
     );
@@ -489,9 +490,8 @@ describe("AdminBookingsScreen", () => {
     expect(screen.getByText("Bookings")).toBeTruthy();
   });
 
-  it("BookingDetailPopup onDeleted callback refreshes bookings", async () => {
-    // The onDeleted callback increments refreshKey which re-fetches bookings
-    const { BookingDetailPopup } = require("@/components/admin/bookings/BookingDetailPopup");
+  it("BookingDetailPopup onMutated callback refreshes bookings", async () => {
+    // The onMutated callback increments refreshKey which re-fetches bookings
     render(<AdminBookingsScreen />);
     await waitFor(() => expect(screen.getByText("Bookings")).toBeTruthy());
     // Since BookingDetailPopup is mocked to null, we can verify the screen renders
@@ -651,13 +651,13 @@ describe("AdminBookingsScreen", () => {
     expect(screen.getByText("Bookings")).toBeTruthy();
   });
 
-  it("BookingDetailPopup onDeleted callback refreshes bookings and reloads grid", async () => {
+  it("BookingDetailPopup onMutated callback refreshes bookings and reloads grid", async () => {
     const callsBefore = (getAdminBookings as jest.Mock).mock.calls.length;
     render(<AdminBookingsScreen />);
     await waitFor(() => expect(screen.getByTestId("grid-press-booking")).toBeTruthy());
     fireEvent.press(screen.getByTestId("grid-press-booking"));
-    await waitFor(() => expect(screen.getByTestId("popup-deleted")).toBeTruthy());
-    fireEvent.press(screen.getByTestId("popup-deleted"));
+    await waitFor(() => expect(screen.getByTestId("popup-mutated")).toBeTruthy());
+    fireEvent.press(screen.getByTestId("popup-mutated"));
     await waitFor(() =>
       expect((getAdminBookings as jest.Mock).mock.calls.length).toBeGreaterThan(callsBefore)
     );
@@ -698,5 +698,131 @@ describe("AdminBookingsScreen", () => {
       // NewBookingModal should become visible (onClose/onCreated buttons appear)
       await waitFor(() => expect(screen.getByTestId("newmodal-close")).toBeTruthy());
     }
+  });
+});
+
+describe("AdminBookingsScreen refresh after mutation", () => {
+  const mockBookings = [
+    {
+      id: 1,
+      bookingRef: "REF1",
+      customerEmail: "john@example.com",
+      status: "active",
+      date: new Date().toISOString(),
+      seats: 2,
+      restaurantId: 1,
+      restaurantName: "Resto 1",
+      sectionId: 1,
+      sectionName: "Main",
+      tableId: 1,
+      tableName: "T1",
+    },
+  ];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (getAdminBookings as jest.Mock).mockResolvedValue(mockBookings);
+    (adminGetTables as jest.Mock).mockResolvedValue([]);
+    (adminLookupBookings as jest.Mock).mockResolvedValue([]);
+    Object.keys(mockSearchParams).forEach((k) => delete mockSearchParams[k]);
+  });
+
+  it("re-fetches the bookings list after NewBookingModal onCreated", async () => {
+    render(<AdminBookingsScreen />);
+    await waitFor(() => expect(screen.getByText("Bookings")).toBeTruthy());
+    const callsBefore = (getAdminBookings as jest.Mock).mock.calls.length;
+
+    const newBtns = screen.queryAllByText("New Booking");
+    fireEvent.press(newBtns[0]);
+    await waitFor(() => expect(screen.getByTestId("newmodal-created")).toBeTruthy());
+    fireEvent.press(screen.getByTestId("newmodal-created"));
+
+    await waitFor(() =>
+      expect((getAdminBookings as jest.Mock).mock.calls.length).toBeGreaterThan(callsBefore)
+    );
+  });
+
+  it("does not refresh the list when a row cancel fails", async () => {
+    (adminDeleteBooking as jest.Mock).mockResolvedValue(false);
+    render(<AdminBookingsScreen />);
+    fireEvent.press(await screen.findByText("List"));
+    await waitFor(() => expect(screen.getByText("john@example.com")).toBeTruthy());
+
+    const callsBefore = (getAdminBookings as jest.Mock).mock.calls.length;
+    const cancelBtns = screen.queryAllByLabelText("Cancel booking");
+    expect(cancelBtns.length).toBeGreaterThan(0);
+    fireEvent.press(cancelBtns[0], { stopPropagation: jest.fn() });
+    const confirmBtns = await screen.findAllByText("Cancel Booking");
+    fireEvent.press(confirmBtns[confirmBtns.length - 1]);
+
+    await waitFor(() => expect(adminDeleteBooking).toHaveBeenCalledWith(1));
+    expect((getAdminBookings as jest.Mock).mock.calls.length).toBe(callsBefore);
+  });
+});
+
+describe("AdminBookingsScreen filter persistence", () => {
+  const originalPlatform = Platform.OS;
+  const mockBookings = [
+    {
+      id: 1,
+      bookingRef: "REF1",
+      customerEmail: "john@example.com",
+      status: "active",
+      date: new Date().toISOString(),
+      seats: 2,
+      restaurantId: 1,
+      restaurantName: "Resto 1",
+      sectionId: 1,
+      sectionName: "Main",
+      tableId: 1,
+      tableName: "T1",
+    },
+  ];
+
+  beforeEach(() => {
+    localStorage.clear();
+    jest.clearAllMocks();
+    (getAdminBookings as jest.Mock).mockResolvedValue(mockBookings);
+    (adminGetTables as jest.Mock).mockResolvedValue([]);
+    (adminLookupBookings as jest.Mock).mockResolvedValue([]);
+    Object.keys(mockSearchParams).forEach((k) => delete mockSearchParams[k]);
+    Object.defineProperty(Platform, "OS", { value: "web", configurable: true });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(Platform, "OS", { value: originalPlatform, configurable: true });
+  });
+
+  it("restores the persisted status filter on mount", async () => {
+    localStorage.setItem("bookings:statusFilter", JSON.stringify("past"));
+    render(<AdminBookingsScreen />);
+    await waitFor(() => expect(getAdminBookings).toHaveBeenCalledWith(1, undefined, "past"));
+  });
+
+  it("restores the persisted view mode (list) on mount", async () => {
+    localStorage.setItem("bookings:viewMode", JSON.stringify("list"));
+    render(<AdminBookingsScreen />);
+    await waitFor(() => expect(screen.getByText("john@example.com")).toBeTruthy());
+  });
+
+  it("falls back to the first restaurant when the persisted id no longer exists", async () => {
+    localStorage.setItem("bookings:restaurantId", JSON.stringify(999));
+    render(<AdminBookingsScreen />);
+    await waitFor(() => expect(getAdminBookings).toHaveBeenCalledWith(1, undefined, "active"));
+  });
+
+  it("persists the selected restaurant when a chip is pressed", async () => {
+    const twoRestaurants = [
+      { id: 1, name: "Resto 1" },
+      { id: 2, name: "Resto 2" },
+    ];
+    const { fetchRestaurants } = require("@/api/restaurants");
+    (fetchRestaurants as jest.Mock).mockResolvedValue(twoRestaurants);
+    render(<AdminBookingsScreen />);
+    await waitFor(() => expect(screen.getByText("Resto 2")).toBeTruthy());
+    fireEvent.press(screen.getByText("Resto 2"));
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem("bookings:restaurantId") as string)).toBe(2);
+    });
   });
 });

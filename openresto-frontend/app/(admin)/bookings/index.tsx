@@ -12,6 +12,7 @@ import { fetchRestaurants, RestaurantDto } from "@/api/restaurants";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { NewBookingModal } from "@/components/admin/bookings/NewBookingModal";
 import { useEffect, useState } from "react";
+import { usePersistedState } from "@/hooks/use-persisted-state";
 import {
   ActivityIndicator,
   Pressable,
@@ -58,11 +59,19 @@ function initials(nameOrEmail: string) {
 export default function AdminBookingsScreen() {
   const [restaurants, setRestaurants] = useState<RestaurantDto[]>([]);
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<number | null>(null);
+  const [persistedRestaurantId, setPersistedRestaurantId] = usePersistedState<number | null>(
+    "bookings:restaurantId",
+    null
+  );
   const [bookings, setBookings] = useState<BookingDetailDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>("timetable");
-  const [statusFilter, setStatusFilter] = useState<BookingStatusFilter>("active");
+  const [viewMode, setViewMode] = usePersistedState<ViewMode>("bookings:viewMode", "timetable");
+  const [statusFilter, setStatusFilter] = usePersistedState<BookingStatusFilter>(
+    "bookings:statusFilter",
+    "active"
+  );
 
+  // Intentionally not persisted — the timetable always opens on today.
   const [gridDate, setGridDate] = useState(new Date());
   const [gridSections, setGridSections] = useState<SectionWithTables[]>([]);
   const [gridBookings, setGridBookings] = useState<BookingDetailDto[]>([]);
@@ -118,12 +127,24 @@ export default function AdminBookingsScreen() {
       if (cancelled) return;
       setRestaurants(data);
       const paramId = restaurantIdParam ? parseInt(restaurantIdParam, 10) : NaN;
-      const match = !isNaN(paramId) && data.find((r) => r.id === paramId);
-      setSelectedRestaurantId(match ? match.id : (data[0]?.id ?? null));
+      const paramMatch = !isNaN(paramId) && data.find((r) => r.id === paramId);
+      const persistedMatch =
+        !paramMatch && persistedRestaurantId != null
+          ? data.find((r) => r.id === persistedRestaurantId)
+          : undefined;
+      const nextId = paramMatch
+        ? paramMatch.id
+        : persistedMatch
+          ? persistedMatch.id
+          : (data[0]?.id ?? null);
+      setSelectedRestaurantId(nextId);
+      setPersistedRestaurantId(nextId);
     });
     return () => {
       cancelled = true;
     };
+    // persistedRestaurantId seeds the initial selection only; omitting it avoids a refetch loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantIdParam]);
 
   useEffect(() => {
@@ -159,6 +180,7 @@ export default function AdminBookingsScreen() {
   const handleSelectRestaurant = (id: number) => {
     if (id === selectedRestaurantId) return;
     setSelectedRestaurantId(id);
+    setPersistedRestaurantId(id);
     if (viewMode === "timetable") loadGrid(id, gridDate);
   };
 
@@ -192,6 +214,14 @@ export default function AdminBookingsScreen() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRestaurantId]);
+
+  // Single source of truth for reconciling list + timetable after any booking mutation.
+  const refreshBookings = () => {
+    setRefreshKey((key) => key + 1);
+    if (selectedRestaurantId && viewMode === "timetable") {
+      loadGrid(selectedRestaurantId, gridDate);
+    }
+  };
 
   // Past tab: most-recent first. All other views: soonest first.
   const sorted = [...bookings].sort((a, b) => {
@@ -761,12 +791,7 @@ export default function AdminBookingsScreen() {
       <BookingDetailPopup
         bookingId={selectedBookingId}
         onClose={() => setSelectedBookingId(null)}
-        onDeleted={() => {
-          setRefreshKey((k) => k + 1);
-          if (selectedRestaurantId && viewMode === "timetable") {
-            loadGrid(selectedRestaurantId, gridDate);
-          }
-        }}
+        onMutated={refreshBookings}
       />
 
       <NewBookingModal
@@ -775,6 +800,7 @@ export default function AdminBookingsScreen() {
         onCreated={(id) => {
           setShowNewModal(false);
           setSelectedBookingId(id);
+          refreshBookings();
         }}
       />
 
@@ -793,8 +819,8 @@ export default function AdminBookingsScreen() {
           if (!cancelTarget) return;
           const id = cancelTarget.id;
           setCancelTarget(null);
-          await adminDeleteBooking(id);
-          setBookings((prev) => prev.filter((x) => x.id !== id));
+          const deleted = await adminDeleteBooking(id);
+          if (deleted) refreshBookings();
         }}
         onCancel={() => setCancelTarget(null)}
       />

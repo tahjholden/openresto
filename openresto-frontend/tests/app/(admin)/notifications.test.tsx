@@ -629,3 +629,62 @@ describe("NotificationsScreen", () => {
     setIntervalSpy.mockRestore();
   });
 });
+
+describe("NotificationsScreen filter persistence", () => {
+  const originalPlatform = Platform.OS;
+  const twoRestaurants = [
+    { id: 1, name: "Resto A" },
+    { id: 2, name: "Resto B" },
+  ];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    Object.defineProperty(Platform, "OS", { value: "web", configurable: true });
+    localStorage.clear();
+
+    mockGetNotifications.mockResolvedValue(mockNotificationsPage);
+    mockFetchRestaurants.mockResolvedValue(twoRestaurants);
+    mockMarkRead.mockResolvedValue(undefined);
+    mockMarkAllRead.mockResolvedValue(undefined);
+    mockDeleteNotification.mockResolvedValue(undefined);
+    mockDeleteNotifications.mockResolvedValue(undefined);
+    mockGetVapidPublicKey.mockResolvedValue(null);
+    mockPush.mockReset();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    Object.defineProperty(Platform, "OS", { value: originalPlatform, configurable: true });
+  });
+
+  it("honours a persisted restaurant filter on mount", async () => {
+    localStorage.setItem("notifications:restaurantId", JSON.stringify(2));
+    render(<NotificationsScreen />);
+    await waitFor(() => expect(mockGetNotifications).toHaveBeenCalled());
+    expect(mockGetNotifications.mock.calls[0][0].restaurantId).toBe(2);
+  });
+
+  it("honours a persisted type filter on mount", async () => {
+    localStorage.setItem("notifications:type", JSON.stringify("BookingCreated"));
+    render(<NotificationsScreen />);
+    await waitFor(() => expect(mockGetNotifications).toHaveBeenCalled());
+    expect(mockGetNotifications.mock.calls[0][0].type).toBe("BookingCreated");
+  });
+
+  it("drops a persisted restaurant id that no longer exists", async () => {
+    localStorage.setItem("notifications:restaurantId", JSON.stringify(999));
+    render(<NotificationsScreen />);
+    await waitFor(() => expect(mockFetchRestaurants).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem("notifications:restaurantId") as string)).toBeNull();
+    });
+  });
+
+  it("does not persist the unread-only toggle", async () => {
+    render(<NotificationsScreen />);
+    await waitFor(() => expect(screen.getByText("Notifications")).toBeTruthy());
+    // unreadOnly is transient by design — no storage key is ever written for it.
+    expect(localStorage.getItem("notifications:unreadOnly")).toBeNull();
+  });
+});

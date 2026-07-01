@@ -30,11 +30,11 @@ import { BookingActionButtons } from "./BookingActionButtons";
 export function BookingDetailPopup({
   bookingId,
   onClose,
-  onDeleted,
+  onMutated,
 }: {
   bookingId: number | null;
   onClose: () => void;
-  onDeleted?: () => void;
+  onMutated?: () => void;
 }) {
   const [booking, setBooking] = useState<BookingDetailDto | null>(null);
   const [loading, setLoading] = useState(false);
@@ -153,7 +153,7 @@ export function BookingDetailPopup({
     setDeleting(true);
     const ok = await adminDeleteBooking(booking.id);
     if (ok) {
-      onDeleted?.();
+      onMutated?.();
       onClose();
     } else {
       setDeleting(false);
@@ -167,6 +167,7 @@ export function BookingDetailPopup({
     const result = await adminExtendBooking(booking.id, minutes);
     if (result) {
       setBooking((prev) => (prev ? { ...prev, endTime: result.endTime } : prev));
+      onMutated?.();
     }
     setExtending(false);
   };
@@ -179,6 +180,7 @@ export function BookingDetailPopup({
       await adminRestoreBooking(booking.id);
       const updated = await getAdminBooking(booking.id);
       setBooking(updated);
+      onMutated?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to restore booking.";
       setErrorMessage(message);
@@ -229,6 +231,7 @@ export function BookingDetailPopup({
       const updated = await adminUpdateBookingFull(booking.id, updateData);
       setBooking(updated);
       setEditing(false);
+      onMutated?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update booking.";
       setErrorMessage(message);
@@ -482,7 +485,7 @@ export function BookingDetailPopup({
           setDeleting(true);
           const ok = await adminPurgeBooking(booking.id);
           if (ok) {
-            onDeleted?.();
+            onMutated?.();
             onClose();
           } else {
             setDeleting(false);

@@ -478,3 +478,70 @@ describe("AdminLocationsScreen", () => {
     await waitFor(() => expect(screen.getByText("Extend 2 active Bookings by 60m")).toBeTruthy());
   });
 });
+
+describe("AdminLocationsScreen selected-location persistence", () => {
+  const { Platform } = require("react-native");
+  const originalPlatform = Platform.OS;
+  const twoRestaurants = [
+    { id: 1, name: "Resto 1", sections: [], activeBookingsCount: 0 },
+    { id: 2, name: "Resto 2", sections: [], activeBookingsCount: 0 },
+  ];
+
+  const renderWithProviders = (ui: React.ReactElement) => {
+    const { SafeAreaProvider } = require("react-native-safe-area-context");
+    const { AppThemeProvider } = require("@/context/ThemeContext");
+    const { BrandProvider } = require("@/context/BrandContext");
+    return render(
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { x: 0, y: 0, width: 0, height: 0 },
+          insets: { top: 0, left: 0, right: 0, bottom: 0 },
+        }}
+      >
+        <AppThemeProvider>
+          <BrandProvider>{ui}</BrandProvider>
+        </AppThemeProvider>
+      </SafeAreaProvider>
+    );
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    Object.defineProperty(Platform, "OS", { value: "web", configurable: true });
+    localStorage.clear();
+    (fetchRestaurants as jest.Mock).mockResolvedValue(twoRestaurants);
+    (adminGetRestaurants as jest.Mock).mockResolvedValue(twoRestaurants);
+    (pauseRestaurantBookings as jest.Mock).mockResolvedValue(true);
+    (unpauseRestaurantBookings as jest.Mock).mockResolvedValue(true);
+    (extendRestaurantBookings as jest.Mock).mockResolvedValue({ ok: true, extendedBookings: [] });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(Platform, "OS", { value: originalPlatform, configurable: true });
+  });
+
+  it("honours a persisted selected-location id on mount", async () => {
+    localStorage.setItem("locations:selectedId", JSON.stringify(2));
+    renderWithProviders(<AdminLocationsScreen />);
+    await waitFor(() => expect(screen.getByText("Resto 1")).toBeTruthy());
+    // Persisted value (2) was honoured, not overwritten to the first restaurant (1).
+    expect(JSON.parse(localStorage.getItem("locations:selectedId") as string)).toBe(2);
+  });
+
+  it("falls back to the first restaurant when the persisted id no longer exists", async () => {
+    localStorage.setItem("locations:selectedId", JSON.stringify(999));
+    renderWithProviders(<AdminLocationsScreen />);
+    await waitFor(() =>
+      expect(JSON.parse(localStorage.getItem("locations:selectedId") as string)).toBe(1)
+    );
+  });
+
+  it("writes the selected id to localStorage when a location pill is pressed", async () => {
+    renderWithProviders(<AdminLocationsScreen />);
+    await waitFor(() => expect(screen.getByText("Resto 2")).toBeTruthy());
+    fireEvent.press(screen.getByText("Resto 2"));
+    await waitFor(() =>
+      expect(JSON.parse(localStorage.getItem("locations:selectedId") as string)).toBe(2)
+    );
+  });
+});

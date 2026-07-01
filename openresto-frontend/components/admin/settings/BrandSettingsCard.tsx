@@ -35,6 +35,13 @@ export function BrandSettingsCard({
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [expanded, setExpanded] = usePersistedState("settings:brand:expanded", true);
 
+  const formIsDirty =
+    appName !== brand.appName ||
+    brandPrimaryColor !== brand.primaryColor ||
+    faviconIcon !== brand.faviconIcon ||
+    websiteUrl.trim() !== (brand.websiteUrl ?? "") ||
+    heroPreview !== (brand.headerImageUrl ?? null);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setAppName(brand.appName);
@@ -303,7 +310,7 @@ export function BrandSettingsCard({
 
           <Button
             onPress={handleSave}
-            disabled={saving || !appName.trim()}
+            disabled={saving || !appName.trim() || formIsDirty === false}
             style={{ marginTop: 4 }}
           >
             {saving ? "Saving…" : "Save"}

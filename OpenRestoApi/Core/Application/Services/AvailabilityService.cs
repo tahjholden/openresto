@@ -94,8 +94,9 @@ public class AvailabilityService(
 
             if (!isPaused)
             {
-                // A slot is available if AT LEAST ONE eligible table is free for the next hour
-                DateTime slotEndUtc = slotUtc.AddHours(1);
+                // A slot is available if AT LEAST ONE eligible table is free for the
+                // restaurant's configured booking duration.
+                DateTime slotEndUtc = slotUtc.AddMinutes(restaurant.DefaultBookingDurationMinutes);
 
                 foreach (Table? table in eligibleTables)
                 {
@@ -104,7 +105,7 @@ public class AvailabilityService(
                     {
                         bool hasBookingConflict = tableBookings.Any(b =>
                             b.Date < slotEndUtc &&
-                            (b.EndTime ?? b.Date.AddHours(1)) > slotUtc);
+                            (b.EndTime ?? b.Date.AddMinutes(restaurant.DefaultBookingDurationMinutes)) > slotUtc);
 
                         if (hasBookingConflict)
                         {
@@ -113,7 +114,7 @@ public class AvailabilityService(
                     }
 
                     // Check holds
-                    if (_holdService.IsTableHeld(table.Id, slotUtc))
+                    if (_holdService.IsTableHeld(table.Id, slotUtc, durationMinutes: restaurant.DefaultBookingDurationMinutes))
                     {
                         continue;
                     }

@@ -11,6 +11,7 @@ public class UpdateRestaurantRequest
     public string? OpenDays { get; set; }
     public string? Timezone { get; set; }
     public string? Tags { get; set; }
+    public int? DefaultBookingDurationMinutes { get; set; }
 }
 
 public class PauseRestaurantRequest
@@ -73,5 +74,6 @@ public class RestaurantDto
     public string[] Tags { get; set; } = [];
     public string? ImageUrl { get; set; }
     public bool IsArchived { get; set; }
+    public int DefaultBookingDurationMinutes { get; set; } = 60;
     public List<SectionDto> Sections { get; set; } = new();
 }

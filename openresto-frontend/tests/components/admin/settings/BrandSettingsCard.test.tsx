@@ -108,11 +108,12 @@ describe("BrandSettingsCard", () => {
   it("calls saveBrandSettings when Save is pressed", async () => {
     (adminApi.saveBrandSettings as jest.Mock).mockResolvedValue({ message: "Saved successfully." });
     render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.changeText(screen.getByDisplayValue("Open Resto"), "My Resto");
     await act(async () => {
       fireEvent.press(screen.getByText("Save"));
     });
     expect(adminApi.saveBrandSettings).toHaveBeenCalledWith({
-      appName: "Open Resto",
+      appName: "My Resto",
       primaryColor: "#0a7ea4",
     });
     await waitFor(() => {
@@ -128,6 +129,7 @@ describe("BrandSettingsCard", () => {
       })
     );
     render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.changeText(screen.getByDisplayValue("Open Resto"), "My Resto");
     act(() => {
       fireEvent.press(screen.getByText("Save"));
     });
@@ -140,6 +142,7 @@ describe("BrandSettingsCard", () => {
   it("shows error message when saveBrandSettings returns null", async () => {
     (adminApi.saveBrandSettings as jest.Mock).mockResolvedValue(null);
     render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.changeText(screen.getByDisplayValue("Open Resto"), "My Resto");
     await act(async () => {
       fireEvent.press(screen.getByText("Save"));
     });
@@ -267,7 +270,7 @@ describe("BrandSettingsCard", () => {
       appName: "Open Resto",
       headerImageUrl: "https://example.com/hero.jpg",
     };
-    (adminApi.deleteHeroImage as jest.Mock).mockResolvedValue(undefined);
+    (adminApi.deleteHeroImage as jest.Mock).mockResolvedValue(true);
     render(<BrandSettingsCard {...baseProps} />);
     await act(async () => {
       fireEvent.press(screen.getByText("Remove"));
@@ -283,6 +286,7 @@ describe("BrandSettingsCard", () => {
       message: "Failed to update brand.",
     });
     render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.changeText(screen.getByDisplayValue("Open Resto"), "My Resto");
     await act(async () => {
       fireEvent.press(screen.getByText("Save"));
     });
@@ -368,6 +372,7 @@ describe("BrandSettingsCard", () => {
   it("passes undefined websiteUrl when field is empty", async () => {
     (adminApi.saveBrandSettings as jest.Mock).mockResolvedValue({ message: "Saved." });
     render(<BrandSettingsCard {...baseProps} />);
+    fireEvent.changeText(screen.getByDisplayValue("Open Resto"), "My Resto");
     await act(async () => {
       fireEvent.press(screen.getByText("Save"));
     });

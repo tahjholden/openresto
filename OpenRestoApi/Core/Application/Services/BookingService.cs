@@ -80,7 +80,7 @@ public class BookingService(
 
         // 1. Check DB for an existing confirmed booking on the same table+date
         bool alreadyBooked = await _bookingRepository.IsTableBookedOnDateAsync(
-            bookingDto.TableId.Value, bookingDate);
+            bookingDto.TableId.Value, bookingDate, restaurant.DefaultBookingDurationMinutes);
 
         if (alreadyBooked)
         {
@@ -89,7 +89,8 @@ public class BookingService(
 
         // 2. Check for an active hold by someone else
         bool heldByOther = _holdService.IsTableHeld(
-            bookingDto.TableId.Value, bookingDate, excludeHoldId: bookingDto.HoldId);
+            bookingDto.TableId.Value, bookingDate, excludeHoldId: bookingDto.HoldId,
+            durationMinutes: restaurant.DefaultBookingDurationMinutes);
 
         if (heldByOther)
         {
@@ -107,7 +108,7 @@ public class BookingService(
         Booking booking = _mapper.ToEntity(bookingDto);
         booking.Date = bookingDate; // Use normalized date
         booking.BookingRef = BookingRefGenerator.Generate();
-        booking.EndTime = bookingDate.AddHours(1);
+        booking.EndTime = bookingDate.AddMinutes(restaurant.DefaultBookingDurationMinutes);
         booking.Table = table!;
         booking.Section = (await _sectionRepository.GetByIdAsync(bookingDto.SectionId.Value))!;
         booking.Restaurant = restaurant;
@@ -196,13 +197,10 @@ public class BookingService(
         }
 
         // Ensure EndTime is valid if it's being updated or if Date changed
-        if (booking.EndTime.HasValue && booking.EndTime.Value < booking.Date)
+        if (!booking.EndTime.HasValue || booking.EndTime.Value < booking.Date)
         {
-            booking.EndTime = booking.Date.AddHours(1);
-        }
-        else if (!booking.EndTime.HasValue)
-        {
-            booking.EndTime = booking.Date.AddHours(1);
+            Restaurant? restaurant = await _restaurantRepository.GetByIdAsync(booking.RestaurantId);
+            booking.EndTime = booking.Date.AddMinutes(restaurant?.DefaultBookingDurationMinutes ?? 60);
         }
 
         await _bookingRepository.UpdateAsync(booking);

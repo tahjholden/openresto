@@ -1,4 +1,4 @@
-import { get, post, put, del } from "./client";
+import { get, post, put, del, buildUrl } from "./client";
 
 export interface TableDto {
   id: number;
@@ -23,6 +23,7 @@ export interface RestaurantDto {
   tags?: string[];
   imageUrl?: string | null;
   isArchived?: boolean;
+  defaultBookingDurationMinutes?: number;
   sections: SectionDto[];
 }
 
@@ -94,6 +95,7 @@ export async function updateRestaurant(
     openDays?: string;
     timezone?: string;
     tags?: string | null;
+    defaultBookingDurationMinutes?: number;
   }
 ): Promise<RestaurantDto | null> {
   try {
@@ -197,10 +199,11 @@ export async function uploadLocationImage(
   try {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch(
-      `${process.env.EXPO_PUBLIC_API_URL ?? "/api"}/media/location/${restaurantId}`,
-      { method: "POST", credentials: "include", body: form }
-    );
+    const res = await fetch(buildUrl(`/media/location/${restaurantId}`), {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
     if (!res.ok) return null;
     const data = await res.json();
     return data.url ?? null;
@@ -209,13 +212,14 @@ export async function uploadLocationImage(
   }
 }
 
-export async function deleteLocationImage(restaurantId: number): Promise<void> {
+export async function deleteLocationImage(restaurantId: number): Promise<boolean> {
   try {
-    await fetch(`${process.env.EXPO_PUBLIC_API_URL ?? "/api"}/media/location/${restaurantId}`, {
+    const res = await fetch(buildUrl(`/media/location/${restaurantId}`), {
       method: "DELETE",
       credentials: "include",
     });
+    return res.ok;
   } catch {
-    // ignore
+    return false;
   }
 }

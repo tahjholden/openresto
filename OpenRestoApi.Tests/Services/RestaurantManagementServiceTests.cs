@@ -51,6 +51,23 @@ public class RestaurantManagementServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_CopiesDefaultBookingDurationMinutes_FromDto()
+    {
+        // Regression test (#135 review): CreateAsync previously omitted
+        // DefaultBookingDurationMinutes from the field-by-field entity mapping, silently
+        // discarding any caller-supplied value and always persisting the entity default (60).
+        using AppDbContext db = CreateDb(nameof(CreateAsync_CopiesDefaultBookingDurationMinutes_FromDto));
+        var svc = new RestaurantManagementService(db);
+        var dto = new RestaurantDto { Name = "New", DefaultBookingDurationMinutes = 90 };
+
+        RestaurantDto result = await svc.CreateAsync(dto);
+
+        Assert.Equal(90, result.DefaultBookingDurationMinutes);
+        Restaurant? entity = await db.Restaurants.FindAsync(result.Id);
+        Assert.Equal(90, entity!.DefaultBookingDurationMinutes);
+    }
+
+    [Fact]
     public async Task UpdateAsync_ReturnsNull_WhenNotFound()
     {
         using AppDbContext db = CreateDb(nameof(UpdateAsync_ReturnsNull_WhenNotFound));
@@ -75,6 +92,87 @@ public class RestaurantManagementServiceTests
         });
         Assert.Equal("New", result!.Name);
         Assert.Equal("GMT", result.Timezone);
+    }
+
+    // ── DefaultBookingDurationMinutes (#135) ─────────────────────────────────
+
+    [Fact]
+    public async Task GetByIdAsync_ReturnsDefaultBookingDurationMinutes()
+    {
+        using AppDbContext db = CreateDb(nameof(GetByIdAsync_ReturnsDefaultBookingDurationMinutes));
+        db.Restaurants.Add(new Restaurant { Id = 1, Name = "R", DefaultBookingDurationMinutes = 90 });
+        await db.SaveChangesAsync();
+        var svc = new RestaurantManagementService(db);
+        RestaurantDto? result = await svc.GetByIdAsync(1);
+        Assert.Equal(90, result!.DefaultBookingDurationMinutes);
+    }
+
+    [Fact]
+    public async Task RestaurantDto_DefaultsBookingDurationTo60()
+    {
+        var dto = new RestaurantDto();
+        Assert.Equal(60, dto.DefaultBookingDurationMinutes);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_UpdatesDefaultBookingDurationMinutes()
+    {
+        using AppDbContext db = CreateDb(nameof(UpdateAsync_UpdatesDefaultBookingDurationMinutes));
+        db.Restaurants.Add(new Restaurant { Id = 1, Name = "R", Timezone = "UTC" });
+        await db.SaveChangesAsync();
+        var svc = new RestaurantManagementService(db);
+
+        RestaurantDto? result = await svc.UpdateAsync(1, new UpdateRestaurantRequest { Name = "R", DefaultBookingDurationMinutes = 120 });
+
+        Assert.Equal(120, result!.DefaultBookingDurationMinutes);
+        Restaurant? entity = await db.Restaurants.FindAsync(1);
+        Assert.Equal(120, entity!.DefaultBookingDurationMinutes);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_KeepsExistingDuration_WhenNotProvided()
+    {
+        using AppDbContext db = CreateDb(nameof(UpdateAsync_KeepsExistingDuration_WhenNotProvided));
+        db.Restaurants.Add(new Restaurant { Id = 1, Name = "R", Timezone = "UTC", DefaultBookingDurationMinutes = 90 });
+        await db.SaveChangesAsync();
+        var svc = new RestaurantManagementService(db);
+
+        RestaurantDto? result = await svc.UpdateAsync(1, new UpdateRestaurantRequest { Name = "R" });
+
+        Assert.Equal(90, result!.DefaultBookingDurationMinutes);
+    }
+
+    [Theory]
+    [InlineData(45)]
+    [InlineData(0)]
+    [InlineData(-30)]
+    [InlineData(500)]
+    public async Task UpdateAsync_Throws_WhenDurationNotInAllowedSet(int invalidDuration)
+    {
+        using AppDbContext db = CreateDb($"{nameof(UpdateAsync_Throws_WhenDurationNotInAllowedSet)}_{invalidDuration}");
+        db.Restaurants.Add(new Restaurant { Id = 1, Name = "R", Timezone = "UTC" });
+        await db.SaveChangesAsync();
+        var svc = new RestaurantManagementService(db);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            svc.UpdateAsync(1, new UpdateRestaurantRequest { Name = "R", DefaultBookingDurationMinutes = invalidDuration }));
+    }
+
+    [Theory]
+    [InlineData(30)]
+    [InlineData(60)]
+    [InlineData(90)]
+    [InlineData(480)]
+    public async Task UpdateAsync_Accepts_WhenDurationInAllowedSet(int validDuration)
+    {
+        using AppDbContext db = CreateDb($"{nameof(UpdateAsync_Accepts_WhenDurationInAllowedSet)}_{validDuration}");
+        db.Restaurants.Add(new Restaurant { Id = 1, Name = "R", Timezone = "UTC" });
+        await db.SaveChangesAsync();
+        var svc = new RestaurantManagementService(db);
+
+        RestaurantDto? result = await svc.UpdateAsync(1, new UpdateRestaurantRequest { Name = "R", DefaultBookingDurationMinutes = validDuration });
+
+        Assert.Equal(validDuration, result!.DefaultBookingDurationMinutes);
     }
 
     [Fact]

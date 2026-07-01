@@ -215,6 +215,47 @@ public class HoldServiceTests
         Assert.False(_svc.IsTableHeld(_tableId, _bookingDate.AddDays(1)));
     }
 
+    // ── Configurable booking duration (#135) ────────────────────────────────
+
+    [Fact]
+    public void IsTableHeld_UsesDefaultSixtyMinuteWindow_WhenDurationNotSpecified()
+    {
+        _svc.PlaceHold(_restaurantId, _tableId, _sectionId, _bookingDate);
+
+        // 90 minutes after the held start is outside a default 60-minute window
+        Assert.False(_svc.IsTableHeld(_tableId, _bookingDate.AddMinutes(90)));
+    }
+
+    [Fact]
+    public void IsTableHeld_ReturnsTrue_WhenWithinCustomDurationWindow()
+    {
+        _svc.PlaceHold(_restaurantId, _tableId, _sectionId, _bookingDate, durationMinutes: 120);
+
+        // 90 minutes after the held start is still within a 120-minute occupancy window
+        Assert.True(_svc.IsTableHeld(_tableId, _bookingDate.AddMinutes(90), durationMinutes: 120));
+    }
+
+    [Fact]
+    public void IsTableHeld_ReturnsFalse_OutsideCustomDurationWindow()
+    {
+        _svc.PlaceHold(_restaurantId, _tableId, _sectionId, _bookingDate, durationMinutes: 120);
+
+        // 150 minutes after the held start is beyond a 120-minute occupancy window
+        Assert.False(_svc.IsTableHeld(_tableId, _bookingDate.AddMinutes(150), durationMinutes: 120));
+    }
+
+    [Fact]
+    public void PlaceHold_ReturnsNull_WhenNewHoldOverlapsExistingHold_UsingCustomDuration()
+    {
+        _svc.PlaceHold(_restaurantId, _tableId, _sectionId, _bookingDate, durationMinutes: 120);
+
+        // A second hold starting 90 minutes later still falls within the first
+        // hold's 120-minute occupancy window, so it should be rejected.
+        HoldResult? second = _svc.PlaceHold(_restaurantId, _tableId, _sectionId, _bookingDate.AddMinutes(90), durationMinutes: 120);
+
+        Assert.Null(second);
+    }
+
     // ── GetHold ──────────────────────────────────────────────────────────────
 
     [Fact]

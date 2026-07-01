@@ -49,6 +49,7 @@ const mockRestaurant = {
   closeTime: "22:00",
   openDays: "1,2,3,4,5",
   timezone: "UTC",
+  defaultBookingDurationMinutes: 90,
   tags: ["pizza", "italian"],
   sections: [],
 };
@@ -207,5 +208,84 @@ describe("RestaurantInfoForm", () => {
       fireEvent.press(screen.getByText("Save changes"));
     });
     expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  // ── Booking duration (#135) ────────────────────────────────────────────
+  // The duration control is a raw web `<select>`, not a React Native primitive, so `testID`
+  // does not forward to a queryable DOM attribute the way it does for View/Text (see
+  // TimePicker.web.tsx's `data-testid` convention for the same reason). Query it via
+  // UNSAFE_getByProps against the `data-testid` prop instead of getByTestId.
+  const getDurationSelect = () =>
+    screen.UNSAFE_getByProps({ "data-testid": "booking-duration-select" });
+
+  it("renders the booking duration select at the restaurant's saved value", () => {
+    render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
+    expect(getDurationSelect().props.value).toBe(90);
+  });
+
+  it("defaults the booking duration to 1h (60 minutes) when the restaurant has none set", () => {
+    render(
+      <RestaurantInfoForm
+        restaurant={{
+          ...mockRestaurant,
+          defaultBookingDurationMinutes: undefined as unknown as number,
+        }}
+        onSaved={onSaved}
+      />
+    );
+    expect(getDurationSelect().props.value).toBe(60);
+  });
+
+  it("includes the saved defaultBookingDurationMinutes in the save payload", async () => {
+    (restaurantsApi.updateRestaurant as jest.Mock).mockResolvedValue({
+      ...mockRestaurant,
+      name: "Updated Resto",
+    });
+    render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
+    fireEvent.changeText(screen.getByDisplayValue("Test Resto"), "Updated Resto");
+    await act(async () => {
+      fireEvent.press(screen.getByText("Save changes"));
+    });
+    expect(restaurantsApi.updateRestaurant).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ defaultBookingDurationMinutes: 90 })
+    );
+  });
+
+  it("marks the form dirty and updates the selection when the booking duration changes", () => {
+    render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
+    const select = getDurationSelect();
+    fireEvent(select, "change", { target: { value: "120" } });
+    expect(screen.getByText("Unsaved changes")).toBeTruthy();
+    expect(getDurationSelect().props.value).toBe(120);
+  });
+
+  it("saves the newly selected booking duration", async () => {
+    (restaurantsApi.updateRestaurant as jest.Mock).mockResolvedValue({
+      ...mockRestaurant,
+      defaultBookingDurationMinutes: 120,
+    });
+    render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
+    const select = getDurationSelect();
+    fireEvent(select, "change", { target: { value: "120" } });
+    await act(async () => {
+      fireEvent.press(screen.getByText("Save changes"));
+    });
+    expect(restaurantsApi.updateRestaurant).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({ defaultBookingDurationMinutes: 120 })
+    );
+    expect(onSaved).toHaveBeenCalledWith(
+      expect.objectContaining({ defaultBookingDurationMinutes: 120 })
+    );
+  });
+
+  it("reverts the booking duration to the saved value when Discard is pressed", () => {
+    render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
+    const select = getDurationSelect();
+    fireEvent(select, "change", { target: { value: "120" } });
+    expect(getDurationSelect().props.value).toBe(120);
+    fireEvent.press(screen.getByText("Discard"));
+    expect(getDurationSelect().props.value).toBe(90);
   });
 });

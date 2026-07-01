@@ -68,7 +68,8 @@ public class HoldsController(
         }
 
         // 5. Check for existing booking in DB
-        bool alreadyBooked = await _bookingRepository.IsTableBookedOnDateAsync(request.TableId, bookingDate);
+        bool alreadyBooked = await _bookingRepository.IsTableBookedOnDateAsync(
+            request.TableId, bookingDate, restaurant.DefaultBookingDurationMinutes);
         if (alreadyBooked)
         {
             return Conflict(new MessageResponse { Message = "This table is already booked for that time." });
@@ -80,7 +81,8 @@ public class HoldsController(
             request.TableId,
             request.SectionId,
             bookingDate,
-            request.CurrentHoldId);
+            request.CurrentHoldId,
+            restaurant.DefaultBookingDurationMinutes);
 
         if (result == null)
         {

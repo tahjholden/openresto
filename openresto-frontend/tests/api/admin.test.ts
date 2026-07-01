@@ -1050,24 +1050,25 @@ describe("uploadHeroImage", () => {
 });
 
 describe("deleteHeroImage", () => {
-  it("sends DELETE to /api/media/hero", async () => {
+  it("sends DELETE to /api/media/hero and returns true on success", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
-    await deleteHeroImage();
+    const result = await deleteHeroImage();
 
+    expect(result).toBe(true);
     const [url, opts] = mockFetch.mock.calls[0];
     expect(url).toContain("/api/media/hero");
     expect(opts.method).toBe("DELETE");
     expect(opts.credentials).toBe("include");
   });
 
-  it("resolves without throwing on non-ok response", async () => {
+  it("returns false on non-ok response", async () => {
     mockFetch.mockResolvedValueOnce({ ok: false });
-    await expect(deleteHeroImage()).resolves.toBeUndefined();
+    expect(await deleteHeroImage()).toBe(false);
   });
 
-  it("resolves without throwing on network error", async () => {
+  it("returns false on network error", async () => {
     mockFetch.mockRejectedValueOnce(new Error("offline"));
-    await expect(deleteHeroImage()).resolves.toBeUndefined();
+    expect(await deleteHeroImage()).toBe(false);
   });
 });

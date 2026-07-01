@@ -37,9 +37,12 @@ public class MediaService(AppDbContext db, IWebHostEnvironment env)
         BrandSettings? brand = await _db.Set<BrandSettings>().FirstOrDefaultAsync();
         if (brand?.HeaderImageUrl != null)
         {
-            DeleteFile(brand.HeaderImageUrl);
+            // Clear the persisted reference first so a missing/invalid physical file
+            // never blocks removal. Best-effort deletion of the file on disk.
+            string url = brand.HeaderImageUrl;
             brand.HeaderImageUrl = null;
             await _db.SaveChangesAsync();
+            TryDeleteFile(url);
         }
     }
 
@@ -68,21 +71,37 @@ public class MediaService(AppDbContext db, IWebHostEnvironment env)
         if (restaurant == null) return false;
         if (restaurant.ImageUrl != null)
         {
-            DeleteFile(restaurant.ImageUrl);
+            // Clear the persisted reference first so a missing/invalid physical file
+            // never blocks removal. Best-effort deletion of the file on disk.
+            string url = restaurant.ImageUrl;
             restaurant.ImageUrl = null;
             await _db.SaveChangesAsync();
+            TryDeleteFile(url);
         }
         return true;
     }
 
     private void EnsureMediaDir() => Directory.CreateDirectory(_mediaDir);
 
-    private void DeleteFile(string url)
+    /// <summary>
+    /// Best-effort physical file deletion. Never throws — used so that removing an
+    /// image always succeeds even when the stored path is invalid, corrupt, or the
+    /// underlying file has already been deleted.
+    /// </summary>
+    private void TryDeleteFile(string url)
     {
-        string pathOnly = url.Contains('?') ? url[..url.IndexOf('?')] : url;
-        string path = Path.Combine(_mediaDir, Path.GetFileName(pathOnly));
-        if (System.IO.File.Exists(path))
-            System.IO.File.Delete(path);
+        try
+        {
+            string pathOnly = url.Contains('?') ? url[..url.IndexOf('?')] : url;
+            string path = Path.Combine(_mediaDir, Path.GetFileName(pathOnly));
+            if (System.IO.File.Exists(path))
+                System.IO.File.Delete(path);
+        }
+        catch
+        {
+            // Intentionally ignored: the DB reference has already been cleared,
+            // so a stray/invalid physical file should not fail the removal.
+        }
     }
 
     private static string GetExtension(string contentType) => contentType switch

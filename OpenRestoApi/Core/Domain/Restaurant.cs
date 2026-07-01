@@ -33,4 +33,10 @@ public class Restaurant
     public string? ImageUrl { get; set; }
 
     public bool IsArchived { get; set; }
+
+    /// <summary>
+    /// Length, in minutes, of a single table's occupancy window for a new booking.
+    /// Used wherever a booking's end time is computed (creation, availability, holds).
+    /// </summary>
+    public int DefaultBookingDurationMinutes { get; set; } = 60;
 }

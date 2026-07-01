@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Extensions;
 
 namespace OpenRestoApi.Tests.Extensions;
@@ -70,6 +71,42 @@ public class ServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         services.AddProjectDependencies();
         // Just verify it doesn't throw
+        using ServiceProvider provider = services.BuildServiceProvider();
+        Assert.NotNull(provider);
+    }
+
+    // ── DI-lifetime safety net (#135) ───────────────────────────────────────
+    // HoldService is deliberately registered as a Singleton (its in-memory hold
+    // dictionary must survive across requests — see ServiceCollectionExtensions.cs),
+    // while IRestaurantRepository/AppDbContext (and every other repository/service)
+    // are Scoped. Injecting a Scoped dependency into HoldService's constructor would
+    // be a captive-dependency violation that ASP.NET Core's default container only
+    // catches via scope validation, which is enabled by default in Development but
+    // NOT by a plain `BuildServiceProvider()` call (as used above) — so a regression
+    // here would previously only surface as a runtime `InvalidOperationException`
+    // once someone ran the app in Development, not during `dotnet test`.
+    //
+    // This test builds the container with `validateScopes: true` (the same mechanism
+    // ASP.NET Core's host uses) and resolves `IHoldService` from the root provider.
+    // If HoldService's constructor is ever changed to depend on a Scoped service,
+    // this resolution throws immediately and this test fails loudly instead of only
+    // failing at runtime.
+    [Fact]
+    public void AddProjectDependencies_HoldServiceSingleton_ResolvesCleanly_WithScopeValidationEnabled()
+    {
+        var services = new ServiceCollection();
+        services.AddProjectDependencies();
+
+        using ServiceProvider provider = services.BuildServiceProvider(validateScopes: true);
+
+        IHoldService holdService = provider.GetRequiredService<IHoldService>();
+        Assert.NotNull(holdService);
+
+        // Resolving from a nested scope must yield the exact same singleton instance —
+        // confirms it wasn't (and can't be) silently re-created per-scope/per-request.
+        using IServiceScope scope = provider.CreateScope();
+        IHoldService scopedHoldService = scope.ServiceProvider.GetRequiredService<IHoldService>();
+        Assert.Same(holdService, scopedHoldService);
     }
 
     [Fact]

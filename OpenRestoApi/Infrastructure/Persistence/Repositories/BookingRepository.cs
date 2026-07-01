@@ -66,11 +66,11 @@ namespace OpenRestoApi.Infrastructure.Persistence.Repositories
             }
         }
 
-        public async Task<bool> IsTableBookedOnDateAsync(int tableId, DateTime bookingDate)
+        public async Task<bool> IsTableBookedOnDateAsync(int tableId, DateTime bookingDate, int durationMinutes = 60)
         {
             DateTime newStart = bookingDate.ToUniversalTime();
-            DateTime newEnd = newStart.AddHours(1);
-            DateTime thresholdStart = newStart.AddHours(-1); // For legacy bookings without EndTime
+            DateTime newEnd = newStart.AddMinutes(durationMinutes);
+            DateTime thresholdStart = newStart.AddMinutes(-durationMinutes); // For legacy bookings without EndTime
 
             // Check if any existing booking's time window overlaps the new one
             // Condition: (ExistingStart < NewEnd) AND (ExistingEnd > NewStart)

@@ -221,12 +221,9 @@ public class BookingService(
         string dateStr = localDate.ToString("dddd, d MMMM yyyy", CultureInfo.InvariantCulture);
         string timeStr = localDate.ToString("h:mm tt", CultureInfo.InvariantCulture);
 
-        string timeRangeStr = timeStr;
-        if (booking.EndTime.HasValue)
-        {
-            DateTime localEndDate = TimeZoneInfo.ConvertTimeFromUtc(booking.EndTime.Value, tz);
-            timeRangeStr = $"{timeStr} – {localEndDate.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
-        }
+        // EndTime is always set by CreateBookingAsync before this is called.
+        DateTime localEndDate = TimeZoneInfo.ConvertTimeFromUtc(booking.EndTime!.Value, tz);
+        string timeRangeStr = $"{timeStr} – {localEndDate.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
 
         string primaryColor = brand.PrimaryColor ?? "#0a7ea4";
         string appName = brand.AppName ?? "Open Resto";

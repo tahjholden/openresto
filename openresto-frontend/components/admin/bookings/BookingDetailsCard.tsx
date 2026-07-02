@@ -59,10 +59,14 @@ export function BookingDetailsCard({
       ? `${formatTime(startTime)} – ${formatTime(endTime)}`
       : `${formatTime(startTime)} (${formatDate(startTime)}) – ${formatTime(endTime)} (${formatDate(endTime)})`;
 
+  // Field order mirrors EditBookingForm/NewBookingModal (restaurant → section → table →
+  // date → time → guests → email → name → requests) so the read-only card and the edit
+  // form stay visually aligned when both are shown side by side.
   const rows: { label: string; value: string }[] = [
     { label: "Ref", value: booking.bookingRef ?? `#${booking.id}` },
-    ...(booking.customerName ? [{ label: "Name", value: booking.customerName }] : []),
-    { label: "Email", value: booking.customerEmail },
+    { label: "Restaurant", value: booking.restaurantName },
+    ...(booking.sectionName ? [{ label: "Section", value: booking.sectionName }] : []),
+    { label: "Table", value: booking.tableName ?? "Table" },
     {
       label: "Date",
       value: startTime.toLocaleDateString(undefined, {
@@ -77,9 +81,8 @@ export function BookingDetailsCard({
       value: `${timeRangeDisplay} (${durationMins} min)`,
     },
     { label: "Party", value: `${booking.seats} guest${booking.seats !== 1 ? "s" : ""}` },
-    { label: "Restaurant", value: booking.restaurantName },
-    ...(booking.sectionName ? [{ label: "Section", value: booking.sectionName }] : []),
-    { label: "Table", value: booking.tableName ?? "Table" },
+    { label: "Email", value: booking.customerEmail },
+    ...(booking.customerName ? [{ label: "Name", value: booking.customerName }] : []),
     { label: "Requests", value: booking.specialRequests || "None" },
   ];
 

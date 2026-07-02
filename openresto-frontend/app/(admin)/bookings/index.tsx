@@ -33,6 +33,7 @@ import { StatusBadge } from "@/components/admin/bookings/StatusBadge";
 import { AvailabilityGrid } from "@/components/admin/bookings/AvailabilityGrid";
 import { BookingDetailPopup } from "@/components/admin/bookings/BookingDetailPopup";
 import { styles } from "@/components/admin/bookings/bookings.styles";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 type ViewMode = "timetable" | "list";
 
@@ -82,6 +83,8 @@ export default function AdminBookingsScreen() {
   const [cancelTarget, setCancelTarget] = useState<BookingDetailDto | null>(null);
   const [showNewModal, setShowNewModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [focusedRowId, setFocusedRowId] = useState<number | null>(null);
+  const [detailInitialFocus, setDetailInitialFocus] = useState<"extend" | undefined>(undefined);
 
   const [lookupQuery, setLookupQuery] = useState("");
   const [lookupLoading, setLookupLoading] = useState(false);
@@ -231,6 +234,56 @@ export default function AdminBookingsScreen() {
     const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
     return statusFilter === "past" ? -diff : diff;
   });
+
+  // Only wired via useKeyboardShortcuts below when sorted.length > 0, so
+  // sorted is guaranteed non-empty whenever this actually runs.
+  const moveRowFocus = (delta: number) => {
+    setFocusedRowId((current) => {
+      const idx = current == null ? -1 : sorted.findIndex((b) => b.id === current);
+      const nextIdx = Math.min(Math.max(idx + delta, 0), sorted.length - 1);
+      return sorted[nextIdx].id;
+    });
+  };
+
+  const openBooking = (id: number, focus?: "extend") => {
+    setDetailInitialFocus(focus);
+    setSelectedBookingId(id);
+  };
+
+  const openFocusedRow = (focus?: "extend") => {
+    if (focusedRowId != null) openBooking(focusedRowId, focus);
+  };
+
+  // Shared a11y/highlight props for a bookings-list row — kept identical
+  // between the wide-table and mobile-card layouts below so keyboard-focus
+  // state can't silently drift between the two renderings.
+  const rowA11yProps = (id: number) => ({
+    testID: `booking-row-${id}`,
+    accessibilityRole: "button" as const,
+    accessibilityState: { selected: id === focusedRowId },
+  });
+  const focusedRowHighlight = (id: number) =>
+    id === focusedRowId && { backgroundColor: `${PRIMARY}0D` };
+
+  // Suppressed whenever a booking popup or modal is already open — otherwise
+  // a stray j/k/Enter/e keypress (e.g. focus left on a non-text Pressable
+  // inside the open popup) can silently reassign selectedBookingId and swap
+  // which booking the popup displays underneath the user, with no visible
+  // cue (issue #140 review, Concern 1).
+  const listShortcutsBlocked = selectedBookingId !== null || showNewModal || !!cancelTarget;
+
+  useKeyboardShortcuts(
+    viewMode === "list" && sorted.length > 0 && !listShortcutsBlocked
+      ? {
+          j: () => moveRowFocus(1),
+          ArrowDown: () => moveRowFocus(1),
+          k: () => moveRowFocus(-1),
+          ArrowUp: () => moveRowFocus(-1),
+          Enter: () => openFocusedRow(),
+          e: () => openFocusedRow("extend"),
+        }
+      : {}
+  );
 
   const handleLookup = async () => {
     const q = lookupQuery.trim();
@@ -564,7 +617,7 @@ export default function AdminBookingsScreen() {
               sections={gridSections}
               bookings={gridBookings}
               isDark={isDark}
-              onBookingPress={(b) => setSelectedBookingId(b.id)}
+              onBookingPress={(b) => openBooking(b.id)}
               openTime={openTime}
               closeTime={closeTime}
               timezone={timezone}
@@ -610,12 +663,14 @@ export default function AdminBookingsScreen() {
           {sorted.map((b, i) => (
             <Pressable
               key={b.id}
+              {...rowA11yProps(b.id)}
               style={[
                 styles.tableRow,
                 i > 0 && { borderTopWidth: 1, borderTopColor: borderColor },
                 { cursor: "pointer" } as const,
+                focusedRowHighlight(b.id),
               ]}
-              onPress={() => setSelectedBookingId(b.id)}
+              onPress={() => openBooking(b.id)}
             >
               {/* Avatar + time */}
               <View
@@ -721,8 +776,13 @@ export default function AdminBookingsScreen() {
           {sorted.map((b) => (
             <Pressable
               key={b.id}
-              style={[styles.listCard, { backgroundColor: cardBg, borderColor }]}
-              onPress={() => setSelectedBookingId(b.id)}
+              {...rowA11yProps(b.id)}
+              style={[
+                styles.listCard,
+                { backgroundColor: cardBg, borderColor },
+                focusedRowHighlight(b.id),
+              ]}
+              onPress={() => openBooking(b.id)}
             >
               <View style={styles.listCardRow}>
                 <View
@@ -793,8 +853,12 @@ export default function AdminBookingsScreen() {
       {/* Booking detail popup */}
       <BookingDetailPopup
         bookingId={selectedBookingId}
-        onClose={() => setSelectedBookingId(null)}
+        onClose={() => {
+          setSelectedBookingId(null);
+          setDetailInitialFocus(undefined);
+        }}
         onMutated={refreshBookings}
+        initialFocus={detailInitialFocus}
       />
 
       <NewBookingModal

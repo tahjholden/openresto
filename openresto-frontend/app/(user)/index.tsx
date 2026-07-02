@@ -11,7 +11,6 @@ import {
   View,
 } from "react-native";
 import { Stack } from "expo-router";
-import Navbar from "@/components/layout/Navbar";
 import RestaurantCard from "@/components/restaurant/RestaurantCard";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -71,7 +70,6 @@ export default function HomeScreen() {
   return (
     <ThemedView style={[styles.root, { backgroundColor: bg }]}>
       {Platform.OS !== "web" && <Stack.Screen options={{ title: brand.appName }} />}
-      <Navbar onScrollToTop={scrollToTop} />
 
       <ScrollView
         ref={scrollRef}

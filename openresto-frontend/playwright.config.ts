@@ -47,6 +47,7 @@ export default defineConfig({
         "**/admin-extend.spec.ts",
         "**/brand-colour.spec.ts",
         "**/lookup.spec.ts",
+        "**/keyboard-shortcuts.spec.ts",
       ],
     },
     // ── Admin tests — pre-loaded auth cookie ────────────────────────────────
@@ -61,6 +62,7 @@ export default defineConfig({
         "**/admin-extend.spec.ts",
         "**/brand-colour.spec.ts",
         "**/lookup.spec.ts",
+        "**/keyboard-shortcuts.spec.ts",
       ],
     },
   ],

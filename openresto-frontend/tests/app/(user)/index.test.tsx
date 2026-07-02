@@ -4,7 +4,7 @@
 import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react-native";
 import { Platform, ScrollView } from "react-native";
-import HomeScreen, { resetHomeCache } from "@/app/index";
+import HomeScreen, { resetHomeCache } from "@/app/(user)/index";
 import { fetchRestaurants, fetchHighlights } from "@/api/restaurants";
 import { BrandProvider } from "@/context/BrandContext";
 
@@ -23,18 +23,6 @@ jest.mock("@expo/vector-icons", () => ({
 jest.mock("@/api/restaurants", () => ({
   fetchRestaurants: jest.fn(),
   fetchHighlights: jest.fn(),
-}));
-
-jest.mock("@/components/layout/Navbar", () => ({
-  __esModule: true,
-  default: ({ onScrollToTop }: { onScrollToTop?: () => void }) => {
-    const { Pressable, Text } = require("react-native");
-    return (
-      <Pressable testID="navbar-scroll-top" onPress={onScrollToTop}>
-        <Text>Navbar</Text>
-      </Pressable>
-    );
-  },
 }));
 
 jest.mock("@/api/availability", () => ({
@@ -66,6 +54,10 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 jest.setTimeout(15000);
 
+// HomeScreen no longer renders its own Navbar — it's now nested inside
+// app/(user)/_layout.tsx, which renders the shared Navbar once for every
+// (user) route (see issue #140 review, Concern 9: this page previously lived
+// outside the (user) group and duplicated Navbar rendering itself).
 describe("HomeScreen", () => {
   const mockRestaurants = [
     {
@@ -205,10 +197,18 @@ describe("HomeScreen", () => {
     // Line covered — no assertion needed beyond no crash
   });
 
-  it("scrollToTop callback calls scrollTo on the ScrollView ref", async () => {
+  it("scrollToTop callback calls scrollTo on the ScrollView ref via the ScrollToTopFab", async () => {
+    jest
+      .spyOn(require("react-native/Libraries/Utilities/useWindowDimensions"), "default")
+      .mockReturnValue({ width: 375, height: 812 });
     renderWithProviders(<HomeScreen />);
     await waitFor(() => expect(screen.queryByTestId("loading-screen")).toBeNull());
-    fireEvent.press(screen.getByTestId("navbar-scroll-top"));
-    // Line 41 covered — scrollRef.current?.scrollTo is a no-op in tests
+
+    const scrollView = screen.UNSAFE_getByType(ScrollView);
+    fireEvent.scroll(scrollView, { nativeEvent: { contentOffset: { y: 400 } } });
+
+    fireEvent.press(screen.getByLabelText("Scroll to top"));
+    // scrollRef.current?.scrollTo is a no-op in tests — asserts no crash and
+    // covers the scrollToTop callback.
   });
 });

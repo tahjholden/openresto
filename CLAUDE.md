@@ -38,6 +38,31 @@ npm run lint:fix     # auto-fix lint issues
 docker compose up    # full stack on localhost:5062 (builds from source)
 ```
 
+**Starting Docker Desktop on this machine (Windows):** if `docker info` fails
+(daemon not running), launch Docker Desktop yourself rather than asking the
+user to do it manually:
+
+```powershell
+Start-Process "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+```
+
+The daemon takes a while to come up after launch. Poll until it's ready instead
+of a fixed sleep:
+
+```powershell
+$deadline = (Get-Date).AddMinutes(3)
+while ((Get-Date) -lt $deadline) {
+  docker info *> $null
+  if ($LASTEXITCODE -eq 0) { break }
+  Start-Sleep -Seconds 5
+}
+```
+
+Once `docker info` succeeds, proceed with `docker compose up` / `npm run
+test:e2e` as normal. Docker Desktop only needs to be launched once per machine
+session — if it's already running, `docker info` succeeds immediately and this
+whole step is a no-op.
+
 ### Release (tag-triggered)
 
 ```bash

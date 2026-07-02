@@ -1,4 +1,5 @@
 import React from "react";
+import { Platform } from "react-native";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react-native";
 import { BookingDetailPopup } from "@/components/admin/bookings/BookingDetailPopup";
 import * as adminApi from "@/api/admin";
@@ -808,5 +809,91 @@ describe("BookingDetailPopup", () => {
       fireEvent.press(screen.getByText("Save Changes"));
     });
     await waitFor(() => expect(baseProps.onMutated).toHaveBeenCalled());
+  });
+
+  describe("initialFocus='extend' (bound to the bookings-list 'e' shortcut)", () => {
+    afterEach(() => {
+      Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
+    });
+
+    it("fires the auto-scroll effect on web without crashing", async () => {
+      Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
+      render(<BookingDetailPopup {...baseProps} initialFocus="extend" />);
+      await waitFor(() => expect(screen.getByTestId("extend-section")).toBeTruthy());
+      // View refs in the RN test renderer are component instances, not DOM
+      // elements, so scrollIntoView?.() is a no-op via optional chaining —
+      // this proves the timeout callback runs without throwing.
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      expect(screen.getByTestId("extend-section")).toBeTruthy();
+    });
+
+    it("calls findNodeHandle on native", async () => {
+      Object.defineProperty(Platform, "OS", { get: () => "ios", configurable: true });
+      const findNodeHandleSpy = jest
+        .spyOn(require("react-native"), "findNodeHandle")
+        .mockReturnValue(1);
+
+      try {
+        render(<BookingDetailPopup {...baseProps} initialFocus="extend" />);
+        await waitFor(() => expect(screen.getByTestId("extend-section")).toBeTruthy());
+        await waitFor(() => expect(findNodeHandleSpy).toHaveBeenCalled(), { timeout: 1000 });
+      } finally {
+        findNodeHandleSpy.mockRestore();
+      }
+    });
+
+    it("fires measureLayout success callback scrolling the extend section into view natively", async () => {
+      Object.defineProperty(Platform, "OS", { get: () => "ios", configurable: true });
+      const { View } = require("react-native");
+      const findNodeHandleSpy = jest
+        .spyOn(require("react-native"), "findNodeHandle")
+        .mockReturnValue(1);
+      const measureLayoutSpy = jest
+        .spyOn(View.prototype, "measureLayout")
+        .mockImplementation((...args: unknown[]) => {
+          const success = args[1] as (x: number, y: number) => void;
+          success(0, 100);
+        });
+
+      try {
+        render(<BookingDetailPopup {...baseProps} initialFocus="extend" />);
+        await waitFor(() => expect(screen.getByTestId("extend-section")).toBeTruthy());
+        await waitFor(() => expect(measureLayoutSpy).toHaveBeenCalled(), { timeout: 1000 });
+      } finally {
+        findNodeHandleSpy.mockRestore();
+        measureLayoutSpy.mockRestore();
+      }
+    });
+
+    it("does not scroll when the extend section is not rendered (editing mode)", async () => {
+      const findNodeHandleSpy = jest.spyOn(require("react-native"), "findNodeHandle");
+      render(<BookingDetailPopup {...baseProps} initialFocus="extend" />);
+      await waitFor(() => expect(screen.getByText("Edit")).toBeTruthy());
+      fireEvent.press(screen.getByText("Edit"));
+      await waitFor(() => expect(screen.getByTestId("edit-booking-form")).toBeTruthy());
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      expect(findNodeHandleSpy).not.toHaveBeenCalled();
+      findNodeHandleSpy.mockRestore();
+    });
+
+    it("does not scroll for a cancelled booking", async () => {
+      (adminApi.getAdminBooking as jest.Mock).mockResolvedValue(cancelledBooking);
+      const findNodeHandleSpy = jest.spyOn(require("react-native"), "findNodeHandle");
+      render(<BookingDetailPopup {...baseProps} initialFocus="extend" />);
+      await waitFor(() => expect(screen.getByTestId("booking-details-card")).toBeTruthy());
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      expect(screen.queryByTestId("extend-section")).toBeNull();
+      expect(findNodeHandleSpy).not.toHaveBeenCalled();
+      findNodeHandleSpy.mockRestore();
+    });
+
+    it("does not scroll when initialFocus is unset", async () => {
+      const findNodeHandleSpy = jest.spyOn(require("react-native"), "findNodeHandle");
+      render(<BookingDetailPopup {...baseProps} />);
+      await waitFor(() => expect(screen.getByTestId("extend-section")).toBeTruthy());
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      expect(findNodeHandleSpy).not.toHaveBeenCalled();
+      findNodeHandleSpy.mockRestore();
+    });
   });
 });

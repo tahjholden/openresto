@@ -79,7 +79,6 @@ function AppWithTheme() {
           animation: Platform.OS === "web" ? "fade" : "default",
         }}
       >
-        <Stack.Screen name="index" />
         <Stack.Screen name="(user)" />
         <Stack.Screen name="(admin)" />
       </Stack>

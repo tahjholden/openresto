@@ -417,4 +417,77 @@ describe("RestaurantInfoForm", () => {
     render(<RestaurantInfoForm restaurant={overnight} onSaved={onSaved} />);
     expect(screen.getByText(/closes after midnight/)).toBeTruthy();
   });
+
+  describe("reservations / walk-in policy", () => {
+    it("shows the online-bookings mode and day chips by default", () => {
+      render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
+      expect(screen.getByText("Reservations")).toBeTruthy();
+      expect(screen.getByText("Online bookings on every open day")).toBeTruthy();
+      expect(screen.getByTestId("walkin-day-1")).toBeTruthy();
+      expect(screen.getByTestId("walkin-day-7")).toBeTruthy();
+    });
+
+    it("switching to walk-ins only hides the day chips and marks the form dirty", () => {
+      render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
+      fireEvent.press(screen.getByTestId("walkin-mode-walkin"));
+      expect(screen.getByText("Unsaved changes")).toBeTruthy();
+      expect(screen.getByText("Walk-ins only — online booking is off")).toBeTruthy();
+      expect(screen.queryByTestId("walkin-day-1")).toBeNull();
+    });
+
+    it("saves walkInOnly=true when toggled", async () => {
+      (restaurantsApi.updateRestaurant as jest.Mock).mockResolvedValue({
+        ...mockRestaurant,
+        walkInOnly: true,
+        walkInDays: "",
+      });
+      render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
+      fireEvent.press(screen.getByTestId("walkin-mode-walkin"));
+      await act(async () => {
+        fireEvent.press(screen.getByText("Save changes"));
+      });
+      expect(restaurantsApi.updateRestaurant).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ walkInOnly: true, walkInDays: "" })
+      );
+      expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ walkInOnly: true }));
+    });
+
+    it("toggles walk-in days and saves the joined list", async () => {
+      (restaurantsApi.updateRestaurant as jest.Mock).mockResolvedValue({
+        ...mockRestaurant,
+        walkInDays: "6,7",
+      });
+      render(<RestaurantInfoForm restaurant={mockRestaurant} onSaved={onSaved} />);
+      fireEvent.press(screen.getByTestId("walkin-day-6"));
+      fireEvent.press(screen.getByTestId("walkin-day-7"));
+      expect(screen.getByText("Walk-ins only on 2 days")).toBeTruthy();
+      await act(async () => {
+        fireEvent.press(screen.getByText("Save changes"));
+      });
+      expect(restaurantsApi.updateRestaurant).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ walkInOnly: false, walkInDays: "6,7" })
+      );
+    });
+
+    it("unselecting a walk-in day removes it from the payload", () => {
+      const withWalkIn = { ...mockRestaurant, walkInDays: "6" };
+      render(<RestaurantInfoForm restaurant={withWalkIn} onSaved={onSaved} />);
+      expect(screen.getByText("Walk-ins only on 1 day")).toBeTruthy();
+      fireEvent.press(screen.getByTestId("walkin-day-6"));
+      expect(screen.getByText("Online bookings on every open day")).toBeTruthy();
+      expect(screen.getByText("Unsaved changes")).toBeTruthy();
+    });
+
+    it("discard restores the saved walk-in policy", () => {
+      const withWalkIn = { ...mockRestaurant, walkInOnly: true };
+      render(<RestaurantInfoForm restaurant={withWalkIn} onSaved={onSaved} />);
+      fireEvent.press(screen.getByTestId("walkin-mode-bookings"));
+      expect(screen.getByText("Unsaved changes")).toBeTruthy();
+      fireEvent.press(screen.getByText("Discard"));
+      expect(screen.getByText("All changes saved")).toBeTruthy();
+      expect(screen.getByText("Walk-ins only — online booking is off")).toBeTruthy();
+    });
+  });
 });

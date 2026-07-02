@@ -167,10 +167,10 @@ exec 3>"$SQL_FILE"
   # Brand (EmailSettings intentionally left empty — no SMTP creds in source control)
   echo "INSERT INTO BrandSettings(AppName,PrimaryColor,AccentColor,FaviconIcon,HeaderImageUrl,WebsiteUrl) VALUES('Paddy''s Pub','#059669',NULL,'pizza','/media/hero.jpg','https://openres.to');"
 
-  # Restaurants
-  echo "INSERT INTO Restaurants(Id,Name,Address,OpenTime,CloseTime,OpenDays,Timezone,BookingsPausedUntil,Tags,ImageUrl,IsArchived) VALUES(1,'Paddy''s Pub','346 W Girard Ave, Philadelphia, PA','09:00','23:45','1,2,3,4,5,6','America/Toronto',NULL,'mac and cheese,fight milk','/media/location-1.jpg',0);"
-  echo "INSERT INTO Restaurants(Id,Name,Address,OpenTime,CloseTime,OpenDays,Timezone,BookingsPausedUntil,Tags,ImageUrl,IsArchived) VALUES(2,'Paddy''s Pub Toronto','The Alley Behind the Alley, Toronto, ON','09:00','23:45','3,4,5,6','America/Toronto',NULL,'charlie work,mantis toboggan','/media/location-2.webp',0);"
-  echo "INSERT INTO Restaurants(Id,Name,Address,OpenTime,CloseTime,OpenDays,Timezone,BookingsPausedUntil,Tags,ImageUrl,IsArchived) VALUES(3,'Paddy''s Pub (Vancouver)','Multiple Areas, please don''t ask','00:00','23:00','1,2,3,4,5,6,7','America/Los_Angeles',NULL,'wolf cola,dennis system','/media/location-3.jpg',0);"
+  # Restaurants (WalkInOnly=0 / WalkInDays=NULL keeps online bookings enabled everywhere)
+  echo "INSERT INTO Restaurants(Id,Name,Address,OpenTime,CloseTime,OpenDays,Timezone,BookingsPausedUntil,Tags,ImageUrl,IsArchived,WalkInOnly,WalkInDays) VALUES(1,'Paddy''s Pub','346 W Girard Ave, Philadelphia, PA','09:00','23:45','1,2,3,4,5,6','America/Toronto',NULL,'mac and cheese,fight milk','/media/location-1.jpg',0,0,NULL);"
+  echo "INSERT INTO Restaurants(Id,Name,Address,OpenTime,CloseTime,OpenDays,Timezone,BookingsPausedUntil,Tags,ImageUrl,IsArchived,WalkInOnly,WalkInDays) VALUES(2,'Paddy''s Pub Toronto','The Alley Behind the Alley, Toronto, ON','09:00','23:45','3,4,5,6','America/Toronto',NULL,'charlie work,mantis toboggan','/media/location-2.webp',0,0,NULL);"
+  echo "INSERT INTO Restaurants(Id,Name,Address,OpenTime,CloseTime,OpenDays,Timezone,BookingsPausedUntil,Tags,ImageUrl,IsArchived,WalkInOnly,WalkInDays) VALUES(3,'Paddy''s Pub (Vancouver)','Multiple Areas, please don''t ask','00:00','23:00','1,2,3,4,5,6,7','America/Los_Angeles',NULL,'wolf cola,dennis system','/media/location-3.jpg',0,0,NULL);"
 
   # Sections
   echo "INSERT INTO Sections(Id,Name,RestaurantId) VALUES(1,'Indoor',1);"

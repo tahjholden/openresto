@@ -198,6 +198,19 @@ describe("BookScreen", () => {
     await waitFor(() => expect(screen.getByTestId("expo-image-banner")).toBeTruthy());
   });
 
+  it("replaces the booking form with a walk-in notice for walk-in only locations", async () => {
+    (fetchRestaurantById as jest.Mock).mockResolvedValue({
+      ...mockRestaurant,
+      walkInOnly: true,
+    });
+    renderWithProviders(<BookScreen />);
+    await waitFor(() => expect(screen.getByTestId("walk-in-notice")).toBeTruthy());
+
+    expect(screen.getByText("Visit us")).toBeTruthy();
+    expect(screen.queryByText("Book a table")).toBeNull();
+    expect(screen.queryByTestId("submit-trigger")).toBeNull();
+  });
+
   it("hides image banner after image load error", async () => {
     (fetchRestaurantById as jest.Mock).mockResolvedValue({
       ...mockRestaurant,

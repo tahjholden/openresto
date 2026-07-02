@@ -20,6 +20,12 @@ public class UpdateRestaurantRequest
     public string? Timezone { get; set; }
     public string? Tags { get; set; }
     public int? DefaultBookingDurationMinutes { get; set; }
+
+    /// <summary>When true the whole location becomes walk-in only (no online bookings).</summary>
+    public bool? WalkInOnly { get; set; }
+
+    /// <summary>Comma-separated ISO days (1=Monday … 7=Sunday) that are walk-in only. Empty string clears.</summary>
+    public string? WalkInDays { get; set; }
 }
 
 public class PauseRestaurantRequest
@@ -94,6 +100,13 @@ public class RestaurantDto
     public string[] Tags { get; set; } = [];
     public string? ImageUrl { get; set; }
     public bool IsArchived { get; set; }
+
+    /// <summary>When true the whole location is walk-in only — the booking flow is disabled.</summary>
+    public bool WalkInOnly { get; set; }
+
+    /// <summary>Comma-separated ISO days (1=Monday … 7=Sunday) that are walk-in only ("" when none).</summary>
+    public string WalkInDays { get; set; } = "";
+
     public int DefaultBookingDurationMinutes { get; set; } = 60;
     public List<SectionDto> Sections { get; set; } = new();
 }

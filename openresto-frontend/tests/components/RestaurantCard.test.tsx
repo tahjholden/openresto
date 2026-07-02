@@ -82,4 +82,44 @@ describe("RestaurantCard", () => {
     render(<RestaurantCard restaurant={{ ...restaurant, tags: [] }} />);
     expect(screen.queryByText("Dog friendly")).toBeNull();
   });
+
+  describe("walk-in only", () => {
+    const { fetchAvailability } = require("@/api/availability");
+    // Today's ISO day in UTC (the card's timezone in these fixtures).
+    const jsDay = new Date().getUTCDay();
+    const todayIso = jsDay === 0 ? 7 : jsDay;
+
+    beforeEach(() => {
+      (fetchAvailability as jest.Mock).mockClear();
+    });
+
+    it("shows the walk-in notice instead of slots and skips availability", () => {
+      render(<RestaurantCard restaurant={{ ...restaurant, walkInOnly: true }} />);
+      expect(screen.getByTestId("walk-in-slot-notice")).toBeTruthy();
+      expect(screen.getByText(/first come, first served/)).toBeTruthy();
+      expect(screen.queryByText("Available slots")).toBeNull();
+      expect(fetchAvailability).not.toHaveBeenCalled();
+    });
+
+    it("shows the walk-in badge for walk-in only locations", () => {
+      render(<RestaurantCard restaurant={{ ...restaurant, walkInOnly: true }} />);
+      expect(screen.getByTestId("walk-in-badge")).toBeTruthy();
+      expect(screen.getByText("Walk-ins only")).toBeTruthy();
+    });
+
+    it("shows a walk-in-today notice when today is a walk-in day", () => {
+      render(<RestaurantCard restaurant={{ ...restaurant, walkInDays: String(todayIso) }} />);
+      expect(screen.getByText("Walk-ins only today")).toBeTruthy();
+      expect(screen.getByText(/no online bookings for today/)).toBeTruthy();
+      expect(fetchAvailability).not.toHaveBeenCalled();
+    });
+
+    it("keeps normal slots when the walk-in day is not today", () => {
+      const otherDay = todayIso === 7 ? 1 : todayIso + 1;
+      render(<RestaurantCard restaurant={{ ...restaurant, walkInDays: String(otherDay) }} />);
+      expect(screen.queryByTestId("walk-in-slot-notice")).toBeNull();
+      expect(screen.getByText("Available slots")).toBeTruthy();
+      expect(fetchAvailability).toHaveBeenCalled();
+    });
+  });
 });

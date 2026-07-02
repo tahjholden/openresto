@@ -7,6 +7,7 @@ import { COLORS, getThemeColors } from "@/theme/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { DayHoursDto, RestaurantDto, updateRestaurant } from "@/api/restaurants";
 import { getHoursForDay, hasCustomHours, parseOpenDays } from "@/utils/openingHours";
+import { parseWalkInDays } from "@/utils/walkIn";
 import { useBrand } from "@/context/BrandContext";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -132,6 +133,10 @@ export function RestaurantInfoForm({
   const [customHours, setCustomHours] = useState(() => hasCustomHours(restaurant));
   const [weekHours, setWeekHours] = useState<WeekHours>(() => initialWeekHours(restaurant));
   const [openDays, setOpenDays] = useState<number[]>(parseOpenDays(restaurant.openDays));
+  const [walkInOnly, setWalkInOnly] = useState(!!restaurant.walkInOnly);
+  const [walkInDays, setWalkInDays] = useState<number[]>(() =>
+    parseWalkInDays(restaurant.walkInDays)
+  );
   const [timezone, setTimezone] = useState(restaurant.timezone ?? "UTC");
   const [defaultBookingDurationMinutes, setDefaultBookingDurationMinutes] = useState(
     restaurant.defaultBookingDurationMinutes ?? 60
@@ -154,6 +159,12 @@ export function RestaurantInfoForm({
 
   const toggleDay = (day: number) => {
     setOpenDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
+    );
+  };
+
+  const toggleWalkInDay = (day: number) => {
+    setWalkInDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
     );
   };
@@ -187,6 +198,8 @@ export function RestaurantInfoForm({
     address !== (restaurant.address ?? "") ||
     hoursDirty ||
     openDays.join(",") !== parseOpenDays(restaurant.openDays).join(",") ||
+    walkInOnly !== !!restaurant.walkInOnly ||
+    walkInDays.join(",") !== parseWalkInDays(restaurant.walkInDays).join(",") ||
     timezone !== (restaurant.timezone ?? "UTC") ||
     defaultBookingDurationMinutes !== (restaurant.defaultBookingDurationMinutes ?? 60) ||
     tags.join(",") !== (restaurant.tags ?? []).join(",");
@@ -199,6 +212,8 @@ export function RestaurantInfoForm({
     setCustomHours(hasCustomHours(restaurant));
     setWeekHours(initialWeekHours(restaurant));
     setOpenDays(parseOpenDays(restaurant.openDays));
+    setWalkInOnly(!!restaurant.walkInOnly);
+    setWalkInDays(parseWalkInDays(restaurant.walkInDays));
     setTimezone(restaurant.timezone ?? "UTC");
     setDefaultBookingDurationMinutes(restaurant.defaultBookingDurationMinutes ?? 60);
     setTags(restaurant.tags ?? []);
@@ -218,6 +233,8 @@ export function RestaurantInfoForm({
       closeTime: customHours ? undefined : closeTime,
       openHours: openHoursPayload,
       openDays: openDays.join(","),
+      walkInOnly,
+      walkInDays: walkInDays.join(","),
       timezone,
       defaultBookingDurationMinutes,
       tags: finalTags.join(","),
@@ -231,6 +248,8 @@ export function RestaurantInfoForm({
         closeTime: result.closeTime,
         openHours: result.openHours,
         openDays: result.openDays,
+        walkInOnly: result.walkInOnly,
+        walkInDays: result.walkInDays,
         timezone: result.timezone,
         defaultBookingDurationMinutes: result.defaultBookingDurationMinutes,
         tags: result.tags,
@@ -605,6 +624,120 @@ export function RestaurantInfoForm({
               <Ionicons name="moon-outline" size={12} color={mutedColor} />
               <ThemedText style={{ fontSize: 11, color: mutedColor }}>
                 A closing time at or before opening means the restaurant closes after midnight.
+              </ThemedText>
+            </View>
+          )}
+        </View>
+
+        {/* Reservations / walk-in policy */}
+        <View
+          style={{
+            gap: 12,
+            borderWidth: 1,
+            borderColor,
+            borderRadius: 12,
+            padding: 14,
+            backgroundColor: surface2,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+            }}
+          >
+            <View style={{ gap: 2 }}>
+              <ThemedText style={{ fontSize: 13, fontWeight: "600" }}>Reservations</ThemedText>
+              <ThemedText style={{ fontSize: 11, color: mutedColor }}>
+                {walkInOnly
+                  ? "Walk-ins only — online booking is off"
+                  : walkInDays.length > 0
+                    ? `Walk-ins only on ${walkInDays.length} ${walkInDays.length === 1 ? "day" : "days"}`
+                    : "Online bookings on every open day"}
+              </ThemedText>
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                gap: 2,
+                padding: 3,
+                borderRadius: 9,
+                backgroundColor: isDark ? "#1b1d1f" : "#eef0f2",
+              }}
+            >
+              {modeButton(
+                "Online bookings",
+                !walkInOnly,
+                () => setWalkInOnly(false),
+                "walkin-mode-bookings"
+              )}
+              {modeButton(
+                "Walk-ins only",
+                walkInOnly,
+                () => setWalkInOnly(true),
+                "walkin-mode-walkin"
+              )}
+            </View>
+          </View>
+
+          {walkInOnly ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Ionicons name="walk-outline" size={12} color={mutedColor} />
+              <ThemedText style={{ fontSize: 11, color: mutedColor }}>
+                The location stays listed publicly, but guests can't book online — they'll see a
+                walk-in notice instead. Toggle back anytime; nothing is deleted or archived.
+              </ThemedText>
+            </View>
+          ) : (
+            <View style={{ gap: 6 }}>
+              <ThemedText style={{ fontSize: 12, color: mutedColor, fontWeight: "500" }}>
+                Walk-in only days
+              </ThemedText>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {DAY_SHORT.map((label, i) => {
+                  const day = i + 1;
+                  const active = walkInDays.includes(day);
+                  const closed = !openDays.includes(day);
+                  return (
+                    <Pressable
+                      key={day}
+                      onPress={() => toggleWalkInDay(day)}
+                      testID={`walkin-day-${day}`}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                      accessibilityLabel={`${DAY_LABELS[i]}: ${active ? "walk-ins only" : "online bookings"}. Tap to toggle.`}
+                      style={{
+                        minWidth: 96,
+                        flexGrow: 1,
+                        backgroundColor: active ? primaryColor : colors.card,
+                        borderWidth: 1,
+                        borderColor: active ? primaryColor : borderColor,
+                        borderRadius: 9,
+                        paddingVertical: 10,
+                        paddingHorizontal: 12,
+                        alignItems: "center",
+                        opacity: closed ? 0.55 : 1,
+                      }}
+                    >
+                      <ThemedText
+                        style={{
+                          fontSize: 12,
+                          fontWeight: "500",
+                          color: active ? "#fff" : colors.text,
+                        }}
+                      >
+                        {label}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <ThemedText style={{ fontSize: 11, color: mutedColor }}>
+                Highlighted days stay open but only take walk-ins — the booking form is disabled for
+                those dates. Dimmed days are currently marked closed.
               </ThemedText>
             </View>
           )}

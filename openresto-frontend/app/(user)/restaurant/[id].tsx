@@ -9,6 +9,7 @@ import PageContainer from "@/components/layout/PageContainer";
 import Button from "@/components/common/Button";
 import RestaurantSkeleton from "@/components/restaurant/RestaurantSkeleton";
 import ScrollToTopFab from "@/components/common/ScrollToTopFab";
+import WalkInNotice from "@/components/booking/WalkInNotice";
 
 export default function RestaurantScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -69,9 +70,13 @@ export default function RestaurantScreen() {
       >
         <PageContainer style={styles.page}>
           <RestaurantDetails restaurant={restaurant} />
-          <Link href={`/(user)/book/${id}`} asChild>
-            <Button style={styles.bookButton}>Book a Table</Button>
-          </Link>
+          {restaurant.walkInOnly ? (
+            <WalkInNotice scope="location" />
+          ) : (
+            <Link href={`/(user)/book/${id}`} asChild>
+              <Button style={styles.bookButton}>Book a Table</Button>
+            </Link>
+          )}
         </PageContainer>
       </ScrollView>
       <ScrollToTopFab scrollY={scrollY} onPress={scrollToTop} />

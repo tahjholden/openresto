@@ -75,6 +75,15 @@ public class BookingService(
             throw new InvalidOperationException("Cannot create a booking in the past.");
         }
 
+        // Walk-in-only locations (or walk-in-only days) never take online bookings.
+        // Admin-recorded bookings use AdminService.CreateBookingAsync and are unaffected.
+        if (WalkInHelper.IsWalkInOnlyAt(restaurant, bookingDate))
+        {
+            throw new InvalidOperationException(restaurant.WalkInOnly
+                ? "This location accepts walk-ins only and does not take online bookings."
+                : "This location accepts walk-ins only on the selected day. Please choose another day or just come in.");
+        }
+
         if (bookingDto.TableId is null || bookingDto.SectionId is null)
             throw new ArgumentException("TableId and SectionId are required.");
 

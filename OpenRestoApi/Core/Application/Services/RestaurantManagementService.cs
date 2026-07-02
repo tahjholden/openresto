@@ -105,6 +105,16 @@ public class RestaurantManagementService(AppDbContext db)
             r.DefaultBookingDurationMinutes = req.DefaultBookingDurationMinutes.Value;
         }
 
+        if (req.WalkInOnly.HasValue)
+        {
+            r.WalkInOnly = req.WalkInOnly.Value;
+        }
+
+        if (req.WalkInDays != null)
+        {
+            r.WalkInDays = WalkInHelper.NormalizeWalkInDays(req.WalkInDays);
+        }
+
         await _db.SaveChangesAsync();
 
         return new RestaurantDto
@@ -121,6 +131,8 @@ public class RestaurantManagementService(AppDbContext db)
                 ? []
                 : r.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
             ImageUrl = r.ImageUrl,
+            WalkInOnly = r.WalkInOnly,
+            WalkInDays = r.WalkInDays ?? "",
             DefaultBookingDurationMinutes = r.DefaultBookingDurationMinutes,
             Sections = []
         };
@@ -258,6 +270,8 @@ public class RestaurantManagementService(AppDbContext db)
             : r.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
         ImageUrl = r.ImageUrl,
         IsArchived = r.IsArchived,
+        WalkInOnly = r.WalkInOnly,
+        WalkInDays = r.WalkInDays ?? "",
         DefaultBookingDurationMinutes = r.DefaultBookingDurationMinutes,
         Sections = r.Sections.Select(s => new SectionDto
         {

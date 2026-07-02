@@ -94,6 +94,16 @@ describe("RestaurantScreen", () => {
     });
   });
 
+  it("replaces the Book a Table button with a walk-in notice for walk-in only locations", async () => {
+    const { fetchRestaurantById } = require("@/api/restaurants");
+    fetchRestaurantById.mockResolvedValueOnce({ ...mockRestaurant, walkInOnly: true });
+    renderWithProviders(<RestaurantScreen />);
+    await waitFor(() => {
+      expect(screen.getByTestId("walk-in-notice")).toBeTruthy();
+    });
+    expect(screen.queryByText("Book a Table")).toBeNull();
+  });
+
   it("shows not found when restaurant is null", async () => {
     const { fetchRestaurantById } = require("@/api/restaurants");
     fetchRestaurantById.mockResolvedValueOnce(null);

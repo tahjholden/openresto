@@ -13,6 +13,7 @@ import { COLORS, BORDER_RADIUS, getThemeColors } from "@/theme/theme";
 import { convertLocalToUtc } from "@/utils/date";
 import BookingSkeleton from "@/components/booking/BookingSkeleton";
 import ScrollToTopFab from "@/components/common/ScrollToTopFab";
+import WalkInNotice from "@/components/booking/WalkInNotice";
 
 export default function BookScreen() {
   const {
@@ -130,25 +131,31 @@ export default function BookScreen() {
             />
           )}
           <ThemedText type="title" style={styles.title}>
-            Book a table
+            {restaurant.walkInOnly ? "Visit us" : "Book a table"}
           </ThemedText>
           <ThemedText style={[styles.subtitle, { color: mutedColor }]}>
             at {restaurant.name}
           </ThemedText>
 
-          {submitError && (
-            <ThemedView style={styles.errorBanner}>
-              <ThemedText style={styles.errorText}>{submitError}</ThemedText>
-            </ThemedView>
-          )}
+          {restaurant.walkInOnly ? (
+            <WalkInNotice scope="location" />
+          ) : (
+            <>
+              {submitError && (
+                <ThemedView style={styles.errorBanner}>
+                  <ThemedText style={styles.errorText}>{submitError}</ThemedText>
+                </ThemedView>
+              )}
 
-          <BookingForm
-            restaurant={restaurant}
-            onSubmit={handleSubmit}
-            onRefresh={() => router.replace(`/(user)/book/${restaurantId}`)}
-            initialTime={initialTime}
-            initialSeats={initialSeats}
-          />
+              <BookingForm
+                restaurant={restaurant}
+                onSubmit={handleSubmit}
+                onRefresh={() => router.replace(`/(user)/book/${restaurantId}`)}
+                initialTime={initialTime}
+                initialSeats={initialSeats}
+              />
+            </>
+          )}
         </PageContainer>
       </ScrollView>
       <ScrollToTopFab scrollY={scrollY} onPress={scrollToTop} />

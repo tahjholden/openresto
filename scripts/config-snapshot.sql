@@ -51,6 +51,7 @@ VALUES
 -- Restaurants
 -- DefaultBookingDurationMinutes defaults to 60 (NOT NULL, added by migration).
 -- OpenHoursJson is NULL so OpenTime/CloseTime apply to every day.
+-- WalkInOnly is 0 and WalkInDays is NULL so online bookings stay enabled.
 INSERT INTO
   Restaurants (
     Id,
@@ -65,7 +66,9 @@ INSERT INTO
     ImageUrl,
     IsArchived,
     DefaultBookingDurationMinutes,
-    OpenHoursJson
+    OpenHoursJson,
+    WalkInOnly,
+    WalkInDays
   )
 VALUES
   (
@@ -81,6 +84,8 @@ VALUES
     '/media/location-1.jpg?v=1779668717048',
     0,
     60,
+    NULL,
+    0,
     NULL
   );
 
@@ -98,7 +103,9 @@ INSERT INTO
     ImageUrl,
     IsArchived,
     DefaultBookingDurationMinutes,
-    OpenHoursJson
+    OpenHoursJson,
+    WalkInOnly,
+    WalkInDays
   )
 VALUES
   (
@@ -114,6 +121,8 @@ VALUES
     '/media/location-2.webp',
     0,
     60,
+    NULL,
+    0,
     NULL
   );
 
@@ -131,7 +140,9 @@ INSERT INTO
     ImageUrl,
     IsArchived,
     DefaultBookingDurationMinutes,
-    OpenHoursJson
+    OpenHoursJson,
+    WalkInOnly,
+    WalkInDays
   )
 VALUES
   (
@@ -147,6 +158,8 @@ VALUES
     '/media/location-3.jpg?v=1780155462249',
     0,
     60,
+    NULL,
+    0,
     NULL
   );
 

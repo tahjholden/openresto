@@ -32,6 +32,10 @@ export interface RestaurantDto {
   tags?: string[];
   imageUrl?: string | null;
   isArchived?: boolean;
+  /** When true the whole location is walk-in only — the booking flow is disabled. */
+  walkInOnly?: boolean;
+  /** Comma-separated ISO days (1=Monday … 7=Sunday) that are walk-in only ("" when none). */
+  walkInDays?: string;
   defaultBookingDurationMinutes?: number;
   sections: SectionDto[];
 }
@@ -106,6 +110,8 @@ export async function updateRestaurant(
     timezone?: string;
     tags?: string | null;
     defaultBookingDurationMinutes?: number;
+    walkInOnly?: boolean;
+    walkInDays?: string;
   }
 ): Promise<RestaurantDto | null> {
   try {

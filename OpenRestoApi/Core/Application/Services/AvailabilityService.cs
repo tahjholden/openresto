@@ -37,6 +37,17 @@ public class AvailabilityService(
         int jsDay = (int)localDate.DayOfWeek; // 0=Sun…6=Sat
         int isoDay = jsDay == 0 ? 7 : jsDay;  // 1=Mon…7=Sun
 
+        // Walk-in-only locations/days take no online bookings, so expose no slots.
+        if (WalkInHelper.IsWalkInOnlyOn(restaurant, isoDay))
+        {
+            return new AvailabilityResponseDto
+            {
+                RestaurantId = restaurantId,
+                Date = bookingDate,
+                Slots = new List<TimeSlotDto>()
+            };
+        }
+
         // Check if this day of week is an open day
         if (!string.IsNullOrEmpty(restaurant.OpenDays))
         {

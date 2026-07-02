@@ -205,4 +205,23 @@ describe("BookingForm", () => {
     fireEvent.press(screen.getByTestId("section-select"));
     expect(mockSetHoldStatus).not.toHaveBeenCalled();
   });
+
+  it("shows the walk-in notice and skips fetch when a walk-in-only day is selected", async () => {
+    // Saturdays (ISO 6) are walk-in only; the restaurant is open every day.
+    const restaurant = { ...mockRestaurantAllDays, walkInDays: "6" };
+    render(<BookingForm restaurant={restaurant} onSubmit={jest.fn()} />);
+    // Initial fetch happens for today's (bookable) date
+    await waitFor(() => expect(mockFetchAvailability).toHaveBeenCalledTimes(1));
+    mockFetchAvailability.mockClear();
+
+    // "2026-06-20" is a Saturday
+    await act(async () => {
+      fireEvent.press(screen.getByTestId("date-picker-sat"));
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("walk-in-notice")).toBeTruthy();
+    });
+    expect(screen.getByText("Walk-ins only on this day")).toBeTruthy();
+    expect(mockFetchAvailability).not.toHaveBeenCalled();
+  });
 });

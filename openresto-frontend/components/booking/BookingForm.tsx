@@ -16,6 +16,8 @@ import { getThemeColors, COLORS } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 import { getNowInTimezone, formatCurrentTimeInTimezone } from "@/utils/date";
 import { getHoursForDate, HoursSource } from "@/utils/openingHours";
+import { isWalkInOnlyOnDate } from "@/utils/walkIn";
+import WalkInNotice from "./WalkInNotice";
 
 const isWeb = Platform.OS === "web";
 
@@ -152,7 +154,7 @@ export default function BookingForm({
     const openDaysList = restaurant.openDays?.split(",").map(Number) ?? [1, 2, 3, 4, 5, 6, 7];
     const jsDay = date ? new Date(date + "T12:00:00").getDay() : -1;
     const isoDay = jsDay === 0 ? 7 : jsDay;
-    if (date && !openDaysList.includes(isoDay)) {
+    if (date && (!openDaysList.includes(isoDay) || isWalkInOnlyOnDate(restaurant, date))) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setAvailabilitySlots([]);
       setLoadingAvailability(false);
@@ -243,6 +245,7 @@ export default function BookingForm({
   const selectedJsDay = date ? new Date(date + "T12:00:00").getDay() : -1;
   const selectedIsoDay = selectedJsDay === 0 ? 7 : selectedJsDay;
   const isClosedDay = date ? !openDaysList.includes(selectedIsoDay) : false;
+  const isWalkInDay = date ? isWalkInOnlyOnDate(restaurant, date) : false;
 
   // Hours for the selected date's day of week (falls back to uniform hours).
   // For after-midnight closing (close <= open) let the picker run to end of day.
@@ -258,7 +261,8 @@ export default function BookingForm({
     customerName.trim().length > 0 &&
     customerEmail.includes("@") &&
     holdStatus === "held" &&
-    !isClosedDay;
+    !isClosedDay &&
+    !isWalkInDay;
 
   const handleSubmit = async () => {
     if (!isValid || submitting) return;
@@ -302,6 +306,8 @@ export default function BookingForm({
           <ThemedText style={[styles.closedDayNotice, { color: colors.error }]}>
             The restaurant is closed on this day. Please select a different date.
           </ThemedText>
+        ) : isWalkInDay ? (
+          <WalkInNotice scope="day" />
         ) : (
           <PopularTimesPicker
             slots={availabilitySlots}

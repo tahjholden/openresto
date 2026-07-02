@@ -115,4 +115,48 @@ public class HoldsControllerUnitTests
 
         Assert.IsType<OkObjectResult>(result);
     }
+
+    [Fact]
+    public async Task PlaceHold_ReturnsBadRequest_WhenLocationIsWalkInOnly()
+    {
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "UTC",
+                OpenTime = "00:00",
+                CloseTime = "23:59",
+                WalkInOnly = true
+            });
+
+        var testDate = DateTime.UtcNow.Date.AddDays(1).AddHours(12);
+        var result = await _controller.PlaceHold(new PlaceHoldRequest { Date = testDate });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        _mockService.Verify(
+            s => s.PlaceHold(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<string?>(), It.IsAny<int>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task PlaceHold_ReturnsBadRequest_WhenDateFallsOnWalkInDay()
+    {
+        // Tomorrow's ISO day (1=Mon … 7=Sun) is marked walk-in only.
+        DateTime testDate = DateTime.UtcNow.Date.AddDays(1).AddHours(12);
+        int isoDay = (int)testDate.DayOfWeek == 0 ? 7 : (int)testDate.DayOfWeek;
+
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "UTC",
+                OpenTime = "00:00",
+                CloseTime = "23:59",
+                WalkInDays = isoDay.ToString()
+            });
+
+        var result = await _controller.PlaceHold(new PlaceHoldRequest { Date = testDate });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
 }

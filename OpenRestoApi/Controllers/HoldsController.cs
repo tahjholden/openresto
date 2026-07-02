@@ -62,6 +62,16 @@ public class HoldsController(
             return BadRequest(new MessageResponse { Message = "Bookings are currently paused for this restaurant." });
         }
 
+        if (WalkInHelper.IsWalkInOnlyAt(restaurant, bookingDate))
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = restaurant.WalkInOnly
+                    ? "This location accepts walk-ins only and does not take online bookings."
+                    : "This location accepts walk-ins only on the selected day."
+            });
+        }
+
         // 4. Check operating hours and days
         if (!IsTimeWithinOpeningHours(restaurant, bookingDate))
         {

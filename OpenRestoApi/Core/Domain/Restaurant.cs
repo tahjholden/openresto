@@ -42,6 +42,20 @@ public class Restaurant
     public bool IsArchived { get; set; }
 
     /// <summary>
+    /// When true the location accepts walk-ins only: it stays listed publicly
+    /// but online bookings (and holds) are rejected for every day.
+    /// </summary>
+    public bool WalkInOnly { get; set; }
+
+    /// <summary>
+    /// Comma-separated ISO day numbers (1=Monday … 7=Sunday) on which the
+    /// location accepts walk-ins only. Ignored when <see cref="WalkInOnly"/>
+    /// is true (the whole week is walk-in only). Null/empty means bookings
+    /// are accepted on every open day.
+    /// </summary>
+    public string? WalkInDays { get; set; }
+
+    /// <summary>
     /// Length, in minutes, of a single table's occupancy window for a new booking.
     /// Used wherever a booking's end time is computed (creation, availability, holds).
     /// </summary>

@@ -135,11 +135,12 @@ describe("RestaurantCard", () => {
       expect(screen.getByText("Walk-ins only on Saturdays and Sundays")).toBeTruthy();
     });
 
-    it("does not show the days hint for a fully walk-in-only location", () => {
+    it("shows an every-day hint for a fully walk-in-only location, ignoring walkInDays", () => {
       render(
         <RestaurantCard restaurant={{ ...restaurant, walkInOnly: true, walkInDays: "6,7" }} />
       );
-      expect(screen.queryByTestId("walk-in-days-hint")).toBeNull();
+      expect(screen.getByTestId("walk-in-days-hint")).toBeTruthy();
+      expect(screen.getByText("This location is walk-in only every day of the week")).toBeTruthy();
     });
 
     it("does not show the days hint when no walk-in days are configured", () => {

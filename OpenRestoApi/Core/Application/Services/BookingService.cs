@@ -221,6 +221,13 @@ public class BookingService(
         string dateStr = localDate.ToString("dddd, d MMMM yyyy", CultureInfo.InvariantCulture);
         string timeStr = localDate.ToString("h:mm tt", CultureInfo.InvariantCulture);
 
+        string timeRangeStr = timeStr;
+        if (booking.EndTime.HasValue)
+        {
+            DateTime localEndDate = TimeZoneInfo.ConvertTimeFromUtc(booking.EndTime.Value, tz);
+            timeRangeStr = $"{timeStr} – {localEndDate.ToString("h:mm tt", CultureInfo.InvariantCulture)}";
+        }
+
         string primaryColor = brand.PrimaryColor ?? "#0a7ea4";
         string appName = brand.AppName ?? "Open Resto";
         string cleanWebsiteUrl = websiteUrl.TrimEnd('/');
@@ -315,7 +322,7 @@ public class BookingService(
                 </tr>
                 <tr>
                   <td style="padding:12px 0;color:#6b7280;font-size:14px;">Time</td>
-                  <td style="padding:12px 0;font-size:14px;color:#111827;">{timeStr}</td>
+                  <td style="padding:12px 0;font-size:14px;color:#111827;">{timeRangeStr}</td>
                 </tr>
                 <tr>
                   <td style="padding:12px 0;color:#6b7280;font-size:14px;">Guests</td>

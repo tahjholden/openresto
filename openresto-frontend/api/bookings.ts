@@ -6,6 +6,7 @@ export interface BookingDto {
   sectionId: number | null;
   restaurantId: number;
   date: string;
+  endTime?: string;
   customerEmail: string;
   customerName?: string;
   seats: number;
@@ -38,6 +39,7 @@ function normalizeBooking(raw: Record<string, unknown>): BookingDto {
     sectionId: (raw.sectionId ?? raw.SectionId ?? null) as number | null,
     restaurantId: (raw.restaurantId ?? raw.RestaurantId) as number,
     date: (raw.date ?? raw.Date) as string,
+    endTime: (raw.endTime ?? raw.EndTime) as string | undefined,
     customerEmail: (raw.customerEmail ?? raw.CustomerEmail) as string,
     customerName: (raw.customerName ?? raw.CustomerName) as string | undefined,
     seats: (raw.seats ?? raw.Seats) as number,

@@ -35,6 +35,16 @@ describe("calendar utility - buildCalendarUrls", () => {
     expect(googleUrl).toContain(encodeURIComponent("Window seat"));
   });
 
+  it("uses the provided endTime for the event duration instead of a hardcoded hour", () => {
+    const { googleUrl } = buildCalendarUrls({ ...input, endTime: "2026-10-10T13:30:00Z" });
+    expect(googleUrl).toContain(`${fmtCal(new Date(input.date))}/20261010T133000Z`);
+  });
+
+  it("falls back to a 60-minute event when endTime is not provided", () => {
+    const { googleUrl } = buildCalendarUrls(input);
+    expect(googleUrl).toContain(`${fmtCal(new Date(input.date))}/20261010T130000Z`);
+  });
+
   it("omits LOCATION when restaurantAddress is empty", () => {
     let capturedContent = "";
     const origBlob = global.Blob;

@@ -7,6 +7,7 @@ import { buildCalendarUrls } from "@/utils/calendar";
 interface CalendarActionsProps {
   bookingRef: string;
   date: string;
+  endTime?: string;
   seats: number;
   specialRequests?: string;
   restaurantName: string;

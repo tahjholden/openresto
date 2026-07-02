@@ -41,6 +41,7 @@ function escapeIcal(str: string): string {
 interface CalendarInput {
   bookingRef: string;
   date: string;
+  endTime?: string;
   seats: number;
   specialRequests?: string;
   restaurantName: string;
@@ -49,7 +50,9 @@ interface CalendarInput {
 
 export function buildCalendarUrls(input: CalendarInput) {
   const startDate = new Date(input.date);
-  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+  const endDate = input.endTime
+    ? new Date(input.endTime)
+    : new Date(startDate.getTime() + 60 * 60 * 1000);
   const now = new Date();
 
   const title = `Reservation at ${input.restaurantName}`;

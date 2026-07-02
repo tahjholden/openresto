@@ -311,6 +311,7 @@ export default function BookingConfirmationScreen() {
                   <CalendarActions
                     bookingRef={ref}
                     date={booking.date}
+                    endTime={booking.endTime}
                     seats={booking.seats}
                     specialRequests={booking.specialRequests}
                     restaurantName={restaurantName}

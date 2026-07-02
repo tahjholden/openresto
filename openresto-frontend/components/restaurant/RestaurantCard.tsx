@@ -178,7 +178,12 @@ export default function RestaurantCard({
   const walkInToday =
     !walkInLocation &&
     isWalkInOnlyOnDay(restaurant, getRestaurantNow(restaurant.timezone ?? "UTC").isoDay);
-  const walkInDaysList = !walkInLocation ? walkInDaysLabel(restaurant) : null;
+  const walkInDaysList = walkInLocation ? null : walkInDaysLabel(restaurant);
+  const walkInDaysHintText = walkInLocation
+    ? "This location is walk-in only every day of the week"
+    : walkInDaysList
+      ? `Walk-ins only on ${walkInDaysList}`
+      : null;
   const todayHours = getHoursForDay(
     restaurant,
     getRestaurantNow(restaurant.timezone ?? "UTC").isoDay
@@ -392,11 +397,11 @@ export default function RestaurantCard({
         )}
 
         {/* Walk-in days hint (always visible, independent of today) */}
-        {walkInDaysList && (
+        {walkInDaysHintText && (
           <View style={styles.walkInDaysRow} testID="walk-in-days-hint">
             <Ionicons name="walk-outline" size={11} color={mutedColor} />
             <ThemedText style={[styles.walkInDaysText, { color: mutedColor }]}>
-              Walk-ins only on {walkInDaysList}
+              {walkInDaysHintText}
             </ThemedText>
           </View>
         )}

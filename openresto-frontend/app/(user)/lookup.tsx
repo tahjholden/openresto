@@ -430,10 +430,13 @@ function BookingActions({
         <CalendarActions
           bookingRef={booking.bookingRef}
           date={booking.date}
+          endTime={booking.endTime}
           seats={booking.seats}
           specialRequests={booking.specialRequests}
           restaurantName={restaurant?.name ?? "Restaurant"}
           restaurantAddress={restaurant?.address ?? ""}
+          sectionName={booking.sectionName}
+          tableName={booking.tableName}
           variant="compact"
         />
       </View>

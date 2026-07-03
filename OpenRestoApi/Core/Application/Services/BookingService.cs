@@ -381,6 +381,11 @@ public class BookingService(
             return true;
         }
 
+        if (booking.Date < DateTime.UtcNow.AddMinutes(-5))
+        {
+            throw new InvalidOperationException("Cannot cancel a booking that has already passed.");
+        }
+
         booking.IsCancelled = true;
         booking.CancelledAt = DateTime.UtcNow;
         await _bookingRepository.UpdateAsync(booking);

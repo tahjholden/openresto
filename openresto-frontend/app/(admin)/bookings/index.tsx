@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { usePersistedState } from "@/hooks/use-persisted-state";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   TextInput,
@@ -29,7 +30,7 @@ import { COLORS, FORM_SIZES, getThemeColors, STATUS_COLORS } from "@/theme/theme
 import { Ionicons } from "@expo/vector-icons";
 import { useBrand } from "@/context/BrandContext";
 
-import { StatusBadge } from "@/components/admin/bookings/StatusBadge";
+import { StatusBadge, isPast } from "@/components/admin/bookings/StatusBadge";
 import { AvailabilityGrid } from "@/components/admin/bookings/AvailabilityGrid";
 import { BookingDetailPopup } from "@/components/admin/bookings/BookingDetailPopup";
 import { styles } from "@/components/admin/bookings/bookings.styles";
@@ -751,7 +752,7 @@ export default function AdminBookingsScreen() {
               </View>
 
               <View style={styles.colAction}>
-                {!b.isCancelled && (
+                {!b.isCancelled && !isPast(b.date) && (
                   <Pressable
                     accessibilityLabel="Cancel booking"
                     style={[
@@ -886,8 +887,17 @@ export default function AdminBookingsScreen() {
           if (!cancelTarget) return;
           const id = cancelTarget.id;
           setCancelTarget(null);
-          const deleted = await adminDeleteBooking(id);
-          if (deleted) refreshBookings();
+          try {
+            await adminDeleteBooking(id);
+            refreshBookings();
+          } catch (err) {
+            const message = err instanceof Error ? err.message : "Failed to cancel the booking.";
+            if (Platform.OS === "web") {
+              window.alert(message);
+            } else {
+              Alert.alert("Error", message);
+            }
+          }
         }}
         onCancel={() => setCancelTarget(null)}
       />

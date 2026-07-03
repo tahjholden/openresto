@@ -305,6 +305,11 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
             return false;
         }
 
+        if (!booking.IsCancelled && booking.Date < DateTime.UtcNow.AddMinutes(-5))
+        {
+            throw new InvalidOperationException("Cannot cancel a booking that has already passed.");
+        }
+
         booking.IsCancelled = true;
         booking.CancelledAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
@@ -393,7 +398,7 @@ public class AdminService(AppDbContext db, IHoldService holdService, INotificati
             booking.TableId = req.TableId.Value;
             booking.SectionId = table.SectionId;
         }
-        else if (req.SectionId.HasValue)
+        else if (req.SectionId.HasValue && req.SectionId.Value != booking.SectionId)
         {
             throw new ArgumentException("Provide tableId when reassigning to a different section.");
         }

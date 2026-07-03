@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from "react";
-import { Platform } from "react-native";
+import { Alert, Platform } from "react-native";
 import { render, screen, waitFor, fireEvent, act } from "@testing-library/react-native";
 import AdminBookingsScreen from "@/app/(admin)/bookings/index";
 import {
@@ -632,6 +632,17 @@ describe("AdminBookingsScreen", () => {
     }
   });
 
+  it("hides the row cancel button for a past, non-cancelled booking", async () => {
+    (getAdminBookings as jest.Mock).mockResolvedValue([
+      { ...mockBookings[0], date: "2020-01-01T10:00:00Z" },
+    ]);
+    render(<AdminBookingsScreen />);
+    fireEvent.press(await screen.findByText("List"));
+    await waitFor(() => expect(screen.getByText("john@example.com")).toBeTruthy());
+
+    expect(screen.queryAllByLabelText("Cancel booking").length).toBe(0);
+  });
+
   it("pressing grid booking triggers onBookingPress callback", async () => {
     render(<AdminBookingsScreen />);
     await waitFor(() => expect(screen.getByTestId("grid-press-booking")).toBeTruthy());
@@ -743,7 +754,8 @@ describe("AdminBookingsScreen refresh after mutation", () => {
   });
 
   it("does not refresh the list when a row cancel fails", async () => {
-    (adminDeleteBooking as jest.Mock).mockResolvedValue(false);
+    (adminDeleteBooking as jest.Mock).mockRejectedValue(new Error("Failed to cancel the booking."));
+    const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(() => {});
     render(<AdminBookingsScreen />);
     fireEvent.press(await screen.findByText("List"));
     await waitFor(() => expect(screen.getByText("john@example.com")).toBeTruthy());
@@ -757,6 +769,10 @@ describe("AdminBookingsScreen refresh after mutation", () => {
 
     await waitFor(() => expect(adminDeleteBooking).toHaveBeenCalledWith(1));
     expect((getAdminBookings as jest.Mock).mock.calls.length).toBe(callsBefore);
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith("Error", "Failed to cancel the booking.")
+    );
+    alertSpy.mockRestore();
   });
 });
 

@@ -191,7 +191,7 @@ describe("LookupScreen", () => {
     Object.defineProperty(Platform, "OS", { get: () => "ios", configurable: true });
 
     (getBookingByRef as jest.Mock).mockResolvedValue(mockBooking);
-    (cancelBookingByRef as jest.Mock).mockResolvedValue(false);
+    (cancelBookingByRef as jest.Mock).mockRejectedValue(new Error("Failed to cancel booking."));
     renderWithProviders(<LookupScreen />);
 
     fireEvent.changeText(screen.getByPlaceholderText("e.g. crispy-basil-thyme"), "REF123");
@@ -227,10 +227,32 @@ describe("LookupScreen", () => {
     expect(screen.queryByTestId("confirm-modal")).toBeNull();
   });
 
+  it("disables the cancel action for a past, non-cancelled booking", async () => {
+    (getBookingByRef as jest.Mock).mockResolvedValue({
+      ...mockBooking,
+      date: "2020-01-01T12:00:00Z",
+    });
+    (fetchRestaurantById as jest.Mock).mockResolvedValue(mockRestaurant);
+    renderWithProviders(<LookupScreen />);
+
+    fireEvent.changeText(screen.getByPlaceholderText("e.g. crispy-basil-thyme"), "REF123");
+    fireEvent.changeText(
+      screen.getByPlaceholderText("The email used when booking"),
+      "test@test.com"
+    );
+    fireEvent.press(screen.getByText("Look Up"));
+
+    await waitFor(() => expect(screen.getByText("Booking Has Passed")).toBeTruthy());
+    expect(screen.queryByText("Cancel This Booking")).toBeNull();
+
+    fireEvent.press(screen.getByText("Booking Has Passed"));
+    expect(screen.queryByTestId("confirm-modal")).toBeNull();
+  });
+
   it("shows web alert on cancellation failure", async () => {
     Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
     (getBookingByRef as jest.Mock).mockResolvedValue(mockBooking);
-    (cancelBookingByRef as jest.Mock).mockResolvedValue(false);
+    (cancelBookingByRef as jest.Mock).mockRejectedValue(new Error("Failed to cancel booking."));
     renderWithProviders(<LookupScreen />);
 
     fireEvent.changeText(screen.getByPlaceholderText("e.g. crispy-basil-thyme"), "REF123");
@@ -249,6 +271,34 @@ describe("LookupScreen", () => {
     );
     expect(cancelBookingByRef).toHaveBeenCalledTimes(1);
     expect(getBookingByRef).toHaveBeenCalledTimes(1);
+
+    Object.defineProperty(Platform, "OS", { get: () => "ios", configurable: true });
+  });
+
+  it("surfaces the backend's specific rejection message instead of a generic one", async () => {
+    Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
+    (getBookingByRef as jest.Mock).mockResolvedValue(mockBooking);
+    (cancelBookingByRef as jest.Mock).mockRejectedValue(
+      new Error("Cannot cancel a booking that has already passed.")
+    );
+    renderWithProviders(<LookupScreen />);
+
+    fireEvent.changeText(screen.getByPlaceholderText("e.g. crispy-basil-thyme"), "REF123");
+    fireEvent.changeText(
+      screen.getByPlaceholderText("The email used when booking"),
+      "test@test.com"
+    );
+    fireEvent.press(screen.getByText("Look Up"));
+
+    await waitFor(() => screen.getByText("Cancel This Booking"));
+    fireEvent.press(screen.getByText("Cancel This Booking"));
+    fireEvent.press(await screen.findByText("Cancel Booking"));
+
+    await waitFor(() =>
+      expect((window as any).alert).toHaveBeenCalledWith(
+        "Cannot cancel a booking that has already passed."
+      )
+    );
 
     Object.defineProperty(Platform, "OS", { get: () => "ios", configurable: true });
   });

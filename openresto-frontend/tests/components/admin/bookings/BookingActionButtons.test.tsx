@@ -107,4 +107,26 @@ describe("BookingActionButtons", () => {
       expect(baseProps.onPurge).not.toHaveBeenCalled();
     });
   });
+
+  describe("past booking", () => {
+    it("does not show Cancel Booking button when isPast is true", () => {
+      render(<BookingActionButtons {...baseProps} isPast />);
+      expect(screen.queryByText("Cancel Booking")).toBeNull();
+    });
+
+    it("still shows Permanently Delete (GDPR) button when isPast is true", () => {
+      render(<BookingActionButtons {...baseProps} isPast />);
+      expect(screen.getByText("Permanently Delete (GDPR)")).toBeTruthy();
+    });
+
+    it("still shows Restore Booking button for a past cancelled booking", () => {
+      render(<BookingActionButtons {...baseProps} isCancelled isPast />);
+      expect(screen.getByText("Restore Booking")).toBeTruthy();
+    });
+
+    it("shows Cancel Booking button when isPast is false", () => {
+      render(<BookingActionButtons {...baseProps} isPast={false} />);
+      expect(screen.getByText("Cancel Booking")).toBeTruthy();
+    });
+  });
 });

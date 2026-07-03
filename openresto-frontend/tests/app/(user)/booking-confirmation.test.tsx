@@ -159,6 +159,26 @@ describe("BookingConfirmationScreen", () => {
     expect(screen.queryByText("This booking has been cancelled")).toBeNull();
   });
 
+  it("disables the cancel button and updates copy for a past, non-cancelled booking", async () => {
+    const { useLocalSearchParams } = require("expo-router");
+    useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
+    (getBookingByRef as jest.Mock).mockResolvedValue({
+      ...mockBooking,
+      date: "2020-01-01T12:00:00Z",
+    });
+
+    renderWithProviders(<BookingConfirmationScreen />);
+    await waitFor(() => expect(screen.getByText("Booking Has Passed")).toBeTruthy());
+
+    expect(screen.queryByText("Cancel This Booking")).toBeNull();
+    expect(
+      screen.getByText("This booking has already passed and can no longer be cancelled.")
+    ).toBeTruthy();
+
+    fireEvent.press(screen.getByText("Booking Has Passed"));
+    expect(screen.queryByTestId("confirm-modal")).toBeNull();
+  });
+
   it("shows cancelled header and disabled button when booking is already cancelled", async () => {
     const { useLocalSearchParams } = require("expo-router");
     useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
@@ -195,7 +215,7 @@ describe("BookingConfirmationScreen", () => {
   it("shows web alert on cancellation failure", async () => {
     const { useLocalSearchParams } = require("expo-router");
     useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
-    (cancelBookingByRef as jest.Mock).mockResolvedValue(false);
+    (cancelBookingByRef as jest.Mock).mockRejectedValue(new Error("Failed to cancel booking."));
 
     renderWithProviders(<BookingConfirmationScreen />);
     await waitFor(() => expect(screen.getByText("Cancel This Booking")).toBeTruthy());
@@ -209,12 +229,32 @@ describe("BookingConfirmationScreen", () => {
     expect(screen.queryByText("Booking Cancelled")).toBeNull();
   });
 
+  it("surfaces the backend's specific rejection message instead of a generic one", async () => {
+    const { useLocalSearchParams } = require("expo-router");
+    useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
+    (cancelBookingByRef as jest.Mock).mockRejectedValue(
+      new Error("Cannot cancel a booking that has already passed.")
+    );
+
+    renderWithProviders(<BookingConfirmationScreen />);
+    await waitFor(() => expect(screen.getByText("Cancel This Booking")).toBeTruthy());
+
+    fireEvent.press(screen.getByText("Cancel This Booking"));
+    fireEvent.press(await screen.findByText("Cancel Booking"));
+
+    await waitFor(() =>
+      expect((window as any).alert).toHaveBeenCalledWith(
+        "Cannot cancel a booking that has already passed."
+      )
+    );
+  });
+
   it("shows native alert on cancellation failure", async () => {
     Object.defineProperty(Platform, "OS", { get: () => "ios", configurable: true });
 
     const { useLocalSearchParams } = require("expo-router");
     useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
-    (cancelBookingByRef as jest.Mock).mockResolvedValue(false);
+    (cancelBookingByRef as jest.Mock).mockRejectedValue(new Error("Failed to cancel booking."));
 
     renderWithProviders(<BookingConfirmationScreen />);
     await waitFor(() => expect(screen.getByText("Cancel This Booking")).toBeTruthy());

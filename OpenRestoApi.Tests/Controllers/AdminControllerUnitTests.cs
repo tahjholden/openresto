@@ -62,7 +62,7 @@ public class AdminControllerUnitTests
         var response = Assert.IsType<MessageResponse>(badRequest.Value);
         Assert.Contains("Failed to send: Fail", response.Message);
     }
-    
+
     [Fact]
     public async Task SendEmail_EmailServiceInvalidOp_ReturnsBadRequest()
     {
@@ -87,6 +87,19 @@ public class AdminControllerUnitTests
         var result = await _controller.RestoreBooking(1);
 
         Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task CancelBooking_InvalidOperationException_ReturnsConflict()
+    {
+        _mockAdminService.Setup(s => s.CancelBookingAsync(It.IsAny<int>()))
+            .ThrowsAsync(new InvalidOperationException("Cannot cancel a booking that has already passed."));
+
+        var result = await _controller.CancelBooking(1);
+
+        var conflict = Assert.IsType<ConflictObjectResult>(result);
+        var response = Assert.IsType<MessageResponse>(conflict.Value);
+        Assert.Equal("Cannot cancel a booking that has already passed.", response.Message);
     }
 
     [Fact]

@@ -6,6 +6,7 @@ import { bookingDetailStyles as styles } from "./booking-detail.styles";
 
 interface BookingActionButtonsProps {
   isCancelled: boolean;
+  isPast?: boolean;
   uncancelling: boolean;
   deleting: boolean;
   mutedColor: string;
@@ -16,6 +17,7 @@ interface BookingActionButtonsProps {
 
 export function BookingActionButtons({
   isCancelled,
+  isPast,
   uncancelling,
   deleting,
   mutedColor,
@@ -39,8 +41,8 @@ export function BookingActionButtons({
         </Pressable>
       )}
 
-      {/* Cancel - hide if already cancelled */}
-      {!isCancelled && (
+      {/* Cancel - hide if already cancelled or the booking has already passed */}
+      {!isCancelled && !isPast && (
         <Pressable
           style={[styles.cancelBtn, deleting && { opacity: 0.6 }]}
           onPress={onCancel}

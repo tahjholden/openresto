@@ -221,6 +221,76 @@ public class AdminControllerTests(TestWebAppFactory factory) : IClassFixture<Tes
     }
 
     [Fact]
+    public async Task CancelBooking_PastBooking_ReturnsConflict_AndLeavesBookingActiveInDb()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+        (int restaurantId, int sectionId, int tableId) = GetSeededIds();
+
+        // Admin creation is intentionally exempt from the past-date guard (#160),
+        // so this is the only way to seed a genuinely past, non-cancelled booking.
+        HttpResponseMessage createResp = await client.PostAsJsonAsync("/api/admin/bookings", new
+        {
+            restaurantId,
+            sectionId,
+            tableId,
+            date = DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ss"),
+            customerEmail = "past-admin-cancel@test.com",
+            seats = 2
+        });
+        Assert.Equal(HttpStatusCode.Created, createResp.StatusCode);
+        int bookingId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+
+        HttpResponseMessage response = await client.PostAsync($"/api/admin/bookings/{bookingId}/cancel", null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains("passed", body.GetProperty("message").GetString()?.ToLower() ?? "");
+
+        using IServiceScope scope = _factory.Services.CreateScope();
+        AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Booking? inDb = await db.Bookings.FindAsync(bookingId);
+        Assert.NotNull(inDb);
+        Assert.False(inDb!.IsCancelled);
+    }
+
+    [Fact]
+    public async Task CancelBooking_AlreadyCancelledPastBooking_IsIdempotent_ReturnsNoContent()
+    {
+        // The already-cancelled short-circuit must run before the past-date guard,
+        // so re-cancelling a past booking that's already cancelled stays a no-op
+        // success rather than regressing to a 400 — this is a real end-to-end
+        // regression guard for the check-ordering in AdminService.CancelBookingAsync.
+        HttpClient client = _factory.CreateAuthenticatedClient();
+        (int restaurantId, int sectionId, int tableId) = GetSeededIds();
+
+        HttpResponseMessage createResp = await client.PostAsJsonAsync("/api/admin/bookings", new
+        {
+            restaurantId,
+            sectionId,
+            tableId,
+            date = DateTime.UtcNow.AddDays(-2).ToString("yyyy-MM-ddTHH:mm:ss"),
+            customerEmail = "past-admin-idempotent@test.com",
+            seats = 2
+        });
+        Assert.Equal(HttpStatusCode.Created, createResp.StatusCode);
+        int bookingId = (await createResp.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
+
+        // Cancel while still active is impossible for a past booking (guarded above),
+        // so mark it cancelled directly in the DB to reach the already-cancelled state.
+        using (IServiceScope scope = _factory.Services.CreateScope())
+        {
+            AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            Booking booking = await db.Bookings.FindAsync(bookingId) ?? throw new InvalidOperationException("seed booking missing");
+            booking.IsCancelled = true;
+            await db.SaveChangesAsync();
+        }
+
+        HttpResponseMessage response = await client.PostAsync($"/api/admin/bookings/{bookingId}/cancel", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
     public async Task CancelBooking_NonExistent_Returns404()
     {
         HttpClient client = _factory.CreateAuthenticatedClient();

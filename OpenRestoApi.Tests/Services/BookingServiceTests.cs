@@ -653,6 +653,56 @@ public class BookingServiceTests
         Assert.True(await svc.CancelBookingAsync(created.BookingRef!, "test@test.com"));
     }
 
+    [Fact]
+    public async Task CancelBookingAsync_Throws_WhenBookingDateIsInThePast()
+    {
+        using AppDbContext db = CreateDb(nameof(CancelBookingAsync_Throws_WhenBookingDateIsInThePast));
+        Seed(db);
+        BookingService svc = CreateService(db);
+        BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow.AddHours(1), CustomerEmail = "test@test.com", Seats = 2 });
+
+        Booking booking = await db.Bookings.FirstAsync(b => b.Id == created.Id);
+        booking.Date = DateTime.UtcNow.AddHours(-1);
+        await db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => svc.CancelBookingAsync(created.BookingRef!, "test@test.com"));
+
+        Booking inDb = await db.Bookings.FirstAsync(b => b.Id == created.Id);
+        Assert.False(inDb.IsCancelled);
+    }
+
+    [Fact]
+    public async Task CancelBookingAsync_Succeeds_WithinFiveMinuteGracePeriod()
+    {
+        using AppDbContext db = CreateDb(nameof(CancelBookingAsync_Succeeds_WithinFiveMinuteGracePeriod));
+        Seed(db);
+        BookingService svc = CreateService(db);
+        BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow.AddHours(1), CustomerEmail = "test@test.com", Seats = 2 });
+
+        Booking booking = await db.Bookings.FirstAsync(b => b.Id == created.Id);
+        booking.Date = DateTime.UtcNow.AddMinutes(-4);
+        await db.SaveChangesAsync();
+
+        Assert.True(await svc.CancelBookingAsync(created.BookingRef!, "test@test.com"));
+    }
+
+    [Fact]
+    public async Task CancelBookingAsync_Throws_JustOutsideFiveMinuteGracePeriod()
+    {
+        using AppDbContext db = CreateDb(nameof(CancelBookingAsync_Throws_JustOutsideFiveMinuteGracePeriod));
+        Seed(db);
+        BookingService svc = CreateService(db);
+        BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow.AddHours(1), CustomerEmail = "test@test.com", Seats = 2 });
+
+        Booking booking = await db.Bookings.FirstAsync(b => b.Id == created.Id);
+        booking.Date = DateTime.UtcNow.AddMinutes(-6);
+        await db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => svc.CancelBookingAsync(created.BookingRef!, "test@test.com"));
+    }
+
     // ── Booking Confirmation Emails ───────────────────────────────────────────
 
     [Fact]

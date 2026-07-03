@@ -195,13 +195,17 @@ export async function adminExtendBooking(
   }
 }
 
-export async function adminDeleteBooking(id: number): Promise<boolean> {
+export async function adminDeleteBooking(id: number): Promise<true> {
   try {
     const res = await post(`/admin/bookings/${id}/cancel`);
-    return res.ok;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message ?? "Failed to cancel the booking.");
+    }
+    return true;
   } catch (err) {
     console.error("adminDeleteBooking error:", err);
-    return false;
+    throw err;
   }
 }
 

@@ -1,10 +1,32 @@
 import React from "react";
 import { render, screen } from "@testing-library/react-native";
-import { StatusBadge, getStatus } from "@/components/admin/bookings/StatusBadge";
+import { StatusBadge, getStatus, isPast } from "@/components/admin/bookings/StatusBadge";
 
 jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: () => "light",
 }));
+
+describe("isPast", () => {
+  it("returns false for a booking more than 5 minutes in the future", () => {
+    const date = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    expect(isPast(date)).toBe(false);
+  });
+
+  it("returns false for a booking within the 5-minute grace period", () => {
+    const date = new Date(Date.now() - 4 * 60 * 1000).toISOString();
+    expect(isPast(date)).toBe(false);
+  });
+
+  it("returns true for a booking just outside the 5-minute grace period", () => {
+    const date = new Date(Date.now() - 6 * 60 * 1000).toISOString();
+    expect(isPast(date)).toBe(true);
+  });
+
+  it("returns true for a booking well in the past", () => {
+    const date = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    expect(isPast(date)).toBe(true);
+  });
+});
 
 describe("getStatus", () => {
   it("returns 'Completed' for bookings more than 90 minutes ago", () => {

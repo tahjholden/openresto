@@ -285,6 +285,71 @@ public class BookingsControllerTests(TestWebAppFactory factory) : IClassFixture<
     }
 
     [Fact]
+    public async Task CancelBookingByRef_PastBooking_ReturnsConflict_AndLeavesBookingActiveInDb()
+    {
+        // Customer-facing booking creation rejects past dates, so seed the past booking
+        // via the admin route (intentionally exempt per #160) then exercise the real
+        // customer cancel endpoint end-to-end (HTTP -> controller -> service -> SQLite).
+        HttpClient adminClient = _factory.CreateAuthenticatedClient();
+        (int restaurantId, int sectionId, int tableId) = GetSeededIds();
+        HttpResponseMessage createResp = await adminClient.PostAsJsonAsync("/api/admin/bookings", new
+        {
+            restaurantId,
+            sectionId,
+            tableId,
+            date = DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ss"),
+            customerEmail = "past-customer-cancel@test.com",
+            seats = 2
+        });
+        Assert.Equal(HttpStatusCode.Created, createResp.StatusCode);
+        JsonElement created = await createResp.Content.ReadFromJsonAsync<JsonElement>();
+        string? bookingRef = created.GetProperty("bookingRef").GetString();
+        int bookingId = created.GetProperty("id").GetInt32();
+
+        HttpClient client = _factory.CreateClient();
+        HttpResponseMessage response = await client.PostAsJsonAsync(
+            $"/api/bookings/ref/{bookingRef}/cancel",
+            new { email = "past-customer-cancel@test.com" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains("passed", body.GetProperty("message").GetString()?.ToLower() ?? "");
+
+        // The rejected request must not have flipped IsCancelled in the real database.
+        using IServiceScope scope = _factory.Services.CreateScope();
+        AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Booking? inDb = await db.Bookings.FindAsync(bookingId);
+        Assert.NotNull(inDb);
+        Assert.False(inDb!.IsCancelled);
+    }
+
+    [Fact]
+    public async Task CancelBookingByRef_WithinFiveMinuteGracePeriod_Succeeds()
+    {
+        HttpClient adminClient = _factory.CreateAuthenticatedClient();
+        (int restaurantId, int sectionId, int tableId) = GetSeededIds();
+        HttpResponseMessage createResp = await adminClient.PostAsJsonAsync("/api/admin/bookings", new
+        {
+            restaurantId,
+            sectionId,
+            tableId,
+            date = DateTime.UtcNow.AddMinutes(-4).ToString("yyyy-MM-ddTHH:mm:ss"),
+            customerEmail = "grace-customer-cancel@test.com",
+            seats = 2
+        });
+        Assert.Equal(HttpStatusCode.Created, createResp.StatusCode);
+        JsonElement created = await createResp.Content.ReadFromJsonAsync<JsonElement>();
+        string? bookingRef = created.GetProperty("bookingRef").GetString();
+
+        HttpClient client = _factory.CreateClient();
+        HttpResponseMessage response = await client.PostAsJsonAsync(
+            $"/api/bookings/ref/{bookingRef}/cancel",
+            new { email = "grace-customer-cancel@test.com" });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
     public async Task CreateBooking_InvalidModel_ReturnsBadRequest()
     {
         HttpClient client = _factory.CreateClient();

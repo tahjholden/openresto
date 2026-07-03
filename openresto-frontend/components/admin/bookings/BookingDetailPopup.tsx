@@ -27,6 +27,7 @@ import { EditBookingForm } from "./EditBookingForm";
 import { ExtendBookingActions } from "./ExtendBookingActions";
 import { EmailGuestForm } from "./EmailGuestForm";
 import { BookingActionButtons } from "./BookingActionButtons";
+import { isPast } from "./StatusBadge";
 
 export function BookingDetailPopup({
   bookingId,
@@ -170,13 +171,14 @@ export function BookingDetailPopup({
     if (!booking) return;
     setShowDeleteConfirm(false);
     setDeleting(true);
-    const ok = await adminDeleteBooking(booking.id);
-    if (ok) {
+    try {
+      await adminDeleteBooking(booking.id);
       onMutated?.();
       onClose();
-    } else {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to cancel the booking.";
       setDeleting(false);
-      setErrorMessage("Failed to cancel the booking.");
+      setErrorMessage(message);
     }
   };
 
@@ -459,6 +461,7 @@ export function BookingDetailPopup({
 
                 <BookingActionButtons
                   isCancelled={!!booking.isCancelled}
+                  isPast={isPast(booking.date)}
                   uncancelling={uncancelling}
                   deleting={deleting}
                   mutedColor={mutedColor}

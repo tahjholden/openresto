@@ -69,7 +69,16 @@ public class AdminController(AdminService adminService, IEmailService emailServi
 
     [HttpPost("bookings/{id}/cancel")]
     public async Task<IActionResult> CancelBooking(int id)
-        => await _adminService.CancelBookingAsync(id) ? NoContent() : NotFound();
+    {
+        try
+        {
+            return await _adminService.CancelBookingAsync(id) ? NoContent() : NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new MessageResponse { Message = ex.Message });
+        }
+    }
 
     [HttpDelete("bookings/{id}")]
     public async Task<IActionResult> PurgeBooking(int id)

@@ -112,12 +112,16 @@ export async function deleteBooking(id: number): Promise<boolean> {
   }
 }
 
-export async function cancelBookingByRef(bookingRef: string, email: string): Promise<boolean> {
+export async function cancelBookingByRef(bookingRef: string, email: string): Promise<true> {
   try {
     const res = await post(`/bookings/ref/${bookingRef}/cancel`, { email });
-    return res.ok;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message ?? "Failed to cancel booking.");
+    }
+    return true;
   } catch (err) {
     console.error("cancelBookingByRef error:", err);
-    return false;
+    throw err;
   }
 }

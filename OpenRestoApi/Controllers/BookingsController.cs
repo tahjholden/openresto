@@ -124,12 +124,19 @@ namespace OpenRestoApi.Controllers
                 return BadRequest(new { message = "Email is required to cancel a booking." });
             }
 
-            bool ok = await _bookingService.CancelBookingAsync(bookingRef, req.Email);
-            if (!ok)
+            try
             {
-                return NotFound(new { message = "No booking found matching that reference and email." });
+                bool ok = await _bookingService.CancelBookingAsync(bookingRef, req.Email);
+                if (!ok)
+                {
+                    return NotFound(new { message = "No booking found matching that reference and email." });
+                }
+                return NoContent();
             }
-            return NoContent();
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
     }
 }

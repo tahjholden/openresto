@@ -132,11 +132,13 @@ jest.mock("@/components/admin/bookings/BookingActionButtons", () => ({
     onPurge,
     onUncancel,
     isCancelled,
+    isPast,
   }: {
     onCancel: () => void;
     onPurge: () => void;
     onUncancel: () => void;
     isCancelled: boolean;
+    isPast?: boolean;
   }) => {
     const { View, Pressable, Text } = require("react-native");
     return (
@@ -145,6 +147,8 @@ jest.mock("@/components/admin/bookings/BookingActionButtons", () => ({
           <Pressable testID="uncancel-btn" onPress={onUncancel}>
             <Text>Restore</Text>
           </Pressable>
+        ) : isPast ? (
+          <Text testID="past-booking-no-cancel">Booking Has Passed</Text>
         ) : (
           <Pressable testID="cancel-btn" onPress={onCancel}>
             <Text>Cancel Booking</Text>
@@ -216,7 +220,7 @@ const mockBooking: adminApi.BookingDetailDto = {
   sectionName: "Indoor",
   tableId: 100,
   tableName: "Table 1",
-  date: "2026-06-01T18:00:00Z",
+  date: "2026-12-01T18:00:00Z",
   customerEmail: "guest@example.com",
   seats: 2,
   specialRequests: "Window seat",
@@ -317,6 +321,16 @@ describe("BookingDetailPopup", () => {
     });
   });
 
+  it("hides Cancel Booking and shows past indicator for a past, non-cancelled booking", async () => {
+    (adminApi.getAdminBooking as jest.Mock).mockResolvedValue({
+      ...mockBooking,
+      date: "2020-01-01T18:00:00Z",
+    });
+    render(<BookingDetailPopup {...baseProps} />);
+    await waitFor(() => expect(screen.getByTestId("past-booking-no-cancel")).toBeTruthy());
+    expect(screen.queryByTestId("cancel-btn")).toBeNull();
+  });
+
   it("shows cancel booking confirm modal when Cancel Booking is pressed", async () => {
     render(<BookingDetailPopup {...baseProps} />);
     await waitFor(() => expect(screen.getByTestId("cancel-btn")).toBeTruthy());
@@ -341,7 +355,9 @@ describe("BookingDetailPopup", () => {
   });
 
   it("shows error message when cancel fails", async () => {
-    (adminApi.adminDeleteBooking as jest.Mock).mockResolvedValue(false);
+    (adminApi.adminDeleteBooking as jest.Mock).mockRejectedValue(
+      new Error("Failed to cancel the booking.")
+    );
     render(<BookingDetailPopup {...baseProps} />);
     await waitFor(() => expect(screen.getByTestId("cancel-btn")).toBeTruthy());
     fireEvent.press(screen.getByTestId("cancel-btn"));
@@ -351,6 +367,24 @@ describe("BookingDetailPopup", () => {
     });
     await waitFor(() => {
       expect(screen.getByTestId("alert-message")).toBeTruthy();
+    });
+  });
+
+  it("surfaces the backend's specific rejection message instead of a generic one", async () => {
+    (adminApi.adminDeleteBooking as jest.Mock).mockRejectedValue(
+      new Error("Cannot cancel a booking that has already passed.")
+    );
+    render(<BookingDetailPopup {...baseProps} />);
+    await waitFor(() => expect(screen.getByTestId("cancel-btn")).toBeTruthy());
+    fireEvent.press(screen.getByTestId("cancel-btn"));
+    await waitFor(() => expect(screen.getByTestId("confirm-btn")).toBeTruthy());
+    await act(async () => {
+      fireEvent.press(screen.getByTestId("confirm-btn"));
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("alert-message").props.children).toBe(
+        "Cannot cancel a booking that has already passed."
+      );
     });
   });
 
@@ -484,7 +518,9 @@ describe("BookingDetailPopup", () => {
   });
 
   it("closes error alert when close button is pressed", async () => {
-    (adminApi.adminDeleteBooking as jest.Mock).mockResolvedValue(false);
+    (adminApi.adminDeleteBooking as jest.Mock).mockRejectedValue(
+      new Error("Failed to cancel the booking.")
+    );
     render(<BookingDetailPopup {...baseProps} />);
     await waitFor(() => expect(screen.getByTestId("cancel-btn")).toBeTruthy());
     fireEvent.press(screen.getByTestId("cancel-btn"));

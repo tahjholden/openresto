@@ -440,15 +440,32 @@ public class AdminServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task AdminUpdateBookingAsync_Throws_WhenSectionIdProvidedWithoutTableId()
+    public async Task AdminUpdateBookingAsync_Throws_WhenSectionIdChangedWithoutTableId()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        _db.Sections.Add(new Section { Id = 2, Name = "Patio", RestaurantId = 1 });
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow, BookingRef = "B1" });
+        await _db.SaveChangesAsync();
+
+        var req = new AdminUpdateBookingRequest { SectionId = 2 };
+        await Assert.ThrowsAsync<ArgumentException>(() => svc.AdminUpdateBookingAsync(1, req));
+    }
+
+    [Fact]
+    public async Task AdminUpdateBookingAsync_AllowsUnchangedSectionId_WhenOnlyOtherFieldsUpdated()
     {
         AdminService svc = CreateService();
         SeedBase(1);
         _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow, BookingRef = "B1" });
         await _db.SaveChangesAsync();
 
-        var req = new AdminUpdateBookingRequest { SectionId = 1 };
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.AdminUpdateBookingAsync(1, req));
+        DateTime newDate = DateTime.UtcNow.AddHours(2);
+        var req = new AdminUpdateBookingRequest { SectionId = 1, TableId = 1, Date = newDate };
+        BookingDetailDto? result = await svc.AdminUpdateBookingAsync(1, req);
+
+        Assert.NotNull(result);
+        Assert.Equal(newDate, result!.Date, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -621,6 +638,45 @@ public class AdminServiceTests : IDisposable
     {
         AdminService svc = CreateService();
         Assert.False(await svc.CancelBookingAsync(999));
+    }
+
+    [Fact]
+    public async Task CancelBookingAsync_Throws_WhenBookingDateIsInThePast()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        DateTime date = DateTime.UtcNow.AddHours(-1);
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, BookingRef = "B1" });
+        await _db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.CancelBookingAsync(1));
+
+        Booking inDb = await _db.Bookings.FirstAsync(b => b.Id == 1);
+        Assert.False(inDb.IsCancelled);
+    }
+
+    [Fact]
+    public async Task CancelBookingAsync_Succeeds_WithinFiveMinuteGracePeriod()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        DateTime date = DateTime.UtcNow.AddMinutes(-4);
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, BookingRef = "B1" });
+        await _db.SaveChangesAsync();
+
+        Assert.True(await svc.CancelBookingAsync(1));
+    }
+
+    [Fact]
+    public async Task CancelBookingAsync_Throws_JustOutsideFiveMinuteGracePeriod()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        DateTime date = DateTime.UtcNow.AddMinutes(-6);
+        _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, BookingRef = "B1" });
+        await _db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.CancelBookingAsync(1));
     }
 
     [Fact]

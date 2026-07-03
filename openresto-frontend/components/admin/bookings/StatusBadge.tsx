@@ -5,6 +5,18 @@ import { styles } from "./bookings.styles";
 
 export type BadgeVariant = "arrived" | "seated" | "upcoming" | "scheduled" | "completed";
 
+/**
+ * Whether a booking's date/time has already passed, using the same 5-minute
+ * clock-skew grace window as the backend's create/cancel guards
+ * (BookingService.cs and AdminService.cs both enforce this independently —
+ * keep all three in sync if the window ever changes). Distinct from the
+ * 90-minute "Completed" cosmetic bucket in getStatus below, which serves a
+ * different purpose (list bucketing, not action-gating).
+ */
+export function isPast(date: string): boolean {
+  return new Date(date).getTime() < Date.now() - 5 * 60 * 1000;
+}
+
 export function getStatus(date: string): { label: string; variant: BadgeVariant } {
   const d = new Date(date);
   const now = new Date();

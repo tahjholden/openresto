@@ -18,11 +18,11 @@ public class BookingsControllerUnitTests
     public BookingsControllerUnitTests()
     {
         _mockBookingService = new Mock<BookingService>(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, null!);
-        
+
         var mockProvider = new Mock<IDataProtectionProvider>();
         mockProvider.Setup(p => p.CreateProtector(It.IsAny<string>())).Returns(new Mock<IDataProtector>().Object);
         var mockEnv = new Mock<IWebHostEnvironment>();
-        
+
         _mockRecentCookie = new Mock<RecentBookingsCookie>(mockProvider.Object, mockEnv.Object);
         _controller = new BookingsController(_mockBookingService.Object, _mockRecentCookie.Object);
     }
@@ -96,5 +96,17 @@ public class BookingsControllerUnitTests
         _mockBookingService.Setup(s => s.CancelBookingAsync("R", "a@a.com")).ReturnsAsync(false);
         var result = await _controller.CancelBookingByRef("R", new CancelBookingByRefRequest { Email = "a@a.com" });
         Assert.IsType<NotFoundObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task CancelBookingByRef_ReturnsConflict_WhenBookingIsInThePast()
+    {
+        _mockBookingService.Setup(s => s.CancelBookingAsync("R", "a@a.com"))
+            .ThrowsAsync(new InvalidOperationException("Cannot cancel a booking that has already passed."));
+
+        var result = await _controller.CancelBookingByRef("R", new CancelBookingByRefRequest { Email = "a@a.com" });
+
+        var conflict = Assert.IsType<ConflictObjectResult>(result);
+        Assert.Contains("already passed", conflict.Value!.ToString());
     }
 }

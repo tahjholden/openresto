@@ -48,6 +48,7 @@ export default defineConfig({
         "**/brand-colour.spec.ts",
         "**/lookup.spec.ts",
         "**/keyboard-shortcuts.spec.ts",
+        "**/cancel-past-booking.spec.ts",
       ],
     },
     // ── Admin tests — pre-loaded auth cookie ────────────────────────────────
@@ -63,6 +64,7 @@ export default defineConfig({
         "**/brand-colour.spec.ts",
         "**/lookup.spec.ts",
         "**/keyboard-shortcuts.spec.ts",
+        "**/cancel-past-booking.spec.ts",
       ],
     },
   ],

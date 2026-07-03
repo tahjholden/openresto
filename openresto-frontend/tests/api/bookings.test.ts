@@ -183,14 +183,33 @@ describe("cancelBookingByRef", () => {
     expect(JSON.parse(opts.body)).toEqual({ email: "user@test.com" });
   });
 
-  it("returns false on failure", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false });
-    expect(await cancelBookingByRef("ref-abc", "u@t.com")).toBe(false);
+  it("throws with server message on failure", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ message: "Cannot cancel a booking that has already passed." }),
+    });
+
+    await expect(cancelBookingByRef("ref-abc", "u@t.com")).rejects.toThrow(
+      "Cannot cancel a booking that has already passed."
+    );
   });
 
-  it("returns false on network error", async () => {
+  it("throws generic message on failure without body", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => {
+        throw new Error("no json");
+      },
+    });
+
+    await expect(cancelBookingByRef("ref-abc", "u@t.com")).rejects.toThrow(
+      "Failed to cancel booking."
+    );
+  });
+
+  it("throws on network error", async () => {
     mockFetch.mockRejectedValueOnce(new Error("offline"));
-    expect(await cancelBookingByRef("ref-abc", "u@t.com")).toBe(false);
+    await expect(cancelBookingByRef("ref-abc", "u@t.com")).rejects.toThrow("offline");
   });
 });
 

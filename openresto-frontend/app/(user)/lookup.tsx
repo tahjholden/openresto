@@ -39,6 +39,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { buildCalendarUrls } from "@/utils/calendar";
 import ScrollToTopFab from "@/components/common/ScrollToTopFab";
 import Footer from "@/components/layout/Footer";
+import { isPast } from "@/components/admin/bookings/StatusBadge";
 
 export default function LookupScreen() {
   const [refInput, setRefInput] = useState("");
@@ -106,19 +107,22 @@ export default function LookupScreen() {
     if (!booking?.bookingRef) return;
     setCancelling(true);
     try {
-      const ok = await cancelBookingByRef(booking.bookingRef, booking.customerEmail);
-      if (ok) {
-        await performLookup(booking.bookingRef, booking.customerEmail);
-        setShowCancelConfirm(false);
-      } else if (Platform.OS === "web") {
-        window.alert("Failed to cancel booking.");
+      await cancelBookingByRef(booking.bookingRef, booking.customerEmail);
+      await performLookup(booking.bookingRef, booking.customerEmail);
+      setShowCancelConfirm(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to cancel booking.";
+      if (Platform.OS === "web") {
+        window.alert(message);
       } else {
-        Alert.alert("Error", "Failed to cancel booking.");
+        Alert.alert("Error", message);
       }
     } finally {
       setCancelling(false);
     }
   };
+
+  const bookingIsPast = booking ? isPast(booking.date) : false;
 
   return (
     <ThemedView style={styles.root}>
@@ -240,14 +244,20 @@ export default function LookupScreen() {
                     style={[
                       styles.cancelSection,
                       { borderColor: colors.border, backgroundColor: colors.card },
-                      booking.isCancelled && { opacity: 0.4 },
+                      (booking.isCancelled || bookingIsPast) && { opacity: 0.4 },
                     ]}
-                    onPress={() => !booking.isCancelled && setShowCancelConfirm(true)}
-                    disabled={cancelling || booking.isCancelled}
+                    onPress={() =>
+                      !booking.isCancelled && !bookingIsPast && setShowCancelConfirm(true)
+                    }
+                    disabled={cancelling || booking.isCancelled || bookingIsPast}
                   >
                     <Ionicons name="trash-outline" size={15} color={COLORS.error} />
                     <ThemedText style={styles.cancelBtnText}>
-                      {booking.isCancelled ? "Already Cancelled" : "Cancel This Booking"}
+                      {booking.isCancelled
+                        ? "Already Cancelled"
+                        : bookingIsPast
+                          ? "Booking Has Passed"
+                          : "Cancel This Booking"}
                     </ThemedText>
                   </Pressable>
                 </View>
@@ -575,7 +585,7 @@ function BookingResultCard({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingBottom: 60 },
+  scrollContent: { flexGrow: 1 },
   header: { alignItems: "center", gap: 8, marginTop: 8, marginBottom: 20 },
   title: { fontSize: 28, fontWeight: "800", letterSpacing: -0.6, marginTop: 8 },
   subtitle: { fontSize: 15, textAlign: "center", lineHeight: 22 },

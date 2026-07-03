@@ -386,14 +386,31 @@ describe("adminDeleteBooking", () => {
     expect(opts.method).toBe("POST");
   });
 
-  it("returns false on failure", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false });
-    expect(await adminDeleteBooking(10)).toBe(false);
+  it("throws with server message on failure", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ message: "Cannot cancel a booking that has already passed." }),
+    });
+
+    await expect(adminDeleteBooking(10)).rejects.toThrow(
+      "Cannot cancel a booking that has already passed."
+    );
   });
 
-  it("returns false on network error", async () => {
+  it("throws generic message on failure without body", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => {
+        throw new Error("no json");
+      },
+    });
+
+    await expect(adminDeleteBooking(10)).rejects.toThrow("Failed to cancel the booking.");
+  });
+
+  it("throws on network error", async () => {
     mockFetch.mockRejectedValueOnce(new Error("offline"));
-    expect(await adminDeleteBooking(10)).toBe(false);
+    await expect(adminDeleteBooking(10)).rejects.toThrow("offline");
   });
 });
 

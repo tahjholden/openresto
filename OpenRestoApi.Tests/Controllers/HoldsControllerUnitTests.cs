@@ -139,6 +139,198 @@ public class HoldsControllerUnitTests
     }
 
     [Fact]
+    public async Task PlaceHold_ReturnsBadRequest_ForPastDate()
+    {
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "UTC",
+                OpenTime = "00:00",
+                CloseTime = "23:59",
+            });
+
+        var result = await _controller.PlaceHold(
+            new PlaceHoldRequest { Date = DateTime.UtcNow.AddDays(-1) });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task PlaceHold_ReturnsBadRequest_WhenBookingsArePaused()
+    {
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "UTC",
+                OpenTime = "00:00",
+                CloseTime = "23:59",
+                BookingsPausedUntil = DateTime.UtcNow.AddDays(7),
+            });
+
+        var testDate = DateTime.UtcNow.Date.AddDays(1).AddHours(12);
+        var result = await _controller.PlaceHold(new PlaceHoldRequest { Date = testDate });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task PlaceHold_ReturnsConflict_WhenAlreadyBooked()
+    {
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "UTC",
+                OpenTime = "00:00",
+                CloseTime = "23:59",
+            });
+        _mockBookingRepo.Setup(b => b.IsTableBookedOnDateAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<int>()))
+            .ReturnsAsync(true);
+
+        var testDate = DateTime.UtcNow.Date.AddDays(1).AddHours(12);
+        var result = await _controller.PlaceHold(new PlaceHoldRequest { Date = testDate });
+
+        Assert.IsType<ConflictObjectResult>(result);
+        _mockService.Verify(
+            s => s.PlaceHold(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<string?>(), It.IsAny<int>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task PlaceHold_FallsBackToUtc_WhenTimezoneIsInvalid()
+    {
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "Not/A/Real/Timezone",
+                OpenTime = "00:00",
+                CloseTime = "23:59",
+            });
+        _mockBookingRepo.Setup(b => b.IsTableBookedOnDateAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+        _mockService.Setup(s => s.PlaceHold(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<string?>(), It.IsAny<int>()))
+            .Returns(new HoldResult("hold-1", DateTime.UtcNow.AddMinutes(5)));
+
+        // Unspecified-kind date forces the timezone-conversion branch.
+        var testDate = DateTime.SpecifyKind(DateTime.UtcNow.Date.AddDays(1).AddHours(12), DateTimeKind.Unspecified);
+        var result = await _controller.PlaceHold(new PlaceHoldRequest { Date = testDate });
+
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task PlaceHold_ReturnsBadRequest_WhenDayNotInOpenDays()
+    {
+        DateTime testDate = DateTime.UtcNow.Date.AddDays(1).AddHours(12);
+        int isoDay = (int)testDate.DayOfWeek == 0 ? 7 : (int)testDate.DayOfWeek;
+        string otherDay = isoDay == 1 ? "2" : "1";
+
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "UTC",
+                OpenTime = "00:00",
+                CloseTime = "23:59",
+                OpenDays = otherDay,
+            });
+
+        var result = await _controller.PlaceHold(new PlaceHoldRequest { Date = testDate });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task PlaceHold_UsesDefaultHours_WhenStoredTimesAreUnparseable()
+    {
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "UTC",
+                OpenTime = "",
+                CloseTime = "",
+            });
+        _mockBookingRepo.Setup(b => b.IsTableBookedOnDateAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+        _mockService.Setup(s => s.PlaceHold(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<string?>(), It.IsAny<int>()))
+            .Returns(new HoldResult("hold-1", DateTime.UtcNow.AddMinutes(5)));
+
+        // Falls back to the default 09:00-22:00 window, so noon is within hours.
+        var testDate = DateTime.UtcNow.Date.AddDays(1).AddHours(12);
+        var result = await _controller.PlaceHold(new PlaceHoldRequest { Date = testDate });
+
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task PlaceHold_HandlesOvernightHours_WhenRequestedTimeIsBeforeMidnightClose()
+    {
+        // Open 18:00, close 02:00 (after midnight) — 23:00 should be within hours.
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "UTC",
+                OpenTime = "18:00",
+                CloseTime = "02:00",
+            });
+        _mockBookingRepo.Setup(b => b.IsTableBookedOnDateAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+        _mockService.Setup(s => s.PlaceHold(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<string?>(), It.IsAny<int>()))
+            .Returns(new HoldResult("hold-1", DateTime.UtcNow.AddMinutes(5)));
+
+        var testDate = DateTime.UtcNow.Date.AddDays(1).AddHours(23);
+        var result = await _controller.PlaceHold(new PlaceHoldRequest { Date = testDate });
+
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task PlaceHold_ReturnsBadRequest_OutsideOvernightHoursWindow()
+    {
+        // Open 18:00, close 02:00 — noon falls outside both segments of the window.
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "UTC",
+                OpenTime = "18:00",
+                CloseTime = "02:00",
+            });
+
+        var testDate = DateTime.UtcNow.Date.AddDays(1).AddHours(12);
+        var result = await _controller.PlaceHold(new PlaceHoldRequest { Date = testDate });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task PlaceHold_TreatsEqualOpenAndCloseTimes_AsAlwaysOpen()
+    {
+        _mockRestaurantRepo.Setup(r => r.GetByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync(new OpenRestoApi.Core.Domain.Restaurant
+            {
+                Id = 1,
+                Timezone = "UTC",
+                OpenTime = "00:00",
+                CloseTime = "00:00",
+            });
+        _mockBookingRepo.Setup(b => b.IsTableBookedOnDateAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+        _mockService.Setup(s => s.PlaceHold(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<string?>(), It.IsAny<int>()))
+            .Returns(new HoldResult("hold-1", DateTime.UtcNow.AddMinutes(5)));
+
+        var testDate = DateTime.UtcNow.Date.AddDays(1).AddHours(3);
+        var result = await _controller.PlaceHold(new PlaceHoldRequest { Date = testDate });
+
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
     public async Task PlaceHold_ReturnsBadRequest_WhenDateFallsOnWalkInDay()
     {
         // Tomorrow's ISO day (1=Mon … 7=Sun) is marked walk-in only.

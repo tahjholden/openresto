@@ -3,6 +3,7 @@ import {
   logout,
   checkSession,
   changePassword,
+  changeEmail,
   getPvqStatus,
   setupPvq,
   verifyPvq,
@@ -135,6 +136,63 @@ describe("auth api", () => {
       });
       const res = await changePassword("old", "new");
       expect(res).toEqual({ ok: true, message: "Done." });
+    });
+  });
+
+  describe("changeEmail", () => {
+    it("returns success and new email on ok response", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ message: "Email changed successfully.", email: "new@test.com" }),
+      });
+      const res = await changeEmail("pass", "new@test.com");
+      expect(res).toEqual({
+        ok: true,
+        message: "Email changed successfully.",
+        email: "new@test.com",
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("/admin/auth/change-email"),
+        expect.any(Object)
+      );
+    });
+
+    it("returns error message on failure", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ message: "Current password is incorrect." }),
+      });
+      const res = await changeEmail("wrong", "new@test.com");
+      expect(res).toEqual({
+        ok: false,
+        message: "Current password is incorrect.",
+        email: undefined,
+      });
+    });
+
+    it("returns network error message on exception", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network"));
+      const res = await changeEmail("pass", "new@test.com");
+      expect(res.ok).toBe(false);
+      expect(res.message).toBe("Network error.");
+    });
+
+    it("returns fallback message when body has no message and ok is false", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.reject(new Error("bad json")),
+      });
+      const res = await changeEmail("pass", "new@test.com");
+      expect(res).toEqual({ ok: false, message: "Request failed.", email: undefined });
+    });
+
+    it("returns Done fallback when ok is true but body has no message", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.reject(new Error("bad json")),
+      });
+      const res = await changeEmail("pass", "new@test.com");
+      expect(res).toEqual({ ok: true, message: "Done.", email: undefined });
     });
   });
 

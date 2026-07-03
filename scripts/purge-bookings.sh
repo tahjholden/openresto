@@ -83,6 +83,12 @@ log "Resetting admin credentials for $ADMIN_EMAIL..."
 docker exec "$CONTAINER" sqlite3 "$DB" \
   "UPDATE AdminCredentials SET Email='$ADMIN_EMAIL', PasswordHash='$NEW_HASH', PasswordSalt='$NEW_SALT', PvqQuestion=NULL, PvqAnswerHash=NULL, PvqAnswerSalt=NULL, ResetToken=NULL, ResetTokenExpiry=NULL;"
 
+ACTUAL_EMAIL="$(docker exec "$CONTAINER" sqlite3 "$DB" 'SELECT Email FROM AdminCredentials LIMIT 1;')"
+if [[ "$ACTUAL_EMAIL" != "$ADMIN_EMAIL" ]]; then
+  log "ERROR: AdminCredentials.Email is '$ACTUAL_EMAIL' after reset, expected '$ADMIN_EMAIL'."
+  exit 1
+fi
+
 log "Credential reset done."
 
 # --- Seed example bookings ---

@@ -63,6 +63,28 @@ public class AuthController(AuthService authService) : ControllerBase
         return Ok(new { message = "Password changed successfully." });
     }
 
+    [HttpPost("change-email")]
+    [Authorize]
+    public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequest req)
+    {
+        string trimmedEmail = req.NewEmail?.Trim() ?? string.Empty;
+        if (trimmedEmail.Length == 0 || !IsValidEmail(trimmedEmail))
+            return BadRequest(new { message = "A valid email address is required." });
+
+        try
+        {
+            string? jwt = await _authService.ChangeEmailAsync(req.CurrentPassword, trimmedEmail);
+            if (jwt == null)
+                return Unauthorized(new { message = "Current password is incorrect." });
+            SetAuthCookie(jwt);
+            return Ok(new { message = "Email changed successfully.", email = trimmedEmail.ToLowerInvariant() });
+        }
+        catch (InvalidOperationException)
+        {
+            return BadRequest(new { message = "New email must be different from the current email." });
+        }
+    }
+
     [HttpGet("pvq")]
     public async Task<IActionResult> GetPvqStatus()
     {
@@ -103,6 +125,9 @@ public class AuthController(AuthService authService) : ControllerBase
             return BadRequest(new { message = "Invalid or expired reset token." });
         return Ok(new { message = "Password reset successfully." });
     }
+
+    private static bool IsValidEmail(string email) =>
+        System.Text.RegularExpressions.Regex.IsMatch(email, @"^[^\s@]+@[^\s@]+\.[^\s@]+$");
 
     private void SetAuthCookie(string jwt)
     {

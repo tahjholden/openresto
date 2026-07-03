@@ -47,6 +47,23 @@ export async function changePassword(
   }
 }
 
+export async function changeEmail(
+  currentPassword: string,
+  newEmail: string
+): Promise<{ ok: boolean; message: string; email?: string }> {
+  try {
+    const res = await post("/admin/auth/change-email", { currentPassword, newEmail });
+    const body = await res.json().catch(() => ({}));
+    return {
+      ok: res.ok,
+      message: body.message ?? (res.ok ? "Done." : "Request failed."),
+      email: body.email,
+    };
+  } catch {
+    return { ok: false, message: "Network error." };
+  }
+}
+
 // ---------- PVQ (Personal Verification Questions) ----------
 
 export interface PvqStatus {

@@ -119,6 +119,12 @@ public class ChangePasswordRequest
     public string NewPassword { get; set; } = null!;
 }
 
+public class ChangeEmailRequest
+{
+    public string CurrentPassword { get; set; } = null!;
+    public string NewEmail { get; set; } = null!;
+}
+
 public class LookupDto
 {
     public int Id { get; set; }

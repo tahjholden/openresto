@@ -38,6 +38,19 @@ public class AuthService(AppDbContext db, IConfiguration config)
         return true;
     }
 
+    public virtual async Task<string?> ChangeEmailAsync(string currentPassword, string newEmail)
+    {
+        AdminCredential cred = await GetOrCreateCredentialAsync();
+        if (!VerifyPassword(currentPassword, cred.PasswordHash, cred.PasswordSalt))
+            return null;
+        string normalizedEmail = newEmail.Trim().ToLowerInvariant();
+        if (string.Equals(normalizedEmail, cred.Email, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("New email must be different from the current email.");
+        cred.Email = normalizedEmail;
+        await _db.SaveChangesAsync();
+        return GenerateJwt(cred.Email);
+    }
+
     public virtual async Task<PvqStatusDto> GetPvqStatusAsync()
     {
         AdminCredential? cred = await _db.AdminCredentials.FirstOrDefaultAsync();

@@ -11,6 +11,8 @@ jest.mock("@/api/auth", () => ({
   getPvqStatus: jest.fn(),
   setupPvq: jest.fn(),
   changePassword: jest.fn(),
+  checkSession: jest.fn(),
+  changeEmail: jest.fn(),
 }));
 
 jest.mock("@/context/BrandContext", () => {
@@ -39,6 +41,7 @@ describe("SecurityCard", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (authApi.getPvqStatus as jest.Mock).mockResolvedValue(null);
+    (authApi.checkSession as jest.Mock).mockResolvedValue({ email: "admin@test.com" });
   });
 
   it("renders Account Security title", async () => {
@@ -255,5 +258,128 @@ describe("SecurityCard", () => {
     await waitFor(() => {
       expect(screen.getByText("Password updated.")).toBeTruthy();
     });
+  });
+
+  // ── Email row ────────────────────────────────────────────────────────────
+
+  it("renders the current email fetched via checkSession", async () => {
+    render(<SecurityCard {...baseProps} />);
+    await waitFor(() => {
+      expect(screen.getByText("admin@test.com")).toBeTruthy();
+    });
+  });
+
+  it("opens the email form when its Change button is pressed", async () => {
+    render(<SecurityCard {...baseProps} />);
+    await waitFor(() => expect(screen.getByText("admin@test.com")).toBeTruthy());
+    const changeBtns = screen.queryAllByText("Change");
+    fireEvent.press(changeBtns[0]);
+    expect(screen.getByText("New email")).toBeTruthy();
+  });
+
+  it("closes the email form when Cancel is pressed", async () => {
+    render(<SecurityCard {...baseProps} />);
+    await waitFor(() => expect(screen.getByText("admin@test.com")).toBeTruthy());
+    const changeBtns = screen.queryAllByText("Change");
+    fireEvent.press(changeBtns[0]);
+    expect(screen.getByText("New email")).toBeTruthy();
+    fireEvent.press(screen.getByText("Cancel"));
+    expect(screen.queryByText("New email")).toBeNull();
+  });
+
+  it("disables Update Email until both fields are filled", async () => {
+    render(<SecurityCard {...baseProps} />);
+    await waitFor(() => expect(screen.getByText("admin@test.com")).toBeTruthy());
+    const changeBtns = screen.queryAllByText("Change");
+    fireEvent.press(changeBtns[0]);
+    fireEvent.changeText(screen.getByPlaceholderText("new@email.com"), "new@test.com");
+    fireEvent.press(screen.getByText("Update Email"));
+    expect(authApi.changeEmail).not.toHaveBeenCalled();
+  });
+
+  it("calls changeEmail and updates the displayed email on success", async () => {
+    (authApi.changeEmail as jest.Mock).mockResolvedValue({
+      ok: true,
+      message: "Email changed successfully.",
+      email: "new@test.com",
+    });
+    render(<SecurityCard {...baseProps} />);
+    await waitFor(() => expect(screen.getByText("admin@test.com")).toBeTruthy());
+    const changeBtns = screen.queryAllByText("Change");
+    fireEvent.press(changeBtns[0]);
+    fireEvent.changeText(screen.getByPlaceholderText("new@email.com"), "new@test.com");
+    fireEvent.changeText(screen.getByPlaceholderText("••••••••"), "currentpass");
+    await act(async () => {
+      fireEvent.press(screen.getByText("Update Email"));
+    });
+    expect(authApi.changeEmail).toHaveBeenCalledWith("currentpass", "new@test.com");
+    await waitFor(() => {
+      expect(screen.getByText("new@test.com")).toBeTruthy();
+      expect(screen.getByText("Email changed successfully.")).toBeTruthy();
+    });
+    expect(screen.queryByText("New email")).toBeNull();
+  });
+
+  it("shows inline error and keeps old email when changeEmail fails", async () => {
+    (authApi.changeEmail as jest.Mock).mockResolvedValue({
+      ok: false,
+      message: "Current password is incorrect.",
+    });
+    render(<SecurityCard {...baseProps} />);
+    await waitFor(() => expect(screen.getByText("admin@test.com")).toBeTruthy());
+    const changeBtns = screen.queryAllByText("Change");
+    fireEvent.press(changeBtns[0]);
+    fireEvent.changeText(screen.getByPlaceholderText("new@email.com"), "new@test.com");
+    fireEvent.changeText(screen.getByPlaceholderText("••••••••"), "wrongpass");
+    await act(async () => {
+      fireEvent.press(screen.getByText("Update Email"));
+    });
+    await waitFor(() => {
+      expect(screen.getByText("Current password is incorrect.")).toBeTruthy();
+    });
+    expect(screen.getByText("admin@test.com")).toBeTruthy();
+  });
+
+  // ── Mutual exclusion across Email / PVQ / Password forms ───────────────────
+
+  it("opening the password form closes an already-open email form", async () => {
+    render(<SecurityCard {...baseProps} />);
+    await waitFor(() => expect(screen.getByText("admin@test.com")).toBeTruthy());
+    const emailChangeBtns = screen.queryAllByText("Change");
+    fireEvent.press(emailChangeBtns[0]);
+    expect(screen.getByText("New email")).toBeTruthy();
+
+    const changeBtnsAfterOpen = screen.queryAllByText("Change");
+    fireEvent.press(changeBtnsAfterOpen[changeBtnsAfterOpen.length - 1]);
+
+    expect(screen.queryByText("New email")).toBeNull();
+    expect(screen.getByText("Update Password")).toBeTruthy();
+  });
+
+  it("opening the email form closes an already-open password form", async () => {
+    render(<SecurityCard {...baseProps} />);
+    await waitFor(() => expect(screen.getByText("admin@test.com")).toBeTruthy());
+    const changeBtns = screen.queryAllByText("Change");
+    fireEvent.press(changeBtns[changeBtns.length - 1]);
+    expect(screen.getByText("Update Password")).toBeTruthy();
+
+    const changeBtnsAfterOpen = screen.queryAllByText("Change");
+    fireEvent.press(changeBtnsAfterOpen[0]);
+
+    expect(screen.queryByText("Update Password")).toBeNull();
+    expect(screen.getByText("New email")).toBeTruthy();
+  });
+
+  it("opening the security-question form closes an already-open email form", async () => {
+    render(<SecurityCard {...baseProps} />);
+    await waitFor(() => expect(screen.getByText("admin@test.com")).toBeTruthy());
+    const changeBtns = screen.queryAllByText("Change");
+    fireEvent.press(changeBtns[0]);
+    expect(screen.getByText("New email")).toBeTruthy();
+
+    fireEvent.press(screen.getByText("Set up"));
+
+    expect(screen.queryByText("New email")).toBeNull();
+    expect(screen.getByText("Save Question")).toBeTruthy();
   });
 });

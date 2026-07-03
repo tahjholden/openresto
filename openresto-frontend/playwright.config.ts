@@ -49,6 +49,7 @@ export default defineConfig({
         "**/lookup.spec.ts",
         "**/keyboard-shortcuts.spec.ts",
         "**/cancel-past-booking.spec.ts",
+        "**/admin-change-email.spec.ts",
       ],
     },
     // ── Admin tests — pre-loaded auth cookie ────────────────────────────────
@@ -65,6 +66,7 @@ export default defineConfig({
         "**/lookup.spec.ts",
         "**/keyboard-shortcuts.spec.ts",
         "**/cancel-past-booking.spec.ts",
+        "**/admin-change-email.spec.ts",
       ],
     },
   ],

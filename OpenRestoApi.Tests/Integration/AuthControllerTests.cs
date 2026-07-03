@@ -143,6 +143,280 @@ public class AuthControllerTests(TestWebAppFactory factory) : IClassFixture<Test
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    // ── ChangeEmail ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task ChangeEmail_WithCorrectCurrentPassword_Succeeds()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+
+        HttpResponseMessage response = await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = "new-admin@test.com"
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // Verify we can login with the new email
+        HttpResponseMessage loginResponse = await client.PostAsJsonAsync("/api/admin/auth/login", new
+        {
+            email = "new-admin@test.com",
+            password = TestWebAppFactory.AdminPassword
+        });
+        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+
+        // Old email should no longer work
+        HttpResponseMessage oldLoginResponse = await client.PostAsJsonAsync("/api/admin/auth/login", new
+        {
+            email = TestWebAppFactory.AdminEmail,
+            password = TestWebAppFactory.AdminPassword
+        });
+        Assert.Equal(HttpStatusCode.Unauthorized, oldLoginResponse.StatusCode);
+
+        // Reset email back for other tests
+        await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = TestWebAppFactory.AdminEmail
+        });
+    }
+
+    [Fact]
+    public async Task ChangeEmail_WithWrongCurrentPassword_Returns401()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+
+        HttpResponseMessage response = await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = "WrongCurrent",
+            newEmail = "someone-else@test.com"
+        });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ChangeEmail_WithInvalidEmailFormat_Returns400()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+
+        HttpResponseMessage response = await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = "not-an-email"
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("missing-domain@")]
+    [InlineData("@missing-local.com")]
+    [InlineData("missing-tld@domain")]
+    [InlineData("spaces in@email.com")]
+    [InlineData("double@@at.com")]
+    public async Task ChangeEmail_WithVariousMalformedFormats_Returns400(string malformedEmail)
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+
+        HttpResponseMessage response = await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = malformedEmail
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ChangeEmail_WithSameEmailDifferentCase_Returns400()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+
+        HttpResponseMessage response = await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = TestWebAppFactory.AdminEmail.ToUpperInvariant()
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ChangeEmail_WithIdenticalEmailSameCase_Returns400()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+
+        HttpResponseMessage response = await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = TestWebAppFactory.AdminEmail
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ChangeEmail_WithWhitespacePaddedEmail_TrimsAndSucceeds()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+
+        HttpResponseMessage response = await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = "  padded-admin@test.com  "
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("padded-admin@test.com", body.GetProperty("email").GetString());
+
+        // Reset email back for other tests
+        await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = TestWebAppFactory.AdminEmail
+        });
+    }
+
+    [Fact]
+    public async Task ChangeEmail_WithEmptyNewEmail_Returns400()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+
+        HttpResponseMessage response = await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = "   "
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ChangeEmail_WithoutAuth_Returns401()
+    {
+        HttpClient client = _factory.CreateClient();
+
+        HttpResponseMessage response = await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = "no-auth@test.com"
+        });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ChangeEmail_Succeeds_SetsCookieAndMeReflectsNewEmail()
+    {
+        HttpClient client = _factory.CreateClient();
+
+        // 1. Login to obtain a cookie-based session
+        HttpResponseMessage loginResp = await client.PostAsJsonAsync("/api/admin/auth/login", new
+        {
+            email = TestWebAppFactory.AdminEmail,
+            password = TestWebAppFactory.AdminPassword
+        });
+        Assert.Equal(HttpStatusCode.OK, loginResp.StatusCode);
+        string? loginCookie = loginResp.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? loginCookies)
+            ? loginCookies.FirstOrDefault(v => v.StartsWith("openresto_auth=", StringComparison.OrdinalIgnoreCase))
+            : null;
+        Assert.NotNull(loginCookie);
+
+        // 2. Change email using the cookie
+        var changeRequest = new HttpRequestMessage(HttpMethod.Post, "/api/admin/auth/change-email")
+        {
+            Content = JsonContent.Create(new
+            {
+                currentPassword = TestWebAppFactory.AdminPassword,
+                newEmail = "cookie-flow@test.com"
+            })
+        };
+        changeRequest.Headers.Add("Cookie", loginCookie!.Split(';')[0]);
+        HttpResponseMessage changeResponse = await client.SendAsync(changeRequest);
+        Assert.Equal(HttpStatusCode.OK, changeResponse.StatusCode);
+
+        // 3. Extract the freshly re-issued cookie
+        string? newCookie = changeResponse.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? newCookies)
+            ? newCookies.FirstOrDefault(v => v.StartsWith("openresto_auth=", StringComparison.OrdinalIgnoreCase))
+            : null;
+        Assert.NotNull(newCookie);
+
+        // 4. /me reflects the new email using the re-issued cookie
+        var meRequest = new HttpRequestMessage(HttpMethod.Get, "/api/admin/auth/me");
+        meRequest.Headers.Add("Cookie", newCookie!.Split(';')[0]);
+        HttpResponseMessage meResponse = await client.SendAsync(meRequest);
+        Assert.Equal(HttpStatusCode.OK, meResponse.StatusCode);
+        JsonElement meBody = await meResponse.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("cookie-flow@test.com", meBody.GetProperty("email").GetString());
+
+        // Reset email back for other tests
+        var resetRequest = new HttpRequestMessage(HttpMethod.Post, "/api/admin/auth/change-email")
+        {
+            Content = JsonContent.Create(new
+            {
+                currentPassword = TestWebAppFactory.AdminPassword,
+                newEmail = TestWebAppFactory.AdminEmail
+            })
+        };
+        resetRequest.Headers.Add("Cookie", newCookie!.Split(';')[0]);
+        await client.SendAsync(resetRequest);
+    }
+
+    [Fact]
+    public async Task ChangeEmail_ThenPvqVerify_MustUseNewEmail()
+    {
+        // Regression test: VerifyPvqAsync looks up the AdminCredential row by matching
+        // the supplied email against cred.Email (AuthService.cs), so a PVQ-based
+        // password-reset attempt must follow an email change and use the new address.
+        HttpClient client = _factory.CreateAuthenticatedClient();
+
+        // 1. Set up the security question on the account.
+        HttpResponseMessage setupResponse = await client.PostAsJsonAsync("/api/admin/auth/pvq/setup", new
+        {
+            question = "What is your favorite color?",
+            answer = "Purple"
+        });
+        Assert.Equal(HttpStatusCode.OK, setupResponse.StatusCode);
+
+        // 2. Change the login email.
+        HttpResponseMessage changeResponse = await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = "pvq-after-change@test.com"
+        });
+        Assert.Equal(HttpStatusCode.OK, changeResponse.StatusCode);
+
+        HttpClient unauthClient = _factory.CreateClient();
+
+        // 3. Verifying with the OLD email must fail — no credential row matches it anymore.
+        HttpResponseMessage oldEmailVerify = await unauthClient.PostAsJsonAsync("/api/admin/auth/pvq/verify", new
+        {
+            email = TestWebAppFactory.AdminEmail,
+            answer = "Purple"
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, oldEmailVerify.StatusCode);
+
+        // 4. Verifying with the NEW email succeeds — the security question follows the account, not the old address.
+        HttpResponseMessage newEmailVerify = await unauthClient.PostAsJsonAsync("/api/admin/auth/pvq/verify", new
+        {
+            email = "pvq-after-change@test.com",
+            answer = "Purple"
+        });
+        Assert.Equal(HttpStatusCode.OK, newEmailVerify.StatusCode);
+        JsonElement verifyBody = await newEmailVerify.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(string.IsNullOrEmpty(verifyBody.GetProperty("resetToken").GetString()));
+
+        // Reset email back for other tests
+        await client.PostAsJsonAsync("/api/admin/auth/change-email", new
+        {
+            currentPassword = TestWebAppFactory.AdminPassword,
+            newEmail = TestWebAppFactory.AdminEmail
+        });
+    }
+
     // ── PVQ flow ─────────────────────────────────────────────────────────────
 
     [Fact]

@@ -6,7 +6,14 @@ import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/theme/theme";
-import { getPvqStatus, setupPvq, changePassword, PvqStatus } from "@/api/auth";
+import {
+  getPvqStatus,
+  setupPvq,
+  changePassword,
+  changeEmail,
+  checkSession,
+  PvqStatus,
+} from "@/api/auth";
 import { useBrand } from "@/context/BrandContext";
 import { AnimatedAccordion } from "@/components/common/AnimatedAccordion";
 import { styles } from "./settings.styles";
@@ -21,13 +28,17 @@ export function SecurityCard({
   cardBg: string;
 }) {
   const [pvqStatus, setPvqStatus] = useState<PvqStatus | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
   const [showPvqForm, setShowPvqForm] = useState(false);
   const [showPwForm, setShowPwForm] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
   const [pvqQuestion, setPvqQuestion] = useState("");
   const [pvqAnswer, setPvqAnswer] = useState("");
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [currentPwForEmail, setCurrentPwForEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [expanded, setExpanded] = usePersistedState("settings:security:expanded", true);
@@ -37,6 +48,9 @@ export function SecurityCard({
 
   useEffect(() => {
     getPvqStatus().then(setPvqStatus);
+    checkSession().then((session) => {
+      if (session && session !== "rate-limited") setEmail(session.email);
+    });
   }, []);
 
   const handleSavePvq = async () => {
@@ -50,6 +64,19 @@ export function SecurityCard({
       setShowPvqForm(false);
       setPvqQuestion("");
       setPvqAnswer("");
+    }
+  };
+
+  const handleChangeEmail = async () => {
+    setSaving(true);
+    const result = await changeEmail(currentPwForEmail, newEmail.trim());
+    setSaving(false);
+    setMsg({ text: result.message, ok: result.ok });
+    if (result.ok) {
+      setEmail(result.email ?? newEmail.trim().toLowerCase());
+      setShowEmailForm(false);
+      setNewEmail("");
+      setCurrentPwForEmail("");
     }
   };
 
@@ -91,6 +118,71 @@ export function SecurityCard({
 
       <AnimatedAccordion expanded={expanded}>
         <>
+          {/* Email row */}
+          <View style={[styles.secRow, { borderTopColor: borderColor }]}>
+            <View style={{ flex: 1 }}>
+              <ThemedText style={styles.secRowTitle}>Email</ThemedText>
+              <ThemedText style={[styles.secRowSub, { color: mutedColor }]} numberOfLines={1}>
+                {email ?? "Loading…"}
+              </ThemedText>
+            </View>
+            <Pressable
+              testID="email-change-button"
+              style={[styles.secBtn, { borderColor }]}
+              onPress={() => {
+                setShowEmailForm((v) => !v);
+                setShowPvqForm(false);
+                setShowPwForm(false);
+                setMsg(null);
+              }}
+            >
+              <ThemedText style={[styles.secBtnText, { color: primaryColor }]}>Change</ThemedText>
+            </Pressable>
+          </View>
+
+          {showEmailForm && (
+            <View style={[styles.secForm, { borderTopColor: borderColor }]}>
+              <View style={styles.field}>
+                <ThemedText style={styles.fieldLabel}>New email</ThemedText>
+                <Input
+                  value={newEmail}
+                  onChangeText={setNewEmail}
+                  placeholder="new@email.com"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+              <View style={styles.field}>
+                <ThemedText style={styles.fieldLabel}>Current password</ThemedText>
+                <Input
+                  value={currentPwForEmail}
+                  onChangeText={setCurrentPwForEmail}
+                  secureTextEntry
+                  placeholder="••••••••"
+                />
+              </View>
+              {msg && (
+                <ThemedText style={msg.ok ? styles.successText : styles.errorText}>
+                  {msg.text}
+                </ThemedText>
+              )}
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+                <Button
+                  onPress={handleChangeEmail}
+                  disabled={saving || !newEmail.trim() || !currentPwForEmail}
+                  style={{ flex: 1 }}
+                >
+                  {saving ? "Saving…" : "Update Email"}
+                </Button>
+                <Pressable style={styles.smallBtn} onPress={() => setShowEmailForm(false)}>
+                  <ThemedText style={[styles.smallBtnText, { color: mutedColor }]}>
+                    Cancel
+                  </ThemedText>
+                </Pressable>
+              </View>
+            </View>
+          )}
+
           {/* PVQ status row */}
           <View style={[styles.secRow, { borderTopColor: borderColor }]}>
             <View style={{ flex: 1, gap: 2 }}>
@@ -110,6 +202,7 @@ export function SecurityCard({
               onPress={() => {
                 setShowPvqForm((v) => !v);
                 setShowPwForm(false);
+                setShowEmailForm(false);
                 setMsg(null);
               }}
             >
@@ -169,6 +262,7 @@ export function SecurityCard({
               onPress={() => {
                 setShowPwForm((v) => !v);
                 setShowPvqForm(false);
+                setShowEmailForm(false);
                 setMsg(null);
               }}
             >

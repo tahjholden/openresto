@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
-import { Slot, Stack, useRouter, usePathname } from "expo-router";
+import { Slot, Stack, useRouter, usePathname, useSegments } from "expo-router";
 import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
 import { checkSession } from "@/api/auth";
@@ -9,6 +9,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 import PageLoader from "@/components/common/PageLoader";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { focusTarget } from "@/utils/focusRegistry";
+import KeyboardShortcutsHelp from "@/components/common/KeyboardShortcutsHelp";
 
 const MIN_WIDTH = 600;
 
@@ -45,6 +48,16 @@ export default function AdminLayout() {
 function AdminLayoutInner() {
   const router = useRouter();
   const pathname = usePathname();
+  const segments = useSegments();
+  // useSegments() reflects the true current URL (a plain state read, no focus-
+  // event lifecycle), unlike useIsFocused() which never fires on a cold web
+  // load (page.goto() straight to a route never dispatches a "focus" nav
+  // event) and would leave shortcutsEnabled stuck false. This also still
+  // guards against the original scope-leak bug: once the user navigates to a
+  // (user) route, segments[0] flips away from "(admin)" even though this
+  // layout instance may remain mounted (React Navigation doesn't unmount
+  // sibling stack screens on navigation).
+  const isAdminRouteActive = segments[0] === "(admin)";
   const brand = useBrand();
   const [authState, setAuthState] = useState<"loading" | "authenticated" | "unauthenticated">(
     "loading"
@@ -95,6 +108,27 @@ function AdminLayoutInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const shortcutsEnabled =
+    authState === "authenticated" && pathname !== "/login" && isAdminRouteActive;
+
+  useKeyboardShortcuts(
+    shortcutsEnabled
+      ? {
+          "g d": () => router.push("/(admin)/dashboard"),
+          "g b": () => router.push("/(admin)/bookings"),
+          "g l": () => router.push("/(admin)/locations"),
+          "g s": () => router.push("/(admin)/settings"),
+          "/": (e) => {
+            e.preventDefault();
+            focusTarget("admin-lookup");
+          },
+          c: () => router.push({ pathname: "/(admin)/bookings", params: { create: "1" } }),
+          "?": () => setShowShortcutsHelp((v) => !v),
+        }
+      : {}
+  );
+
   if (authState === "loading") return <PageLoader />;
 
   /* istanbul ignore next */
@@ -116,6 +150,11 @@ function AdminLayoutInner() {
         <View style={{ flex: 1 }}>
           <Slot />
         </View>
+        <KeyboardShortcutsHelp
+          visible={showShortcutsHelp}
+          scope="admin"
+          onClose={() => setShowShortcutsHelp(false)}
+        />
       </ThemedView>
     );
   }

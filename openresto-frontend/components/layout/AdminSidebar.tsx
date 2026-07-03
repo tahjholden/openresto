@@ -10,11 +10,12 @@ import { COLORS, BORDER_RADIUS, FORM_SIZES, TYPOGRAPHY, getThemeColors } from "@
 import { useBrand } from "@/context/BrandContext";
 import { hexToRgba } from "@/utils/colors";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchRestaurants } from "@/api/restaurants";
 import { adminLookupBookings } from "@/api/admin";
 import { getUnreadCount } from "@/api/notifications";
 import { BookingDetailPopup } from "@/components/admin/bookings/BookingDetailPopup";
+import { registerFocusTarget, unregisterFocusTarget } from "@/utils/focusRegistry";
 
 const NAV_ITEMS = [
   {
@@ -65,12 +66,18 @@ export default function AdminSidebar() {
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupStatus, setLookupStatus] = useState<"idle" | "not_found" | "multiple">("idle");
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const lookupInputRef = useRef<TextInput>(null);
 
   const hoverBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)";
   const activeBg = isDark ? hexToRgba(PRIMARY, 0.18) : hexToRgba(PRIMARY, 0.09);
 
   useEffect(() => {
     fetchRestaurants().then((data) => setLocationCount(data.length));
+  }, []);
+
+  useEffect(() => {
+    registerFocusTarget("admin-lookup", lookupInputRef);
+    return () => unregisterFocusTarget("admin-lookup");
   }, []);
 
   useEffect(() => {
@@ -203,6 +210,7 @@ export default function AdminSidebar() {
           Lookup Booking
         </ThemedText>
         <TextInput
+          ref={lookupInputRef}
           style={[
             styles.lookupInput,
             {

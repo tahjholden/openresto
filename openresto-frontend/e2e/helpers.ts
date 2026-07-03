@@ -1,4 +1,4 @@
-import type { Page, APIRequestContext } from "@playwright/test";
+import { expect, type Page, type APIRequestContext, type Locator } from "@playwright/test";
 
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@openresto.com";
 export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "change-me-before-use";
@@ -117,6 +117,14 @@ export function pastUtcISO(minutesAgo: number): string {
  * via global-setup.ts — no login form needed.  In rare cases where you need a
  * fresh session (e.g. beforeAll hooks that create new browser contexts) call
  * this with `loginFirst = true` to hit the API once.
+ *
+ * `waitForURL` resolves as soon as the client-side route changes, which is
+ * before the admin layout's async `checkSession()` call resolves and renders
+ * the authenticated UI (AdminSidebar, and the keyboard-shortcut listeners
+ * that only attach once authState === "authenticated"). Waiting for the
+ * sidebar's lookup input — present on every admin route — closes that race
+ * so callers can interact with the page (including keyboard shortcuts)
+ * immediately after this resolves.
  */
 export async function gotoAdminDashboard(page: Page, loginFirst = false): Promise<void> {
   if (loginFirst) {
@@ -129,7 +137,24 @@ export async function gotoAdminDashboard(page: Page, loginFirst = false): Promis
   }
   await page.goto("/dashboard");
   await page.waitForURL(/.*dashboard.*/, { timeout: 20_000 });
+  await page.waitForSelector('input[placeholder="Email or reference…"]', { timeout: 10_000 });
 }
 
 /** @deprecated Use gotoAdminDashboard instead. */
 export const adminLoginViaUI = (page: Page) => gotoAdminDashboard(page);
+
+/**
+ * react-native-web's Modal renders its content (making it visible) before its
+ * internal escape-keyup listener effect finishes subscribing — a brief real
+ * race in the library itself, not a fixed delay we can size once and trust.
+ * Retry the actual keypress against the real close condition instead of
+ * guessing a magic sleep, so this doesn't flake under CI load. Shared by any
+ * spec that presses Escape against a real RN Modal (see issue #140
+ * investigation, "Post-implement fix #3").
+ */
+export async function pressEscapeUntilClosed(page: Page, closedIndicator: Locator): Promise<void> {
+  await expect(async () => {
+    await page.keyboard.press("Escape");
+    await expect(closedIndicator).not.toBeVisible({ timeout: 500 });
+  }).toPass({ timeout: 10_000 });
+}

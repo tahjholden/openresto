@@ -11,6 +11,7 @@ jest.mock("@/api/auth", () => ({
 jest.mock("expo-router", () => ({
   useRouter: jest.fn(),
   usePathname: jest.fn(),
+  useSegments: jest.fn().mockReturnValue(["(admin)", "dashboard"]),
   Slot: () => null,
   Stack: Object.assign(() => null, {
     Screen: jest.fn(() => null),

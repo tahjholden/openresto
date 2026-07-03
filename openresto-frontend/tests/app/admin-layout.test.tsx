@@ -30,6 +30,7 @@ jest.mock("expo-router", () => {
     Stack,
     useRouter: jest.fn(),
     usePathname: jest.fn().mockReturnValue("/dashboard"),
+    useSegments: jest.fn().mockReturnValue(["(admin)", "dashboard"]),
   };
 });
 

@@ -3,20 +3,22 @@ import { ThemedView } from "@/components/themed-view";
 import { getBookingByRef, BookingDto, cancelBookingByRef } from "@/api/bookings";
 import { fetchRestaurantById, RestaurantDto } from "@/api/restaurants";
 import { useEffect, useState, useRef, useCallback } from "react";
+import { registerFocusTarget, unregisterFocusTarget } from "@/utils/focusRegistry";
 import {
   ActivityIndicator,
   Alert,
-  findNodeHandle,
   Linking,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   useWindowDimensions,
   View,
   type StyleProp,
   type ViewStyle,
 } from "react-native";
+import { scrollIntoView } from "@/utils/scrollIntoView";
 import Input from "@/components/common/Input";
 import {
   BUTTON_SIZES,
@@ -50,29 +52,19 @@ export default function LookupScreen() {
   const [scrollY, setScrollY] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const bookingCardRef = useRef<View>(null);
+  const refInputRef = useRef<TextInput>(null);
   const scrollToTop = useCallback(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
   }, []);
 
   useEffect(() => {
+    registerFocusTarget("user-lookup", refInputRef);
+    return () => unregisterFocusTarget("user-lookup");
+  }, []);
+
+  useEffect(() => {
     if (loading || !booking) return;
-    const timer = setTimeout(() => {
-      if (!bookingCardRef.current) return;
-      if (Platform.OS === "web") {
-        (bookingCardRef.current as unknown as HTMLElement).scrollIntoView?.({
-          behavior: "smooth",
-          block: "start",
-        });
-      } else {
-        const node = findNodeHandle(scrollRef.current);
-        if (!node) return;
-        bookingCardRef.current.measureLayout(
-          node,
-          (_x, y) => scrollRef.current?.scrollTo({ y: Math.max(0, y - 16), animated: true }),
-          () => {}
-        );
-      }
-    }, 150);
+    const timer = setTimeout(() => scrollIntoView(bookingCardRef, scrollRef, "start"), 150);
     return () => clearTimeout(timer);
   }, [loading, booking]);
 
@@ -155,6 +147,7 @@ export default function LookupScreen() {
               >
                 <ThemedText style={styles.label}>Booking Reference</ThemedText>
                 <Input
+                  ref={refInputRef}
                   placeholder="e.g. crispy-basil-thyme"
                   value={refInput}
                   onChangeText={setRefInput}

@@ -29,6 +29,7 @@ jest.mock("expo-router", () => ({
   }),
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
   usePathname: () => "/",
+  useSegments: () => ["(user)"],
 }));
 
 jest.mock("@/components/layout/Navbar", () => ({

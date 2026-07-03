@@ -1,4 +1,5 @@
 import { Modal, Pressable, ScrollView, View, ActivityIndicator } from "react-native";
+import { scrollIntoView } from "@/utils/scrollIntoView";
 import { ThemedText } from "@/components/themed-text";
 import {
   getAdminBooking,
@@ -12,7 +13,7 @@ import {
   AdminUpdateBookingRequest,
 } from "@/api/admin";
 import { fetchRestaurants, RestaurantDto, SectionDto } from "@/api/restaurants";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getThemeColors, COLORS } from "@/theme/theme";
@@ -31,10 +32,15 @@ export function BookingDetailPopup({
   bookingId,
   onClose,
   onMutated,
+  initialFocus,
 }: {
   bookingId: number | null;
   onClose: () => void;
   onMutated?: () => void;
+  /** "extend" (bound to the bookings-list "e" shortcut) scrolls the extend
+   * section into view once the booking loads, distinguishing it from a plain
+   * "open" (Enter). */
+  initialFocus?: "extend";
 }) {
   const [booking, setBooking] = useState<BookingDetailDto | null>(null);
   const [loading, setLoading] = useState(false);
@@ -69,6 +75,19 @@ export function BookingDetailPopup({
   const mutedColor = colors.muted;
   const brand = useBrand();
   const PRIMARY = brand.primaryColor || COLORS.primary;
+
+  const scrollRef = useRef<ScrollView>(null);
+  const extendSectionRef = useRef<View>(null);
+
+  useEffect(() => {
+    if (initialFocus !== "extend" || loading || editing || !booking || booking.isCancelled) return;
+    const timer = setTimeout(() => scrollIntoView(extendSectionRef, scrollRef, "center"), 150);
+    return () => clearTimeout(timer);
+    // Depend on booking?.id/isCancelled rather than the whole booking object
+    // so an in-place update (e.g. a successful extend refreshing endTime)
+    // doesn't re-trigger the scroll-into-view animation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialFocus, loading, editing, booking?.id, booking?.isCancelled]);
 
   useEffect(() => {
     if (bookingId === null) {
@@ -361,7 +380,7 @@ export function BookingDetailPopup({
           </View>
 
           {/* Body */}
-          <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+          <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 20, gap: 16 }}>
             {loading ? (
               <ActivityIndicator size="large" color={PRIMARY} style={{ marginVertical: 40 }} />
             ) : !booking ? (
@@ -411,12 +430,14 @@ export function BookingDetailPopup({
                       />
                     ) : !booking.isCancelled ? (
                       <View style={{ gap: 16 }}>
-                        <ExtendBookingActions
-                          borderColor={borderColor}
-                          mutedColor={mutedColor}
-                          extending={extending}
-                          onExtend={handleExtend}
-                        />
+                        <View ref={extendSectionRef} testID="extend-section">
+                          <ExtendBookingActions
+                            borderColor={borderColor}
+                            mutedColor={mutedColor}
+                            extending={extending}
+                            onExtend={handleExtend}
+                          />
+                        </View>
                         <EmailGuestForm
                           borderColor={borderColor}
                           mutedColor={mutedColor}

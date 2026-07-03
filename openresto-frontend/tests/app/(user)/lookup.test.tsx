@@ -21,6 +21,11 @@ global.fetch = jest.fn(() =>
 ) as jest.Mock;
 
 // Mock Modal to always render children
+jest.mock("@/components/layout/Footer", () => {
+  const { View } = require("react-native");
+  return { __esModule: true, default: () => <View testID="mock-footer" /> };
+});
+
 jest.mock("react-native", () => {
   const rn = jest.requireActual("react-native");
   rn.Modal = ({ children, visible }: any) => (visible ? children : null);

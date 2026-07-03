@@ -11,7 +11,7 @@ import { fetchSocialLinks, SocialLinkDto } from "@/api/restaurants";
 export default function Footer() {
   const { brand, colors } = useAppTheme();
   const { width } = useWindowDimensions();
-  const isMobile = width < 768;
+  const isMobile = width < 600;
 
   const [socialLinks, setSocialLinks] = useState<SocialLinkDto[]>([]);
 
@@ -28,7 +28,7 @@ export default function Footer() {
       <View style={[styles.inner, isMobile && styles.innerMobile]}>
         <ThemedText style={[styles.copyright, { color: colors.muted }]}>{copyright}</ThemedText>
 
-        <View style={[styles.right, isMobile && styles.rightMobile]}>
+        <View style={styles.right}>
           {socialLinks.length > 0 && (
             <View style={styles.social}>
               {socialLinks.map((link) => (
@@ -42,7 +42,7 @@ export default function Footer() {
                 >
                   <Ionicons
                     name={link.iconKey as ComponentProps<typeof Ionicons>["name"]}
-                    size={18}
+                    size={16}
                     color={colors.muted}
                   />
                 </Pressable>
@@ -54,10 +54,9 @@ export default function Footer() {
             <Pressable
               accessibilityRole="link"
               accessibilityLabel="Restaurant admin"
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              style={({ hovered }: any) => [styles.adminBtn, hovered && { opacity: 0.65 }]}
+              style={styles.adminBtn}
             >
-              <Ionicons name="settings-outline" size={14} color={colors.muted} />
+              <Ionicons name="settings-outline" size={13} color={colors.muted} />
               <ThemedText style={[styles.adminText, { color: colors.muted }]}>Admin</ThemedText>
             </Pressable>
           </Link>
@@ -77,30 +76,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     flexWrap: "wrap",
-    gap: SPACING.sm,
+    rowGap: 6,
+    columnGap: SPACING.md,
     maxWidth: 1320,
     width: "100%",
     alignSelf: "center",
     paddingHorizontal: 28,
-    paddingVertical: SPACING.sm,
+    paddingVertical: 10,
   },
   innerMobile: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    paddingHorizontal: 12,
-    gap: SPACING.xs,
+    justifyContent: "center",
+    paddingHorizontal: 16,
   },
   copyright: {
     fontSize: 12,
+    lineHeight: 16,
   },
   right: {
     flexDirection: "row",
     alignItems: "center",
-    gap: SPACING.lg,
-  },
-  rightMobile: {
-    width: "100%",
-    justifyContent: "space-between",
+    gap: SPACING.md,
   },
   social: {
     flexDirection: "row",
@@ -108,8 +103,8 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   socialBtn: {
-    width: 26,
-    height: 26,
+    width: 20,
+    height: 20,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -117,9 +112,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    height: 20,
   },
   adminText: {
     fontSize: 12,
+    lineHeight: 16,
     fontWeight: "500",
   },
 });

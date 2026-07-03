@@ -10,6 +10,11 @@ import { AppThemeProvider } from "@/context/ThemeContext";
 import { BrandProvider } from "@/context/BrandContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+jest.mock("@/components/layout/Footer", () => {
+  const { View } = require("react-native");
+  return { __esModule: true, default: () => <View testID="mock-footer" /> };
+});
+
 jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: () => "light",
 }));

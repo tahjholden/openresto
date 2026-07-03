@@ -14,6 +14,7 @@ import { convertLocalToUtc } from "@/utils/date";
 import BookingSkeleton from "@/components/booking/BookingSkeleton";
 import ScrollToTopFab from "@/components/common/ScrollToTopFab";
 import WalkInNotice from "@/components/booking/WalkInNotice";
+import Footer from "@/components/layout/Footer";
 
 export default function BookScreen() {
   const {
@@ -157,6 +158,8 @@ export default function BookScreen() {
             </>
           )}
         </PageContainer>
+
+        <Footer />
       </ScrollView>
       <ScrollToTopFab scrollY={scrollY} onPress={scrollToTop} />
     </ThemedView>

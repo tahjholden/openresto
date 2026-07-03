@@ -15,6 +15,7 @@ import RestaurantCard from "@/components/restaurant/RestaurantCard";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { Ionicons } from "@expo/vector-icons";
 import ScrollToTopFab from "@/components/common/ScrollToTopFab";
+import Footer from "@/components/layout/Footer";
 
 // Module-level cache so data survives route changes — prevents hero layout shift on back-navigation.
 let _cachedRestaurants: RestaurantDto[] | null = null;
@@ -252,6 +253,8 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
+
+        <Footer />
       </ScrollView>
 
       <ScrollToTopFab scrollY={scrollY} onPress={scrollToTop} />

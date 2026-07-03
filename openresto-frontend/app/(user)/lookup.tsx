@@ -38,6 +38,7 @@ import BookingDetailRows from "@/components/booking/BookingDetailRows";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { buildCalendarUrls } from "@/utils/calendar";
 import ScrollToTopFab from "@/components/common/ScrollToTopFab";
+import Footer from "@/components/layout/Footer";
 
 export default function LookupScreen() {
   const [refInput, setRefInput] = useState("");
@@ -267,6 +268,8 @@ export default function LookupScreen() {
             />
           )}
         </PageContainer>
+
+        <Footer />
       </ScrollView>
 
       <ScrollToTopFab scrollY={scrollY} onPress={scrollToTop} />

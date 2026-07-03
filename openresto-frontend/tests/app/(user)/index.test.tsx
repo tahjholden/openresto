@@ -16,6 +16,11 @@ global.fetch = jest.fn(() =>
   })
 ) as jest.Mock;
 
+jest.mock("@/components/layout/Footer", () => {
+  const { View } = require("react-native");
+  return { __esModule: true, default: () => <View testID="mock-footer" /> };
+});
+
 jest.mock("@expo/vector-icons", () => ({
   Ionicons: jest.fn(() => null),
 }));

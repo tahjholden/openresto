@@ -22,6 +22,7 @@ import BookingConfirmationSkeleton from "@/components/booking/BookingConfirmatio
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import ScrollToTopFab from "@/components/common/ScrollToTopFab";
+import Footer from "@/components/layout/Footer";
 import * as Haptics from "expo-haptics";
 
 export default function BookingConfirmationScreen() {
@@ -437,6 +438,8 @@ export default function BookingConfirmationScreen() {
           onConfirm={handleCancelBooking}
           onCancel={() => !cancelling && setShowCancelConfirm(false)}
         />
+
+        <Footer />
       </ScrollView>
       <ScrollToTopFab scrollY={scrollY} onPress={scrollToTop} />
     </View>

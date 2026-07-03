@@ -10,6 +10,7 @@ import Button from "@/components/common/Button";
 import RestaurantSkeleton from "@/components/restaurant/RestaurantSkeleton";
 import ScrollToTopFab from "@/components/common/ScrollToTopFab";
 import WalkInNotice from "@/components/booking/WalkInNotice";
+import Footer from "@/components/layout/Footer";
 
 export default function RestaurantScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -78,6 +79,8 @@ export default function RestaurantScreen() {
             </Link>
           )}
         </PageContainer>
+
+        <Footer />
       </ScrollView>
       <ScrollToTopFab scrollY={scrollY} onPress={scrollToTop} />
     </ThemedView>

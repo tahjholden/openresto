@@ -31,13 +31,22 @@ internal sealed class NotificationQueue : INotificationQueue
         Channel.Writer.TryWrite(new CapacityCheckWork(restaurantId, restaurantName, bookingDate));
 
     // The CustomAccessibility analyzer's [OnlyAccessibleBy]/[ExternalAccessAllowed]
-    // pair on this class permits calling members like these from the whitelisted
-    // test classes above, but doesn't extend that permission to the internal
-    // `Channel` field itself when accessed directly from another project — so
-    // tests go through these instead of `queue.Channel...`.
+    // pair on the class only covers construction and the (public,
+    // interface-implementing) Enqueue* methods — internal members need the same
+    // pair repeated on themselves individually to be callable from the
+    // whitelisted test classes, so these carry their own.
+    [OnlyAccessibleBy("OpenRestoApi.Tests.Infrastructure.NotificationQueueTests")]
+    [OnlyAccessibleBy("OpenRestoApi.Tests.Infrastructure.NotificationWorkerTests")]
+    [ExternalAccessAllowed]
     internal bool TryReadForTests(out NotificationWorkItem? item) => Channel.Reader.TryRead(out item);
 
+    [OnlyAccessibleBy("OpenRestoApi.Tests.Infrastructure.NotificationQueueTests")]
+    [OnlyAccessibleBy("OpenRestoApi.Tests.Infrastructure.NotificationWorkerTests")]
+    [ExternalAccessAllowed]
     internal bool TryWriteForTests(NotificationWorkItem item) => Channel.Writer.TryWrite(item);
 
+    [OnlyAccessibleBy("OpenRestoApi.Tests.Infrastructure.NotificationQueueTests")]
+    [OnlyAccessibleBy("OpenRestoApi.Tests.Infrastructure.NotificationWorkerTests")]
+    [ExternalAccessAllowed]
     internal void CompleteForTests() => Channel.Writer.Complete();
 }

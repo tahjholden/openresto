@@ -29,4 +29,15 @@ internal sealed class NotificationQueue : INotificationQueue
 
     public void EnqueueCapacityCheck(int restaurantId, string restaurantName, DateTime bookingDate) =>
         Channel.Writer.TryWrite(new CapacityCheckWork(restaurantId, restaurantName, bookingDate));
+
+    // The CustomAccessibility analyzer's [OnlyAccessibleBy]/[ExternalAccessAllowed]
+    // pair on this class permits calling members like these from the whitelisted
+    // test classes above, but doesn't extend that permission to the internal
+    // `Channel` field itself when accessed directly from another project — so
+    // tests go through these instead of `queue.Channel...`.
+    internal bool TryReadForTests(out NotificationWorkItem? item) => Channel.Reader.TryRead(out item);
+
+    internal bool TryWriteForTests(NotificationWorkItem item) => Channel.Writer.TryWrite(item);
+
+    internal void CompleteForTests() => Channel.Writer.Complete();
 }

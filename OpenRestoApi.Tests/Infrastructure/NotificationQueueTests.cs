@@ -23,7 +23,7 @@ public class NotificationQueueTests
 
         queue.EnqueueBookingCreated(booking, "Test Resto");
 
-        Assert.True(queue.Channel.Reader.TryRead(out NotificationWorkItem? item));
+        Assert.True(queue.TryReadForTests(out NotificationWorkItem? item));
         var work = Assert.IsType<BookingCreatedWork>(item);
         Assert.Same(booking, work.Booking);
         Assert.Equal("Test Resto", work.RestaurantName);
@@ -37,7 +37,7 @@ public class NotificationQueueTests
 
         queue.EnqueueBookingCancelled(booking, "Test Resto");
 
-        Assert.True(queue.Channel.Reader.TryRead(out NotificationWorkItem? item));
+        Assert.True(queue.TryReadForTests(out NotificationWorkItem? item));
         var work = Assert.IsType<BookingCancelledWork>(item);
         Assert.Same(booking, work.Booking);
         Assert.Equal("Test Resto", work.RestaurantName);
@@ -51,7 +51,7 @@ public class NotificationQueueTests
 
         queue.EnqueueCapacityCheck(42, "Test Resto", date);
 
-        Assert.True(queue.Channel.Reader.TryRead(out NotificationWorkItem? item));
+        Assert.True(queue.TryReadForTests(out NotificationWorkItem? item));
         var work = Assert.IsType<CapacityCheckWork>(item);
         Assert.Equal(42, work.RestaurantId);
         Assert.Equal("Test Resto", work.RestaurantName);

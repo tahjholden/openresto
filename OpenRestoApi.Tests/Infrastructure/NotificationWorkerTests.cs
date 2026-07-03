@@ -113,7 +113,7 @@ public class NotificationWorkerTests
         // enumeration on its own, so ExecuteAsync returns normally instead of the
         // loop being torn down by an OperationCanceledException.
         (NotificationWorker worker, NotificationQueue queue, _) = CreateWorker();
-        queue.Channel.Writer.Complete();
+        queue.CompleteForTests();
 
         await worker.StartAsync(CancellationToken.None);
 
@@ -165,7 +165,7 @@ public class NotificationWorkerTests
         await worker.StartAsync(CancellationToken.None);
         try
         {
-            queue.Channel.Writer.TryWrite(new UnknownWork());
+            queue.TryWriteForTests(new UnknownWork());
             queue.EnqueueBookingCreated(afterUnknown, "Resto");
 
             await Task.WhenAny(tcs.Task, Task.Delay(2000));

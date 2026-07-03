@@ -24,4 +24,37 @@ public class AvailabilityControllerUnitTests
         var objectResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(500, objectResult.StatusCode);
     }
+
+    [Fact]
+    public async Task Get_ReturnsNotFound_WhenServiceThrowsArgumentException()
+    {
+        var mockService = new Mock<AvailabilityService>(null!, null!, null!);
+        mockService.Setup(s => s.GetAvailabilityAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<int>()))
+            .ThrowsAsync(new ArgumentException("Restaurant not found"));
+
+        var controller = new AvailabilityController(mockService.Object);
+
+        var result = await controller.Get(999, DateTime.Now, 2);
+
+        var notFound = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal(
+            "Restaurant not found",
+            notFound.Value!.GetType().GetProperty("message")!.GetValue(notFound.Value));
+    }
+
+    [Fact]
+    public async Task Get_ReturnsOk_OnSuccess()
+    {
+        var mockService = new Mock<AvailabilityService>(null!, null!, null!);
+        var response = new OpenRestoApi.Core.Application.DTOs.AvailabilityResponseDto { Slots = [] };
+        mockService.Setup(s => s.GetAvailabilityAsync(1, It.IsAny<DateTime>(), 2))
+            .ReturnsAsync(response);
+
+        var controller = new AvailabilityController(mockService.Object);
+
+        var result = await controller.Get(1, DateTime.Now, 2);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.Same(response, ok.Value);
+    }
 }

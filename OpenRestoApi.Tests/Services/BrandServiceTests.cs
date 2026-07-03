@@ -143,4 +143,86 @@ public class BrandServiceTests
         Assert.Null(result.CopyrightText);
     }
 
+    [Fact]
+    public async Task SaveAsync_Throws_WhenInvalidFaviconIcon()
+    {
+        using AppDbContext db = CreateDb(nameof(SaveAsync_Throws_WhenInvalidFaviconIcon));
+        var svc = CreateService(db);
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => svc.SaveAsync(null, null, null, faviconIcon: "not-a-real-icon"));
+    }
+
+    [Fact]
+    public async Task SaveAsync_Persists_WebsiteUrl_Trimmed()
+    {
+        using AppDbContext db = CreateDb(nameof(SaveAsync_Persists_WebsiteUrl_Trimmed));
+        var svc = CreateService(db);
+        await svc.SaveAsync(null, null, null, websiteUrl: "  https://example.com  ");
+        BrandSettings result = await svc.GetAsync();
+        Assert.Equal("https://example.com", result.WebsiteUrl);
+    }
+
+    [Fact]
+    public async Task SaveAsync_Clears_WebsiteUrl_WhenBlankPassed()
+    {
+        using AppDbContext db = CreateDb(nameof(SaveAsync_Clears_WebsiteUrl_WhenBlankPassed));
+        var svc = CreateService(db);
+        await svc.SaveAsync(null, null, null, websiteUrl: "https://example.com");
+        await svc.SaveAsync(null, null, null, websiteUrl: "   ");
+        BrandSettings result = await svc.GetAsync();
+        Assert.Null(result.WebsiteUrl);
+    }
+
+    [Fact]
+    public void GetWebsiteUrl_ReturnsBrandWebsiteUrl_WhenSet()
+    {
+        var svc = CreateService(CreateDb(nameof(GetWebsiteUrl_ReturnsBrandWebsiteUrl_WhenSet)));
+        string result = svc.GetWebsiteUrl(new BrandSettings { WebsiteUrl = "https://brand.example.com" });
+        Assert.Equal("https://brand.example.com", result);
+    }
+
+    [Fact]
+    public void GetWebsiteUrl_FallsBackToConfig_WhenBrandUrlMissing()
+    {
+        var config = new Mock<IConfiguration>();
+        config.Setup(c => c["Website:Url"]).Returns("https://configured.example.com");
+        var svc = new BrandService(CreateDb(nameof(GetWebsiteUrl_FallsBackToConfig_WhenBrandUrlMissing)), config.Object);
+
+        string result = svc.GetWebsiteUrl(null);
+
+        Assert.Equal("https://configured.example.com", result);
+    }
+
+    [Fact]
+    public void GetWebsiteUrl_FallsBackToFirstCorsOrigin_WhenConfigMissing()
+    {
+        var config = new Mock<IConfiguration>();
+        config.Setup(c => c["Cors:Origins"]).Returns("https://cors-a.example.com, https://cors-b.example.com");
+        var svc = new BrandService(CreateDb(nameof(GetWebsiteUrl_FallsBackToFirstCorsOrigin_WhenConfigMissing)), config.Object);
+
+        string result = svc.GetWebsiteUrl(null);
+
+        Assert.Equal("https://cors-a.example.com", result);
+    }
+
+    [Fact]
+    public void GetWebsiteUrl_FallsBackToLocalhost_WhenNothingConfigured()
+    {
+        var svc = CreateService(CreateDb(nameof(GetWebsiteUrl_FallsBackToLocalhost_WhenNothingConfigured)));
+        string result = svc.GetWebsiteUrl(null);
+        Assert.Equal("http://localhost:8081", result);
+    }
+
+    [Fact]
+    public async Task GetWebsiteUrlAsync_UsesPersistedBrandSettings()
+    {
+        using AppDbContext db = CreateDb(nameof(GetWebsiteUrlAsync_UsesPersistedBrandSettings));
+        db.Set<BrandSettings>().Add(new BrandSettings { WebsiteUrl = "https://persisted.example.com" });
+        await db.SaveChangesAsync();
+        var svc = CreateService(db);
+
+        string result = await svc.GetWebsiteUrlAsync();
+
+        Assert.Equal("https://persisted.example.com", result);
+    }
 }

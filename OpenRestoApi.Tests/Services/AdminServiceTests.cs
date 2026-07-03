@@ -983,4 +983,114 @@ public class AdminServiceTests : IDisposable
         Booking? futureBooking = await _db.Bookings.FindAsync(2);
         Assert.Null(futureBooking!.EndTime);
     }
+
+    [Fact]
+    public async Task PauseRestaurantBookingsAsync_ReturnsFalse_WhenRestaurantNotFound()
+    {
+        AdminService svc = CreateService();
+        bool result = await svc.PauseRestaurantBookingsAsync(999, 60);
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task PauseRestaurantBookingsAsync_SetsBookingsPausedUntil()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        await _db.SaveChangesAsync();
+
+        bool result = await svc.PauseRestaurantBookingsAsync(1, 60);
+
+        Assert.True(result);
+        Restaurant restaurant = await _db.Restaurants.SingleAsync(r => r.Id == 1);
+        Assert.NotNull(restaurant.BookingsPausedUntil);
+        Assert.True(restaurant.BookingsPausedUntil > DateTime.UtcNow);
+    }
+
+    [Fact]
+    public async Task UnpauseRestaurantBookingsAsync_ReturnsFalse_WhenRestaurantNotFound()
+    {
+        AdminService svc = CreateService();
+        bool result = await svc.UnpauseRestaurantBookingsAsync(999);
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task UnpauseRestaurantBookingsAsync_ClearsBookingsPausedUntil()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        await _db.SaveChangesAsync();
+        await svc.PauseRestaurantBookingsAsync(1, 60);
+
+        bool result = await svc.UnpauseRestaurantBookingsAsync(1);
+
+        Assert.True(result);
+        Restaurant restaurant = await _db.Restaurants.SingleAsync(r => r.Id == 1);
+        Assert.Null(restaurant.BookingsPausedUntil);
+    }
+
+    [Fact]
+    public async Task ExtendAllActiveBookingsAsync_ReturnsNull_WhenRestaurantNotFound()
+    {
+        AdminService svc = CreateService();
+        List<BookingDetailDto>? result = await svc.ExtendAllActiveBookingsAsync(999, 30);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetOverviewAsync_CountsPausedRestaurants()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        await _db.SaveChangesAsync();
+        Restaurant restaurant = await _db.Restaurants.SingleAsync(r => r.Id == 1);
+        restaurant.BookingsPausedUntil = DateTime.UtcNow.AddHours(1);
+        await _db.SaveChangesAsync();
+
+        AdminOverviewDto overview = await svc.GetOverviewAsync();
+
+        Assert.Equal(1, overview.PausedRestaurantsCount);
+    }
+
+    [Fact]
+    public async Task GetOverviewAsync_DoesNotCountRestaurants_WithExpiredPause()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        await _db.SaveChangesAsync();
+        Restaurant restaurant = await _db.Restaurants.SingleAsync(r => r.Id == 1);
+        restaurant.BookingsPausedUntil = DateTime.UtcNow.AddHours(-1);
+        await _db.SaveChangesAsync();
+
+        AdminOverviewDto overview = await svc.GetOverviewAsync();
+
+        Assert.Equal(0, overview.PausedRestaurantsCount);
+    }
+
+    [Fact]
+    public async Task GetBookingsAsync_UpcomingFilter_BehavesLikeActive()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        await _db.SaveChangesAsync();
+
+        List<BookingDetailDto> upcoming = await svc.GetBookingsAsync(1, null, "upcoming");
+        List<BookingDetailDto> active = await svc.GetBookingsAsync(1, null, "active");
+
+        Assert.Equal(active.Count, upcoming.Count);
+    }
+
+    [Fact]
+    public async Task GetBookingsAsync_UnrecognizedStatus_DefaultsToActive()
+    {
+        AdminService svc = CreateService();
+        SeedBase(1);
+        await _db.SaveChangesAsync();
+
+        List<BookingDetailDto> unrecognized = await svc.GetBookingsAsync(1, null, "not-a-real-status");
+        List<BookingDetailDto> active = await svc.GetBookingsAsync(1, null, "active");
+
+        Assert.Equal(active.Count, unrecognized.Count);
+    }
 }

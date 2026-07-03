@@ -169,6 +169,26 @@ public class RestaurantsControllerTests(TestWebAppFactory factory) : IClassFixtu
     }
 
     [Fact]
+    public async Task UpdateRestaurant_ReturnsBadRequest_ForInvalidBookingDuration()
+    {
+        HttpClient client = _factory.CreateAuthenticatedClient();
+
+        using IServiceScope scope = _factory.Services.CreateScope();
+        AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        int restaurantId = db.Restaurants.First().Id;
+
+        HttpResponseMessage response = await client.PutAsJsonAsync($"/api/restaurants/{restaurantId}", new
+        {
+            name = "Still A Valid Name",
+            defaultBookingDurationMinutes = 999,
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        JsonElement body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Contains("DefaultBookingDurationMinutes", body.GetProperty("message").GetString());
+    }
+
+    [Fact]
     public async Task UpdateSection_WithAuth_Succeeds()
     {
         HttpClient client = _factory.CreateAuthenticatedClient();

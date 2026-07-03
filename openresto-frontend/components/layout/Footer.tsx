@@ -48,12 +48,13 @@ export default function Footer({ backgroundColor }: FooterProps) {
                   onPress={() => Linking.openURL(link.url)}
                   accessibilityRole="link"
                   accessibilityLabel={link.label}
+                  hitSlop={10}
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   style={({ hovered }: any) => [styles.socialBtn, hovered && { opacity: 0.65 }]}
                 >
                   <Ionicons
                     name={link.iconKey as ComponentProps<typeof Ionicons>["name"]}
-                    size={16}
+                    size={17}
                     color={colors.muted}
                   />
                 </Pressable>
@@ -65,9 +66,10 @@ export default function Footer({ backgroundColor }: FooterProps) {
             <Pressable
               accessibilityRole="link"
               accessibilityLabel="Restaurant admin"
+              hitSlop={10}
               style={styles.adminBtn}
             >
-              <Ionicons name="settings-outline" size={13} color={colors.muted} />
+              <Ionicons name="settings-outline" size={14} color={colors.muted} />
               <ThemedText style={[styles.adminText, { color: colors.muted }]}>Admin</ThemedText>
             </Pressable>
           </Link>
@@ -87,47 +89,49 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     flexWrap: "wrap",
-    rowGap: 6,
+    rowGap: SPACING.sm,
     columnGap: SPACING.md,
     maxWidth: 1320,
     width: "100%",
+    minHeight: 56,
     alignSelf: "center",
     paddingHorizontal: 28,
-    paddingVertical: 6,
+    paddingVertical: SPACING.lg,
   },
   innerMobile: {
     justifyContent: "center",
     paddingHorizontal: 16,
   },
   copyright: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 18,
   },
   right: {
     flexDirection: "row",
     alignItems: "center",
-    gap: SPACING.md,
+    gap: SPACING.lg,
   },
   social: {
     flexDirection: "row",
     alignItems: "center",
-    gap: SPACING.sm,
+    gap: SPACING.md,
   },
   socialBtn: {
-    width: 18,
-    height: 18,
+    minWidth: 32,
+    minHeight: 32,
     alignItems: "center",
     justifyContent: "center",
   },
   adminBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    height: 18,
+    gap: 6,
+    minHeight: 32,
+    paddingHorizontal: SPACING.xs,
   },
   adminText: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: "500",
   },
 });

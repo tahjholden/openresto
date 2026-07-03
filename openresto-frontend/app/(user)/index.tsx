@@ -80,181 +80,185 @@ export default function HomeScreen() {
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={100}
       >
-        {/* ── Hero ── */}
-        <View
-          style={[
-            styles.hero,
-            {
-              backgroundColor: surface,
-              borderBottomColor: border,
-              ...(!hasHero &&
-                Platform.OS === "web" &&
-                ({
-                  background: isDark
-                    ? `radial-gradient(80% 90% at 90% 10%, ${accentSoft}, transparent 60%), radial-gradient(60% 80% at 10% 100%, rgba(${accentR},${accentG},${accentB},0.12), transparent 60%), linear-gradient(180deg, ${surface} 0%, ${bg} 100%)`
-                    : `radial-gradient(80% 90% at 90% 10%, ${accentSoft}, transparent 60%), linear-gradient(180deg, ${surface} 0%, ${bg} 100%)`,
-                } as object)),
-            },
-          ]}
-        >
-          {hasHero && (
-            <>
-              <img
-                src={brand.headerImageUrl!}
-                aria-hidden
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: "center",
-                  pointerEvents: "none",
-                }}
-              />
+        <View style={{ flex: 1 }}>
+          {/* ── Hero ── */}
+          <View
+            style={[
+              styles.hero,
+              {
+                backgroundColor: surface,
+                borderBottomColor: border,
+                ...(!hasHero &&
+                  Platform.OS === "web" &&
+                  ({
+                    background: isDark
+                      ? `radial-gradient(80% 90% at 90% 10%, ${accentSoft}, transparent 60%), radial-gradient(60% 80% at 10% 100%, rgba(${accentR},${accentG},${accentB},0.12), transparent 60%), linear-gradient(180deg, ${surface} 0%, ${bg} 100%)`
+                      : `radial-gradient(80% 90% at 90% 10%, ${accentSoft}, transparent 60%), linear-gradient(180deg, ${surface} 0%, ${bg} 100%)`,
+                  } as object)),
+              },
+            ]}
+          >
+            {hasHero && (
+              <>
+                <img
+                  src={brand.headerImageUrl!}
+                  aria-hidden
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    pointerEvents: "none",
+                  }}
+                />
+                <View
+                  style={[
+                    { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
+                    {
+                      background: `linear-gradient(160deg, rgba(${accentR},${accentG},${accentB},0.30) 0%, rgba(0,0,0,0.40) 100%)`,
+                    } as object,
+                  ]}
+                  pointerEvents="none"
+                />
+              </>
+            )}
+            <View style={[styles.heroInner, isMobile && { paddingHorizontal: 20 }]}>
               <View
                 style={[
-                  { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-                  {
-                    background: `linear-gradient(160deg, rgba(${accentR},${accentG},${accentB},0.30) 0%, rgba(0,0,0,0.40) 100%)`,
-                  } as object,
+                  styles.heroTextPill,
+                  hasHero && {
+                    backgroundColor: surface,
+                    borderColor: border,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    padding: 16,
+                  },
                 ]}
-                pointerEvents="none"
-              />
-            </>
-          )}
-          <View style={[styles.heroInner, isMobile && { paddingHorizontal: 20 }]}>
-            <View
-              style={[
-                styles.heroTextPill,
-                hasHero && {
-                  backgroundColor: surface,
-                  borderColor: border,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  padding: 16,
-                },
-              ]}
-            >
-              <ThemedText style={[styles.heroTitle, isMobile && { fontSize: 40, lineHeight: 44 }]}>
-                {brand.appName}
-              </ThemedText>
-              <ThemedText style={[styles.heroSub, { color: mutedColor }]}>
-                Scroll down to pick a location below, choose a time, enter your email address, and
-                you're booked!
-              </ThemedText>
+              >
+                <ThemedText
+                  style={[styles.heroTitle, isMobile && { fontSize: 40, lineHeight: 44 }]}
+                >
+                  {brand.appName}
+                </ThemedText>
+                <ThemedText style={[styles.heroSub, { color: mutedColor }]}>
+                  Scroll down to pick a location below, choose a time, enter your email address, and
+                  you're booked!
+                </ThemedText>
+              </View>
             </View>
-          </View>
 
-          {/* ── Highlights ── */}
-          <View style={[styles.highlights, isMobile && { paddingHorizontal: 20 }]}>
-            <View style={styles.highlightsHead}>
-              <ThemedText
-                style={[
-                  styles.highlightsLabel,
-                  { color: hasHero ? "rgba(255,255,255,0.92)" : mutedColor },
-                  hasHero && ({ textShadow: heroTextShadow } as object),
-                ]}
-              >
-                Restaurant highlights
-              </ThemedText>
-              <ThemedText
-                style={[
-                  styles.highlightsBy,
-                  { color: hasHero ? "rgba(255,255,255,0.82)" : mutedColor },
-                  hasHero && ({ textShadow: heroTextShadow } as object),
-                ]}
-              >
-                Curated by the owner
-              </ThemedText>
-            </View>
-            <View
-              style={[
-                styles.highlightsGrid,
-                numHighlightCols > 1 && { flexDirection: "row", flexWrap: "wrap" },
-              ]}
-            >
-              {highlights.map((h) => (
-                <View
-                  key={h.id}
+            {/* ── Highlights ── */}
+            <View style={[styles.highlights, isMobile && { paddingHorizontal: 20 }]}>
+              <View style={styles.highlightsHead}>
+                <ThemedText
                   style={[
-                    styles.highlightCard,
-                    { backgroundColor: surface, borderColor: border },
-                    numHighlightCols > 1 && {
-                      width:
-                        numHighlightCols === 2
-                          ? ("calc(50% - 6px)" as unknown as number)
-                          : ("calc(25% - 9px)" as unknown as number),
-                      minWidth: 200,
-                    },
+                    styles.highlightsLabel,
+                    { color: hasHero ? "rgba(255,255,255,0.92)" : mutedColor },
+                    hasHero && ({ textShadow: heroTextShadow } as object),
                   ]}
                 >
-                  <View style={styles.highlightHeader}>
-                    <View
-                      style={[
-                        styles.highlightIconBox,
-                        { backgroundColor: `rgba(${accentR},${accentG},${accentB},0.18)` },
-                      ]}
-                    >
-                      <Ionicons
-                        name={h.iconKey as ComponentProps<typeof Ionicons>["name"]}
-                        size={16}
-                        color={primaryColor}
-                      />
+                  Restaurant highlights
+                </ThemedText>
+                <ThemedText
+                  style={[
+                    styles.highlightsBy,
+                    { color: hasHero ? "rgba(255,255,255,0.82)" : mutedColor },
+                    hasHero && ({ textShadow: heroTextShadow } as object),
+                  ]}
+                >
+                  Curated by the owner
+                </ThemedText>
+              </View>
+              <View
+                style={[
+                  styles.highlightsGrid,
+                  numHighlightCols > 1 && { flexDirection: "row", flexWrap: "wrap" },
+                ]}
+              >
+                {highlights.map((h) => (
+                  <View
+                    key={h.id}
+                    style={[
+                      styles.highlightCard,
+                      { backgroundColor: surface, borderColor: border },
+                      numHighlightCols > 1 && {
+                        width:
+                          numHighlightCols === 2
+                            ? ("calc(50% - 6px)" as unknown as number)
+                            : ("calc(25% - 9px)" as unknown as number),
+                        minWidth: 200,
+                      },
+                    ]}
+                  >
+                    <View style={styles.highlightHeader}>
+                      <View
+                        style={[
+                          styles.highlightIconBox,
+                          { backgroundColor: `rgba(${accentR},${accentG},${accentB},0.18)` },
+                        ]}
+                      >
+                        <Ionicons
+                          name={h.iconKey as ComponentProps<typeof Ionicons>["name"]}
+                          size={16}
+                          color={primaryColor}
+                        />
+                      </View>
+                      <ThemedText style={styles.highlightTitle}>{h.title}</ThemedText>
                     </View>
-                    <ThemedText style={styles.highlightTitle}>{h.title}</ThemedText>
+                    <ThemedText style={[styles.highlightBody, { color: mutedColor }]}>
+                      {h.body}
+                    </ThemedText>
                   </View>
-                  <ThemedText style={[styles.highlightBody, { color: mutedColor }]}>
-                    {h.body}
-                  </ThemedText>
-                </View>
-              ))}
+                ))}
+              </View>
             </View>
+          </View>
+
+          {/* ── Main body ── */}
+          <View style={[styles.body, isMobile && { paddingHorizontal: 16 }]}>
+            <View style={styles.sectionHead}>
+              <ThemedText style={styles.sectionTitle}>Our locations</ThemedText>
+            </View>
+
+            {loading ? (
+              <ActivityIndicator
+                testID="loading-screen"
+                style={styles.spinner}
+                size="large"
+                color={primaryColor}
+              />
+            ) : (
+              <View
+                style={[styles.grid, numColumns > 1 && { flexDirection: "row", flexWrap: "wrap" }]}
+              >
+                {restaurants.map((r, i) => (
+                  <View
+                    key={r.id}
+                    style={[
+                      styles.cardWrapper,
+                      numColumns > 1 && {
+                        width:
+                          numColumns === 2
+                            ? ("calc(50% - 9px)" as unknown as number)
+                            : ("calc(33.333% - 12px)" as unknown as number),
+                        minWidth: 320,
+                      },
+                    ]}
+                  >
+                    <RestaurantCard restaurant={r} index={i} party={party} />
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         </View>
 
-        {/* ── Main body ── */}
-        <View style={[styles.body, isMobile && { paddingHorizontal: 16 }]}>
-          <View style={styles.sectionHead}>
-            <ThemedText style={styles.sectionTitle}>Our locations</ThemedText>
-          </View>
-
-          {loading ? (
-            <ActivityIndicator
-              testID="loading-screen"
-              style={styles.spinner}
-              size="large"
-              color={primaryColor}
-            />
-          ) : (
-            <View
-              style={[styles.grid, numColumns > 1 && { flexDirection: "row", flexWrap: "wrap" }]}
-            >
-              {restaurants.map((r, i) => (
-                <View
-                  key={r.id}
-                  style={[
-                    styles.cardWrapper,
-                    numColumns > 1 && {
-                      width:
-                        numColumns === 2
-                          ? ("calc(50% - 9px)" as unknown as number)
-                          : ("calc(33.333% - 12px)" as unknown as number),
-                      minWidth: 320,
-                    },
-                  ]}
-                >
-                  <RestaurantCard restaurant={r} index={i} party={party} />
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-
-        <Footer />
+        <Footer backgroundColor={bg} />
       </ScrollView>
 
       <ScrollToTopFab scrollY={scrollY} onPress={scrollToTop} />

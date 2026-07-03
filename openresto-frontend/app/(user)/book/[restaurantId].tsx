@@ -119,6 +119,7 @@ export default function BookScreen() {
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         onScroll={(e) => setScrollY(e.nativeEvent.contentOffset.y)}
         scrollEventThrottle={100}
       >
@@ -169,6 +170,7 @@ export default function BookScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   page: {
     maxWidth: Platform.OS === "web" ? 860 : 560,

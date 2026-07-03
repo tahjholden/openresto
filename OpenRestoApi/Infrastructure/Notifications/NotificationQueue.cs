@@ -9,6 +9,7 @@ namespace OpenRestoApi.Infrastructure.Notifications;
 [OnlyAccessibleBy("OpenRestoApi.Infrastructure.Notifications.*")]
 [OnlyAccessibleBy("OpenRestoApi.Tests.Infrastructure.NotificationQueueTests")]
 [OnlyAccessibleBy("OpenRestoApi.Tests.Infrastructure.NotificationWorkerTests")]
+[ExternalAccessAllowed]
 internal sealed class NotificationQueue : INotificationQueue
 {
     internal readonly Channel<NotificationWorkItem> Channel =

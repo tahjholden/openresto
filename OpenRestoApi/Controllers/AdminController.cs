@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using OpenRestoApi.Core.Application.DTOs;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Application.Services;
-using OpenRestoApi.Infrastructure.Email;
 
 namespace OpenRestoApi.Controllers;
 
@@ -178,19 +177,7 @@ public class AdminController(AdminService adminService, IEmailService emailServi
 
         try
         {
-            string htmlBody = req.Body;
-            if (_brand != null && !req.Body.TrimStart().StartsWith("<!DOCTYPE", StringComparison.OrdinalIgnoreCase)
-                               && !req.Body.TrimStart().StartsWith("<html", StringComparison.OrdinalIgnoreCase))
-            {
-                var brand = await _brand.GetAsync();
-                string appName = brand.AppName ?? "Open Resto";
-                string primaryColor = brand.PrimaryColor ?? "#0a7ea4";
-                string websiteUrl = _brand.GetWebsiteUrl(brand).TrimEnd('/');
-                string iconUrl = !string.IsNullOrEmpty(brand.FaviconIcon)
-                    ? $"{websiteUrl}/api/brand/pwa-icon.svg"
-                    : "";
-                htmlBody = WrapInBrandedEmail(req.Body, appName, primaryColor, websiteUrl, iconUrl);
-            }
+            string htmlBody = await EmailHelper.BuildEmailContentFromBrand(_brand, req.Body);
             await _email.SendEmailAsync(booking.CustomerEmail, req.Subject, htmlBody);
             return Ok(new MessageResponse { Message = $"Email sent to {booking.CustomerEmail}." });
         }
@@ -202,26 +189,6 @@ public class AdminController(AdminService adminService, IEmailService emailServi
         {
             return BadRequest(new MessageResponse { Message = $"Failed to send: {ex.Message}" });
         }
-    }
-
-    private static string WrapInBrandedEmail(string content, string appName, string primaryColor, string websiteUrl, string iconUrl = "")
-    {
-        bool isHtmlFragment = content.TrimStart().StartsWith('<');
-        string innerHtml = isHtmlFragment
-            ? content
-            : System.Net.WebUtility.HtmlEncode(content).Replace("\n", "<br>").Replace("\r", "");
-
-        string headerHtml = !string.IsNullOrEmpty(iconUrl)
-            ? EmailTemplateBuilder.IconHeader(iconUrl, appName, appName, "")
-            : EmailTemplateBuilder.TextHeader(appName, primaryColor);
-
-        string contentHtml = $"""
-            <tr><td style="padding:32px 40px;font-size:15px;line-height:1.7;color:#111827;">
-              {innerHtml}
-            </td></tr>
-            """;
-
-        return EmailTemplateBuilder.Wrap(primaryColor, appName, websiteUrl, headerHtml, contentHtml);
     }
 
     [HttpPost("bookings/{id}/restore")]

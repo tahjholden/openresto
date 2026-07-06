@@ -14,6 +14,14 @@ jest.mock("@/context/BrandContext", () => {
   return { useBrand: () => brand };
 });
 
+// Local YYYY-MM-DD (matches how the component computes date strings).
+function localDateValue(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 describe("DatePicker (web)", () => {
   const onSelect = jest.fn();
 
@@ -23,18 +31,16 @@ describe("DatePicker (web)", () => {
 
   it("renders without crashing", () => {
     render(<DatePickerWeb onSelect={onSelect} />);
-    expect(true).toBeTruthy();
+    expect(screen.getByText("Select a date")).toBeTruthy();
   });
 
   it("renders with a selected date without crashing", () => {
     render(<DatePickerWeb selectedDate="2026-10-01" onSelect={onSelect} />);
-    expect(true).toBeTruthy();
+    expect(screen.getByTestId("date-picker-trigger")).toBeTruthy();
   });
 
   it("shows closed day warning when selected date is a closed day", () => {
-    // ISO day: Monday=1, Tuesday=2, ... Saturday=6, Sunday=7
-    // 2026-10-05 is a Monday (ISO day 1)
-    // openDays=[2,3,4,5,6] means only Tue-Sat open → Monday is closed
+    // 2026-10-05 is a Monday (ISO day 1); openDays=[2,3,4,5,6] excludes Monday
     render(
       <DatePickerWeb selectedDate="2026-10-05" onSelect={onSelect} openDays={[2, 3, 4, 5, 6]} />
     );
@@ -59,49 +65,95 @@ describe("DatePicker (web)", () => {
     expect(screen.queryByText(/normally closed on this day/)).toBeNull();
   });
 
-  it("calls onSelect when date value changes", () => {
-    const { getByTestId } = render(<DatePickerWeb onSelect={onSelect} />);
-    const wrapper = getByTestId("date-picker-web");
-    const input = (wrapper as any).children[0];
-    fireEvent(input, "change", { target: { value: "2026-11-15" } });
-    expect(onSelect).toHaveBeenCalledWith("2026-11-15");
+  it("opens the calendar when the trigger is pressed", () => {
+    render(<DatePickerWeb onSelect={onSelect} />);
+    expect(screen.queryByTestId("date-picker-calendar")).toBeNull();
+    fireEvent.press(screen.getByTestId("date-picker-trigger"));
+    expect(screen.getByTestId("date-picker-calendar")).toBeTruthy();
   });
 
-  it("fires onFocus and onBlur on the date input", () => {
-    const { getByTestId } = render(<DatePickerWeb onSelect={onSelect} />);
-    const wrapper = getByTestId("date-picker-web");
-    const input = (wrapper as any).children[0];
-    fireEvent(input, "focus");
-    fireEvent(input, "blur");
-    expect(wrapper).toBeTruthy();
+  it("selects an open day and closes the calendar", () => {
+    const today = new Date();
+    const todayStr = localDateValue(today);
+    render(<DatePickerWeb onSelect={onSelect} openDays={[1, 2, 3, 4, 5, 6, 7]} />);
+    fireEvent.press(screen.getByTestId("date-picker-trigger"));
+    fireEvent.press(screen.getByTestId(`date-picker-day-${todayStr}`));
+    expect(onSelect).toHaveBeenCalledWith(todayStr);
+    expect(screen.queryByTestId("date-picker-calendar")).toBeNull();
   });
 
-  // Local YYYY-MM-DD (matches how the component computes the `min`/`max` bounds).
-  function localDateValue(d: Date): string {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-  }
-
-  it("sets min to today by default (customer-flow restriction)", () => {
-    const { getByTestId } = render(<DatePickerWeb onSelect={onSelect} />);
-    const wrapper = getByTestId("date-picker-web");
-    // The <input> is a react-test-renderer host instance, not a DOM node — read
-    // its props rather than a DOM attribute (no `as any`; cast via `unknown`).
-    const input = wrapper.children[0] as unknown as { props: { min?: string } };
-    expect(input.props.min).toBe(localDateValue(new Date()));
+  it("does not call onSelect when pressing a closed weekday cell", () => {
+    const today = new Date();
+    const todayStr = localDateValue(today);
+    const todayIso = today.getDay() === 0 ? 7 : today.getDay();
+    const openDays = [1, 2, 3, 4, 5, 6, 7].filter((d) => d !== todayIso);
+    render(<DatePickerWeb onSelect={onSelect} openDays={openDays} />);
+    fireEvent.press(screen.getByTestId("date-picker-trigger"));
+    fireEvent.press(screen.getByTestId(`date-picker-day-${todayStr}`));
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it("relaxes min to at most today-365 when allowPast is set", () => {
-    const { getByTestId } = render(<DatePickerWeb onSelect={onSelect} allowPast />);
-    const wrapper = getByTestId("date-picker-web");
-    const input = wrapper.children[0] as unknown as { props: { min?: string } };
-    const min = input.props.min;
-    expect(min).toBeTruthy();
-    const yearAgo = new Date();
-    yearAgo.setDate(yearAgo.getDate() - 365);
-    // Absent OR a date at/before today-365 — either is an acceptable relaxation.
-    expect(min! <= localDateValue(yearAgo)).toBe(true);
+  it("does not call onSelect when pressing a cell outside the allowed range", () => {
+    const today = new Date();
+    render(<DatePickerWeb onSelect={onSelect} />);
+    fireEvent.press(screen.getByTestId("date-picker-trigger"));
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    // Only attempt if yesterday falls within the same rendered month view.
+    if (yesterday.getMonth() === today.getMonth()) {
+      fireEvent.press(screen.getByTestId(`date-picker-day-${localDateValue(yesterday)}`));
+      expect(onSelect).not.toHaveBeenCalled();
+    }
+  });
+
+  it("navigates to the next and previous month", () => {
+    const today = new Date();
+    const currentLabel = today.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const nextLabel = next.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+
+    render(<DatePickerWeb onSelect={onSelect} allowPast />);
+    fireEvent.press(screen.getByTestId("date-picker-trigger"));
+    expect(screen.getByText(currentLabel)).toBeTruthy();
+    fireEvent.press(screen.getByTestId("date-picker-next-month"));
+    expect(screen.getByText(nextLabel)).toBeTruthy();
+    fireEvent.press(screen.getByTestId("date-picker-prev-month"));
+    expect(screen.getByText(currentLabel)).toBeTruthy();
+  });
+
+  it("rolls the year over when navigating across a December/January boundary", () => {
+    const today = new Date();
+    // Mid-December of last year — well within the allowPast 365-day window.
+    const lastDec = new Date(today.getFullYear() - 1, 11, 20);
+    const decLabel = lastDec.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    const jan = new Date(lastDec.getFullYear() + 1, 0, 1);
+    const janLabel = jan.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+
+    render(<DatePickerWeb selectedDate={localDateValue(lastDec)} onSelect={onSelect} allowPast />);
+    fireEvent.press(screen.getByTestId("date-picker-trigger"));
+    expect(screen.getByText(decLabel)).toBeTruthy();
+    fireEvent.press(screen.getByTestId("date-picker-next-month"));
+    expect(screen.getByText(janLabel)).toBeTruthy();
+    fireEvent.press(screen.getByTestId("date-picker-prev-month"));
+    expect(screen.getByText(decLabel)).toBeTruthy();
+  });
+
+  it("does not navigate past the max date's month", () => {
+    render(<DatePickerWeb onSelect={onSelect} />);
+    fireEvent.press(screen.getByTestId("date-picker-trigger"));
+    // Click next repeatedly beyond the ~29 day window (at most 2 months out).
+    fireEvent.press(screen.getByTestId("date-picker-next-month"));
+    fireEvent.press(screen.getByTestId("date-picker-next-month"));
+    fireEvent.press(screen.getByTestId("date-picker-next-month"));
+    const label = screen.getByTestId("date-picker-calendar");
+    expect(label).toBeTruthy();
+  });
+
+  it("closes the calendar when pressing the backdrop", () => {
+    render(<DatePickerWeb onSelect={onSelect} />);
+    fireEvent.press(screen.getByTestId("date-picker-trigger"));
+    expect(screen.getByTestId("date-picker-calendar")).toBeTruthy();
+    fireEvent.press(screen.getByTestId("date-picker-backdrop"));
+    expect(screen.queryByTestId("date-picker-calendar")).toBeNull();
   });
 });

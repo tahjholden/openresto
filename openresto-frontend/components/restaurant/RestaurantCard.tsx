@@ -78,15 +78,21 @@ function parseDayOfWeek(day: string): number {
   return 0;
 }
 
+function getOpenDaysList(restaurant: RestaurantDto): number[] {
+  return (
+    restaurant.openDays
+      ?.split(",")
+      .map((d) => parseDayOfWeek(d.trim()))
+      .filter((d) => d > 0) ?? [1, 2, 3, 4, 5, 6, 7]
+  );
+}
+
 function opensLaterToday(restaurant: RestaurantDto): string | null {
   const timezone = restaurant.timezone ?? "UTC";
   const { totalMins, isoDay } = getRestaurantNow(timezone || "UTC");
   const { open: openTime } = getHoursForDay(restaurant, isoDay);
   const [oh, om] = openTime.split(":").map(Number);
-  const openDaysList = restaurant.openDays
-    ?.split(",")
-    .map((d) => parseDayOfWeek(d.trim()))
-    .filter((d) => d > 0) ?? [1, 2, 3, 4, 5, 6, 7];
+  const openDaysList = getOpenDaysList(restaurant);
   if (openDaysList.length > 0 && !openDaysList.includes(isoDay)) return null;
   const openMins = oh * 60 + (om || 0);
   if (totalMins >= openMins) return null;
@@ -105,10 +111,7 @@ function isOpenNow(restaurant: RestaurantDto): boolean {
   const [oh, om] = openTime.split(":").map(Number);
   const [ch, cm] = closeTime.split(":").map(Number);
   if (isNaN(oh) || isNaN(ch)) return true;
-  const openDaysList = restaurant.openDays
-    ?.split(",")
-    .map((d) => parseDayOfWeek(d.trim()))
-    .filter((d) => d > 0) ?? [1, 2, 3, 4, 5, 6, 7];
+  const openDaysList = getOpenDaysList(restaurant);
   if (openDaysList.length > 0 && !openDaysList.includes(isoDay)) return false;
   return totalMins >= oh * 60 + om && totalMins < ch * 60 + cm;
 }
@@ -134,10 +137,7 @@ export default function RestaurantCard({
   useEffect(() => {
     const tz = restaurant.timezone ?? "UTC";
     const { totalMins, isoDay } = getRestaurantNow(tz);
-    const openDaysList = restaurant.openDays
-      ?.split(",")
-      .map((d) => parseDayOfWeek(d.trim()))
-      .filter((d) => d > 0) ?? [1, 2, 3, 4, 5, 6, 7];
+    const openDaysList = getOpenDaysList(restaurant);
     if (
       (openDaysList.length > 0 && !openDaysList.includes(isoDay)) ||
       isWalkInOnlyOnDay(restaurant, isoDay)
@@ -179,11 +179,10 @@ export default function RestaurantCard({
     !walkInLocation &&
     isWalkInOnlyOnDay(restaurant, getRestaurantNow(restaurant.timezone ?? "UTC").isoDay);
   const walkInBadgeText = walkInBadgeLabel(restaurant);
-  const todayHours = getHoursForDay(
-    restaurant,
-    getRestaurantNow(restaurant.timezone ?? "UTC").isoDay
-  );
+  const todayIsoDay = getRestaurantNow(restaurant.timezone ?? "UTC").isoDay;
+  const todayHours = getHoursForDay(restaurant, todayIsoDay);
   const hoursVary = hasCustomHours(restaurant);
+  const closedToday = !getOpenDaysList(restaurant).includes(todayIsoDay);
   const tags = restaurant.tags ?? [];
 
   const accentHex = primaryColor.replace("#", "");
@@ -451,12 +450,20 @@ export default function RestaurantCard({
         <View style={[styles.cardFoot, { borderTopColor: borderColor }]}>
           <View style={styles.hoursRow}>
             <Ionicons name="time-outline" size={12} color={mutedColor} style={{ marginRight: 5 }} />
-            <ThemedText style={[styles.hoursText, { color: mutedColor }]}>
-              {hoursVary ? "Today " : "Open "}
-            </ThemedText>
-            <ThemedText style={[styles.hoursTime, { color: colors.text }]}>
-              {todayHours.open} – {todayHours.close}
-            </ThemedText>
+            {closedToday ? (
+              <ThemedText style={[styles.hoursTime, { color: colors.text }]}>
+                Closed today
+              </ThemedText>
+            ) : (
+              <>
+                <ThemedText style={[styles.hoursText, { color: mutedColor }]}>
+                  {hoursVary ? "Today " : "Open "}
+                </ThemedText>
+                <ThemedText style={[styles.hoursTime, { color: colors.text }]}>
+                  {todayHours.open} – {todayHours.close}
+                </ThemedText>
+              </>
+            )}
           </View>
           <Pressable
             style={({ pressed }) => [styles.viewBtn, pressed && { backgroundColor: surface2 }]}

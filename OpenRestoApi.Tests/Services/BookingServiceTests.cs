@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Application.Mappings;
 using OpenRestoApi.Core.Application.Services;
@@ -150,7 +151,7 @@ public class BookingServiceTests
             Date = DateTime.UtcNow.AddDays(7)
         };
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        ConflictException ex = await Assert.ThrowsAsync<ConflictException>(() =>
             svc.CreateBookingAsync(dto2));
 
         Assert.Contains("already booked", ex.Message);
@@ -178,7 +179,7 @@ public class BookingServiceTests
             Date = DateTime.UtcNow.AddDays(7)
         };
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        ConflictException ex = await Assert.ThrowsAsync<ConflictException>(() =>
             svc.CreateBookingAsync(dto));
 
         Assert.Contains("held by another user", ex.Message);
@@ -299,7 +300,7 @@ public class BookingServiceTests
             Date = firstStart
         };
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        ConflictException ex = await Assert.ThrowsAsync<ConflictException>(() =>
             svc.CreateBookingAsync(dto));
         Assert.Contains("already booked", ex.Message);
     }
@@ -339,7 +340,7 @@ public class BookingServiceTests
             Date = legacyStart.AddMinutes(70)
         };
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        ConflictException ex = await Assert.ThrowsAsync<ConflictException>(() =>
             svc.CreateBookingAsync(dto));
         Assert.Contains("already booked", ex.Message);
     }
@@ -508,7 +509,7 @@ public class BookingServiceTests
             Date = DateTime.UtcNow.AddDays(7)
         };
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        ConflictException ex = await Assert.ThrowsAsync<ConflictException>(() =>
             svc.CreateBookingAsync(dto));
 
         Assert.Contains("only has 4 seats", ex.Message);
@@ -544,7 +545,7 @@ public class BookingServiceTests
         Seed(db);
         BookingService svc = CreateService(db);
         var dto = new BookingDto { RestaurantId = 1, Date = DateTime.UtcNow.AddHours(-1) };
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.CreateBookingAsync(dto));
+        await Assert.ThrowsAsync<ConflictException>(() => svc.CreateBookingAsync(dto));
     }
 
     [Fact]
@@ -660,7 +661,7 @@ public class BookingServiceTests
         booking.Date = DateTime.UtcNow.AddHours(-1);
         await db.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<ConflictException>(
             () => svc.CancelBookingAsync(created.BookingRef!, "test@test.com"));
 
         Booking inDb = await db.Bookings.FirstAsync(b => b.Id == created.Id);
@@ -694,7 +695,7 @@ public class BookingServiceTests
         booking.Date = DateTime.UtcNow.AddMinutes(-6);
         await db.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsAsync<ConflictException>(
             () => svc.CancelBookingAsync(created.BookingRef!, "test@test.com"));
     }
 
@@ -777,7 +778,7 @@ public class BookingServiceTests
             Date = DateTime.UtcNow.AddDays(7)
         };
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+        ConflictException ex = await Assert.ThrowsAsync<ConflictException>(
             () => svc.CreateBookingAsync(dto));
         Assert.Contains("walk-ins only", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -802,7 +803,7 @@ public class BookingServiceTests
             Date = NextUtcOccurrence(DayOfWeek.Saturday)
         };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.CreateBookingAsync(dto));
+        await Assert.ThrowsAsync<ConflictException>(() => svc.CreateBookingAsync(dto));
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Services;
 using OpenRestoApi.Core.Domain;
 using OpenRestoApi.Infrastructure.Persistence;
@@ -66,7 +67,7 @@ public class WalkInTests
     [InlineData("monday")]
     public void NormalizeWalkInDays_Throws_ForInvalidEntries(string input)
     {
-        Assert.Throws<ArgumentException>(() => WalkInHelper.NormalizeWalkInDays(input));
+        Assert.Throws<ValidationException>(() => WalkInHelper.NormalizeWalkInDays(input));
     }
 
     [Fact]
@@ -168,7 +169,7 @@ public class WalkInTests
         db.SaveChanges();
 
         var svc = CreateService(db);
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.UpdateAsync(1, new UpdateRestaurantRequest
+        await Assert.ThrowsAsync<ValidationException>(() => svc.UpdateAsync(1, new UpdateRestaurantRequest
         {
             Name = "T",
             WalkInDays = "8"

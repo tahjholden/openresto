@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Application.Services;
 using OpenRestoApi.Core.Domain;
@@ -162,7 +163,7 @@ public class AvailabilityServiceTests
         var restRepo = new RestaurantRepository(db);
         var svc = new AvailabilityService(bookingRepo, restRepo, new Mock<IHoldService>().Object);
 
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.GetAvailabilityAsync(999, DateTime.UtcNow, 2));
+        await Assert.ThrowsAsync<NotFoundException>(() => svc.GetAvailabilityAsync(999, DateTime.UtcNow, 2));
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Application.Utilities;
 using OpenRestoApi.Core.Domain;
@@ -33,7 +34,7 @@ public class AuthService(
     public virtual async Task<bool> ChangePasswordAsync(string currentPassword, string newPassword)
     {
         if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 6)
-            throw new ArgumentException("Password must be at least 6 characters.");
+            throw new ValidationException("Password must be at least 6 characters.");
         AdminCredential cred = await GetOrCreateCredentialAsync();
         if (!CredentialHelper.VerifyPassword(cred, currentPassword, _passwordService))
             return false;
@@ -45,13 +46,13 @@ public class AuthService(
     public virtual async Task<string?> ChangeEmailAsync(string currentPassword, string newEmail)
     {
         if (!EmailValidator.IsValid(newEmail))
-            throw new ArgumentException("A valid email address is required.");
+            throw new ValidationException("A valid email address is required.");
         AdminCredential cred = await GetOrCreateCredentialAsync();
         if (!CredentialHelper.VerifyPassword(cred, currentPassword, _passwordService))
             return null;
         string normalizedEmail = newEmail.Trim().ToLowerInvariant();
         if (string.Equals(normalizedEmail, cred.Email, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("New email must be different from the current email.");
+            throw new BusinessRuleException("New email must be different from the current email.");
         cred.Email = normalizedEmail;
         await _credentialRepository.SaveChangesAsync();
         return _jwtTokenService.Generate(cred.Email);
@@ -60,7 +61,7 @@ public class AuthService(
     public virtual async Task<bool> ResetPasswordAsync(string resetToken, string newPassword)
     {
         if (string.IsNullOrEmpty(newPassword) || newPassword.Length < 6)
-            throw new ArgumentException("Password must be at least 6 characters.");
+            throw new ValidationException("Password must be at least 6 characters.");
         AdminCredential? cred = await _credentialRepository.GetByResetTokenAsync(resetToken);
         if (cred == null || cred.ResetTokenExpiry < DateTime.UtcNow)
             return false;
@@ -90,7 +91,7 @@ public class AuthService(
             : Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
         if (string.IsNullOrWhiteSpace(password))
-            throw new InvalidOperationException(
+            throw new InfrastructureException(
                 "Admin:Password must be configured before first use. Set it via ADMIN_PASSWORD env var.");
 
         (string hash, string salt) = _passwordService.Hash(password);

@@ -1,4 +1,5 @@
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Domain;
 
@@ -71,7 +72,7 @@ public sealed class SecurityQuestionsService(
             : Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
         if (string.IsNullOrWhiteSpace(password))
-            throw new InvalidOperationException(
+            throw new InfrastructureException(
                 "Admin:Password must be configured before first use. Set it via ADMIN_PASSWORD env var.");
 
         (string hash, string salt) = _passwordService.Hash(password);

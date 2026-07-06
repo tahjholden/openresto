@@ -2,6 +2,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Application.Services;
 using OpenRestoApi.Core.Domain;
@@ -298,7 +299,7 @@ public class AdminServiceTests : IDisposable
     {
         AdminService svc = CreateService();
         var req = new AdminCreateBookingRequest { RestaurantId = 1, SectionId = 1, TableId = 999 };
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.CreateBookingAsync(req));
+        await Assert.ThrowsAsync<ValidationException>(() => svc.CreateBookingAsync(req));
     }
 
     [Fact]
@@ -309,7 +310,7 @@ public class AdminServiceTests : IDisposable
         _db.Restaurants.Add(new Restaurant { Id = 2, Name = "Other" });
         await _db.SaveChangesAsync();
         var req = new AdminCreateBookingRequest { RestaurantId = 2, SectionId = 1, TableId = 1 };
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.CreateBookingAsync(req));
+        await Assert.ThrowsAsync<ValidationException>(() => svc.CreateBookingAsync(req));
     }
 
     [Fact]
@@ -322,7 +323,7 @@ public class AdminServiceTests : IDisposable
         await _db.SaveChangesAsync();
 
         var req = new AdminCreateBookingRequest { RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, Seats = 2 };
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.CreateBookingAsync(req));
+        await Assert.ThrowsAsync<ConflictException>(() => svc.CreateBookingAsync(req));
     }
 
     [Fact]
@@ -332,7 +333,7 @@ public class AdminServiceTests : IDisposable
         SeedBase(1);
         await _db.SaveChangesAsync();
         var req = new AdminCreateBookingRequest { RestaurantId = 1, SectionId = 1, TableId = 1, Seats = 10, Date = DateTime.UtcNow };
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.CreateBookingAsync(req));
+        await Assert.ThrowsAsync<ConflictException>(() => svc.CreateBookingAsync(req));
     }
 
     // ── Configurable booking duration (#135) ────────────────────────────────
@@ -374,7 +375,7 @@ public class AdminServiceTests : IDisposable
 
         var req = new AdminCreateBookingRequest { RestaurantId = 1, SectionId = 1, TableId = 1, Date = newStart, Seats = 2 };
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.CreateBookingAsync(req));
+        await Assert.ThrowsAsync<ConflictException>(() => svc.CreateBookingAsync(req));
     }
 
     // ── Admin past-date creation (#160) ─────────────────────────────────────
@@ -433,7 +434,7 @@ public class AdminServiceTests : IDisposable
         await _db.SaveChangesAsync();
 
         var req = new AdminUpdateBookingRequest { Seats = 10 };
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.AdminUpdateBookingAsync(1, req));
+        await Assert.ThrowsAsync<BusinessRuleException>(() => svc.AdminUpdateBookingAsync(1, req));
     }
 
     [Fact]
@@ -445,7 +446,7 @@ public class AdminServiceTests : IDisposable
         await _db.SaveChangesAsync();
 
         var req = new AdminUpdateBookingRequest { TableId = 999 };
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.AdminUpdateBookingAsync(1, req));
+        await Assert.ThrowsAsync<ValidationException>(() => svc.AdminUpdateBookingAsync(1, req));
     }
 
     [Fact]
@@ -458,7 +459,7 @@ public class AdminServiceTests : IDisposable
         await _db.SaveChangesAsync();
 
         var req = new AdminUpdateBookingRequest { SectionId = 2 };
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.AdminUpdateBookingAsync(1, req));
+        await Assert.ThrowsAsync<ValidationException>(() => svc.AdminUpdateBookingAsync(1, req));
     }
 
     [Fact]
@@ -658,7 +659,7 @@ public class AdminServiceTests : IDisposable
         _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, BookingRef = "B1" });
         await _db.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.CancelBookingAsync(1));
+        await Assert.ThrowsAsync<ConflictException>(() => svc.CancelBookingAsync(1));
 
         Booking inDb = await _db.Bookings.FirstAsync(b => b.Id == 1);
         Assert.False(inDb.IsCancelled);
@@ -685,7 +686,7 @@ public class AdminServiceTests : IDisposable
         _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, BookingRef = "B1" });
         await _db.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.CancelBookingAsync(1));
+        await Assert.ThrowsAsync<ConflictException>(() => svc.CancelBookingAsync(1));
     }
 
     [Fact]
@@ -709,7 +710,7 @@ public class AdminServiceTests : IDisposable
         SeedBase(1);
         _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow, IsCancelled = false, BookingRef = "B1" });
         await _db.SaveChangesAsync();
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.RestoreBookingAsync(1));
+        await Assert.ThrowsAsync<BusinessRuleException>(() => svc.RestoreBookingAsync(1));
     }
 
     [Fact]
@@ -727,7 +728,7 @@ public class AdminServiceTests : IDisposable
         _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow, BookingRef = "B1" });
         await _db.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { RestaurantId = 999 }));
+        await Assert.ThrowsAsync<ValidationException>(() => svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { RestaurantId = 999 }));
     }
 
     [Fact]
@@ -738,7 +739,7 @@ public class AdminServiceTests : IDisposable
         _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow, BookingRef = "B1" });
         await _db.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { TableId = 999 }));
+        await Assert.ThrowsAsync<ValidationException>(() => svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { TableId = 999 }));
     }
 
     [Fact]
@@ -749,7 +750,7 @@ public class AdminServiceTests : IDisposable
         _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow, BookingRef = "B1" });
         await _db.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { SectionId = 999 }));
+        await Assert.ThrowsAsync<ValidationException>(() => svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { SectionId = 999 }));
     }
 
     [Fact]
@@ -761,7 +762,7 @@ public class AdminServiceTests : IDisposable
         _db.Bookings.Add(new Booking { Id = 1, RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow, BookingRef = "B1", Seats = 4 });
         await _db.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { TableId = 2, Seats = 3 }));
+        await Assert.ThrowsAsync<BusinessRuleException>(() => svc.AdminUpdateBookingAsync(1, new AdminUpdateBookingRequest { TableId = 2, Seats = 3 }));
     }
 
     [Fact]

@@ -4,6 +4,7 @@ using MailKit.Security;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
 using Moq;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Domain;
 using OpenRestoApi.Infrastructure.Email;
 using OpenRestoApi.Infrastructure.Persistence;
@@ -94,7 +95,7 @@ public class EmailServiceTests
         var clientMock = new Mock<ISmtpClient>();
         var service = new EmailService(db, protector.Object, () => clientMock.Object);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<InfrastructureException>(() =>
             service.SendEmailAsync("to@test.com", "Subject", "Body"));
     }
 

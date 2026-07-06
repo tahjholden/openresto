@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Services;
 using OpenRestoApi.Core.Domain;
 using OpenRestoApi.Infrastructure.Persistence;
@@ -192,7 +193,7 @@ public class RestaurantManagementServiceTests
 
         var invalid = new List<DayHoursDto> { new() { Day = 9, Open = "10:00", Close = "20:00" } };
 
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<ValidationException>(() =>
             svc.UpdateAsync(1, new UpdateRestaurantRequest { Name = "R", OpenHours = invalid }));
     }
 
@@ -280,7 +281,7 @@ public class RestaurantManagementServiceTests
         await db.SaveChangesAsync();
         var svc = CreateService(db);
 
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<ValidationException>(() =>
             svc.UpdateAsync(1, new UpdateRestaurantRequest { Name = "R", DefaultBookingDurationMinutes = invalidDuration }));
     }
 

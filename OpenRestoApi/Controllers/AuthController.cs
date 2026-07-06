@@ -50,39 +50,25 @@ public class AuthController(
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest req)
     {
-        try
-        {
-            bool ok = await _authService.ChangePasswordAsync(req.CurrentPassword, req.NewPassword);
-            if (!ok)
-                return Unauthorized(new { message = "Current password is incorrect." });
-            return Ok(new { message = "Password changed successfully." });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        // ValidationException (short password) → 400 is mapped by GlobalExceptionHandler.
+        bool ok = await _authService.ChangePasswordAsync(req.CurrentPassword, req.NewPassword);
+        if (!ok)
+            return Unauthorized(new { message = "Current password is incorrect." });
+        return Ok(new { message = "Password changed successfully." });
     }
 
     [HttpPost("change-email")]
     [Authorize]
     public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailRequest req)
     {
-        try
-        {
-            string? jwt = await _authService.ChangeEmailAsync(req.CurrentPassword, req.NewEmail ?? string.Empty);
-            if (jwt == null)
-                return Unauthorized(new { message = "Current password is incorrect." });
-            _cookies.Set(Response, jwt);
-            return Ok(new { message = "Email changed successfully.", email = req.NewEmail!.Trim().ToLowerInvariant() });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (InvalidOperationException)
-        {
-            return BadRequest(new { message = "New email must be different from the current email." });
-        }
+        // ValidationException (invalid email) and BusinessRuleException (same email)
+        // → 400 are mapped by GlobalExceptionHandler; the BusinessRuleException's
+        // message is "New email must be different from the current email.".
+        string? jwt = await _authService.ChangeEmailAsync(req.CurrentPassword, req.NewEmail ?? string.Empty);
+        if (jwt == null)
+            return Unauthorized(new { message = "Current password is incorrect." });
+        _cookies.Set(Response, jwt);
+        return Ok(new { message = "Email changed successfully.", email = req.NewEmail!.Trim().ToLowerInvariant() });
     }
 
     [HttpGet("pvq")]
@@ -117,16 +103,10 @@ public class AuthController(
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest req)
     {
-        try
-        {
-            bool ok = await _authService.ResetPasswordAsync(req.ResetToken, req.NewPassword);
-            if (!ok)
-                return BadRequest(new { message = "Invalid or expired reset token." });
-            return Ok(new { message = "Password reset successfully." });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        // ValidationException (short password) → 400 is mapped by GlobalExceptionHandler.
+        bool ok = await _authService.ResetPasswordAsync(req.ResetToken, req.NewPassword);
+        if (!ok)
+            return BadRequest(new { message = "Invalid or expired reset token." });
+        return Ok(new { message = "Password reset successfully." });
     }
 }

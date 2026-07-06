@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenRestoApi.Controllers;
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Domain;
 using OpenRestoApi.Infrastructure.Persistence;
@@ -117,19 +118,16 @@ namespace OpenRestoApi.Tests.Controllers
         }
 
         [Fact]
-        public async Task RestoreBooking_WithActiveBooking_ReturnsBadRequest()
+        public async Task RestoreBooking_WithActiveBooking_ThrowsBusinessRuleException()
         {
-            // Arrange
+            // Post-Bundle-6 the controller propagates the typed exception; the 400 status
+            // is applied by GlobalExceptionHandler (covered by GlobalExceptionHandlerTests).
             Booking activeBooking = await _dbContext.Bookings
                 .FirstAsync(b => b.BookingRef == "ACTIVE001");
 
-            // Act
-            IActionResult result = await _adminController.RestoreBooking(activeBooking.Id);
-
-            // Assert
-            BadRequestObjectResult badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            MessageResponse response = Assert.IsType<MessageResponse>(badRequestResult.Value);
-            Assert.Equal("Booking is already active.", response.Message);
+            BusinessRuleException ex = await Assert.ThrowsAsync<BusinessRuleException>(
+                () => _adminController.RestoreBooking(activeBooking.Id));
+            Assert.Equal("Booking is already active.", ex.Message);
         }
 
         [Fact]
@@ -142,14 +140,13 @@ namespace OpenRestoApi.Tests.Controllers
             // Act - First restore
             IActionResult firstResult = await _adminController.RestoreBooking(cancelledBooking.Id);
 
-            // Act - Second restore attempt
-            IActionResult secondResult = await _adminController.RestoreBooking(cancelledBooking.Id);
+            // Act - Second restore attempt now throws BusinessRuleException (booking already active)
+            BusinessRuleException ex = await Assert.ThrowsAsync<BusinessRuleException>(
+                () => _adminController.RestoreBooking(cancelledBooking.Id));
 
             // Assert
             Assert.IsType<OkObjectResult>(firstResult);
-            BadRequestObjectResult badRequestResult = Assert.IsType<BadRequestObjectResult>(secondResult);
-            MessageResponse response = Assert.IsType<MessageResponse>(badRequestResult.Value);
-            Assert.Equal("Booking is already active.", response.Message);
+            Assert.Equal("Booking is already active.", ex.Message);
 
             // Verify booking is still active
             Booking? booking = await _dbContext.Bookings.FindAsync(cancelledBooking.Id);

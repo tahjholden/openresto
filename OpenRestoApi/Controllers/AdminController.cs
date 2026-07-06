@@ -41,19 +41,10 @@ public class AdminController(AdminService adminService) : ControllerBase
     [HttpPost("bookings")]
     public async Task<IActionResult> CreateBooking([FromBody] AdminCreateBookingRequest req)
     {
-        try
-        {
-            BookingDetailDto result = await _adminService.CreateBookingAsync(req);
-            return CreatedAtAction(nameof(GetBooking), new { id = result.Id }, result);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new MessageResponse { Message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new MessageResponse { Message = ex.Message });
-        }
+        // ValidationException (bad table/section) → 400, ConflictException (overlap/seats) → 409
+        // are mapped by GlobalExceptionHandler; the controller just orchestrates.
+        BookingDetailDto result = await _adminService.CreateBookingAsync(req);
+        return CreatedAtAction(nameof(GetBooking), new { id = result.Id }, result);
     }
 
     [HttpPost("bookings/{id}/extend")]
@@ -66,14 +57,8 @@ public class AdminController(AdminService adminService) : ControllerBase
     [HttpPost("bookings/{id}/cancel")]
     public async Task<IActionResult> CancelBooking(int id)
     {
-        try
-        {
-            return await _adminService.CancelBookingAsync(id) ? NoContent() : NotFound();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new MessageResponse { Message = ex.Message });
-        }
+        // ConflictException (past booking) → 409 is mapped by GlobalExceptionHandler.
+        return await _adminService.CancelBookingAsync(id) ? NoContent() : NotFound();
     }
 
     [HttpDelete("bookings/{id}")]
@@ -168,6 +153,11 @@ public class AdminController(AdminService adminService) : ControllerBase
     [HttpPost("bookings/{id}/email")]
     public async Task<IActionResult> SendEmail(int id, [FromBody] SendBookingEmailRequest req)
     {
+        // Intentionally keeps its catch: SMTP/transport failures (SmtpException,
+        // InfrastructureException, etc.) surface here from the email stack and are
+        // wrapped as a user-facing 400 "Failed to send: ..." rather than a 500 —
+        // this is a deliberate UX choice, not something GlobalExceptionHandler should
+        // own (those failures are not domain exceptions).
         try
         {
             SendBookingEmailResult result = await _adminService.SendBookingEmailAsync(id, req);
@@ -188,32 +178,17 @@ public class AdminController(AdminService adminService) : ControllerBase
     [HttpPost("bookings/{id}/restore")]
     public async Task<IActionResult> RestoreBooking(int id)
     {
-        try
-        {
-            BookingDetailDto? result = await _adminService.RestoreBookingAsync(id);
-            return result == null ? NotFound() : Ok(new MessageResponse { Message = "Booking restored successfully." });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new MessageResponse { Message = ex.Message });
-        }
+        // BusinessRuleException (booking already active) → 400 is mapped by GlobalExceptionHandler.
+        BookingDetailDto? result = await _adminService.RestoreBookingAsync(id);
+        return result == null ? NotFound() : Ok(new MessageResponse { Message = "Booking restored successfully." });
     }
 
     [HttpPut("bookings/{id}")]
     public async Task<IActionResult> AdminUpdateBooking(int id, [FromBody] AdminUpdateBookingRequest req)
     {
-        try
-        {
-            BookingDetailDto? result = await _adminService.AdminUpdateBookingAsync(id, req);
-            return result == null ? NotFound() : Ok(result);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new MessageResponse { Message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new MessageResponse { Message = ex.Message });
-        }
+        // ValidationException (bad restaurant/table) and BusinessRuleException
+        // (update-conflict / seats) → 400 are mapped by GlobalExceptionHandler.
+        BookingDetailDto? result = await _adminService.AdminUpdateBookingAsync(id, req);
+        return result == null ? NotFound() : Ok(result);
     }
 }

@@ -1,4 +1,5 @@
 using System.Globalization;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Utilities;
 using OpenRestoApi.Core.Domain;
 
@@ -72,7 +73,7 @@ public static class WalkInHelper
         {
             if (!int.TryParse(part, out int day) || day < 1 || day > 7)
             {
-                throw new ArgumentException("WalkInDays must be a comma-separated list of ISO day numbers 1 (Monday) through 7 (Sunday).");
+                throw new ValidationException("WalkInDays must be a comma-separated list of ISO day numbers 1 (Monday) through 7 (Sunday).");
             }
 
             days.Add(day);

@@ -1,4 +1,5 @@
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Application.Utilities;
 using OpenRestoApi.Core.Domain;
@@ -17,7 +18,7 @@ public sealed class AvailabilityService(
     public async Task<AvailabilityResponseDto> GetAvailabilityAsync(int restaurantId, DateTime bookingDate, int seats)
     {
         Restaurant? restaurant = await _restaurantRepository.GetByIdAsync(restaurantId)
-            ?? throw new ArgumentException("Restaurant not found.");
+            ?? throw new NotFoundException("Restaurant not found.");
 
         TimeZoneInfo tz = TimeZoneHelper.Resolve(restaurant.Timezone);
 

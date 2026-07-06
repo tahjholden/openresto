@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Services;
 using OpenRestoApi.Core.Domain;
 using OpenRestoApi.Infrastructure.Persistence;
@@ -55,7 +56,7 @@ public class BrandServiceTests
     {
         using AppDbContext db = CreateDb(nameof(SaveAsync_Throws_WhenAppNameTooLong));
         var svc = CreateService(db);
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.SaveAsync(new string('a', 33), null, null));
+        await Assert.ThrowsAsync<ValidationException>(() => svc.SaveAsync(new string('a', 33), null, null));
     }
 
     [Fact]
@@ -63,7 +64,7 @@ public class BrandServiceTests
     {
         using AppDbContext db = CreateDb(nameof(SaveAsync_Throws_WhenInvalidPrimaryColor));
         var svc = CreateService(db);
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.SaveAsync(null, "invalid", null));
+        await Assert.ThrowsAsync<ValidationException>(() => svc.SaveAsync(null, "invalid", null));
     }
 
     [Fact]
@@ -71,7 +72,7 @@ public class BrandServiceTests
     {
         using AppDbContext db = CreateDb(nameof(SaveAsync_Throws_WhenInvalidAccentColor));
         var svc = CreateService(db);
-        await Assert.ThrowsAsync<ArgumentException>(() => svc.SaveAsync(null, null, "invalid"));
+        await Assert.ThrowsAsync<ValidationException>(() => svc.SaveAsync(null, null, "invalid"));
     }
 
     [Fact]
@@ -124,7 +125,7 @@ public class BrandServiceTests
     {
         using AppDbContext db = CreateDb(nameof(SaveAsync_Throws_WhenCopyrightTextTooLong));
         var svc = CreateService(db);
-        await Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<ValidationException>(
             () => svc.SaveAsync(null, null, null, copyrightText: new string('a', 201)));
     }
 
@@ -154,7 +155,7 @@ public class BrandServiceTests
     {
         using AppDbContext db = CreateDb(nameof(SaveAsync_Throws_WhenInvalidFaviconIcon));
         var svc = CreateService(db);
-        await Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<ValidationException>(
             () => svc.SaveAsync(null, null, null, faviconIcon: "not-a-real-icon"));
     }
 

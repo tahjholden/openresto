@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using OpenRestoApi.Controllers;
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Domain;
 using OpenRestoApi.Infrastructure.Persistence;
@@ -150,9 +151,10 @@ namespace OpenRestoApi.Tests.Controllers
         }
 
         [Fact]
-        public async Task AdminUpdateBooking_WithInvalidTable_ReturnsBadRequest()
+        public async Task AdminUpdateBooking_WithInvalidTable_ThrowsValidationException()
         {
-            // Arrange
+            // Post-Bundle-6 the controller propagates the typed exception; the 400 status
+            // is applied by GlobalExceptionHandler (covered by GlobalExceptionHandlerTests).
             Booking booking = await _dbContext.Bookings.FirstAsync(b => b.BookingRef == "UPDATE001");
             Table tableInOtherRestaurant = await _dbContext.Tables.FirstAsync(t => t.Name == "Table 3");
             var req = new AdminUpdateBookingRequest
@@ -160,11 +162,8 @@ namespace OpenRestoApi.Tests.Controllers
                 TableId = tableInOtherRestaurant.Id
             };
 
-            // Act
-            IActionResult result = await _adminController.AdminUpdateBooking(booking.Id, req);
-
-            // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
+            await Assert.ThrowsAsync<ValidationException>(
+                () => _adminController.AdminUpdateBooking(booking.Id, req));
         }
 
         [Fact]
@@ -211,13 +210,13 @@ namespace OpenRestoApi.Tests.Controllers
 
             var req = new AdminUpdateBookingRequest { Seats = 5 };
 
-            // Act
-            IActionResult result = await _adminController.AdminUpdateBooking(booking.Id, req);
+            // Act — seats-exceeded throws BusinessRuleException (admin-edit path → 400
+            // via GlobalExceptionHandler), NOT ConflictException (which is the create path → 409).
+            BusinessRuleException ex = await Assert.ThrowsAsync<BusinessRuleException>(
+                () => _adminController.AdminUpdateBooking(booking.Id, req));
 
             // Assert
-            BadRequestObjectResult badRequest = Assert.IsType<BadRequestObjectResult>(result);
-            var json = System.Text.Json.JsonSerializer.Serialize(badRequest.Value);
-            Assert.Contains("only has 2 seats", json);
+            Assert.Contains("only has 2 seats", ex.Message);
         }
 
         [Fact]

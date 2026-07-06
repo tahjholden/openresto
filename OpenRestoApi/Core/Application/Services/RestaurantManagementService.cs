@@ -1,4 +1,5 @@
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Domain;
 
@@ -95,7 +96,7 @@ public class RestaurantManagementService(
         {
             if (!_allowedBookingDurationsMinutes.Contains(req.DefaultBookingDurationMinutes.Value))
             {
-                throw new ArgumentException(
+                throw new ValidationException(
                     $"DefaultBookingDurationMinutes must be one of: {string.Join(", ", _allowedBookingDurationsMinutes.Order())}.");
             }
 

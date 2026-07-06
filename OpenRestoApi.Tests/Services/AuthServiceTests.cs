@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Services;
 using OpenRestoApi.Core.Domain;
 using OpenRestoApi.Infrastructure.Persistence;
@@ -161,7 +162,7 @@ public class AuthServiceTests
         SeedCredential(db, "admin@example.com", "pw");
         AuthService svc = CreateService(db, BuildConfig());
 
-        var ex = await Assert.ThrowsAsync<ArgumentException>(() => svc.ChangePasswordAsync("pw", weak));
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => svc.ChangePasswordAsync("pw", weak));
         Assert.Contains("at least 6 characters", ex.Message);
     }
 
@@ -188,8 +189,8 @@ public class AuthServiceTests
         SeedCredential(db, "admin@example.com", "pw");
         AuthService svc = CreateService(db, BuildConfig());
 
-        // Same email after normalisation (trim + lower) ⇒ InvalidOperationException.
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        // Same email after normalisation (trim + lower) ⇒ BusinessRuleException.
+        await Assert.ThrowsAsync<BusinessRuleException>(
             () => svc.ChangeEmailAsync("pw", "ADMIN@EXAMPLE.COM"));
     }
 
@@ -216,7 +217,7 @@ public class AuthServiceTests
         SeedCredential(db, "admin@example.com", "pw");
         AuthService svc = CreateService(db, BuildConfig());
 
-        var ex = await Assert.ThrowsAsync<ArgumentException>(() => svc.ChangeEmailAsync("pw", malformed));
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => svc.ChangeEmailAsync("pw", malformed));
         Assert.Contains("valid email", ex.Message);
     }
 
@@ -287,7 +288,7 @@ public class AuthServiceTests
         await db.SaveChangesAsync();
         AuthService svc = CreateService(db, BuildConfig());
 
-        var ex = await Assert.ThrowsAsync<ArgumentException>(() => svc.ResetPasswordAsync("valid-token", weak));
+        var ex = await Assert.ThrowsAsync<ValidationException>(() => svc.ResetPasswordAsync("valid-token", weak));
         Assert.Contains("at least 6 characters", ex.Message);
     }
 }

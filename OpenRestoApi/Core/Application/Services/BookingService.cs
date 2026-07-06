@@ -1,4 +1,5 @@
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Application.Mappings;
 using OpenRestoApi.Core.Application.Utilities;
@@ -38,12 +39,12 @@ public class BookingService(
         Restaurant? restaurant = await _restaurantRepository.GetByIdAsync(bookingDto.RestaurantId);
         if (restaurant == null)
         {
-            throw new ArgumentException("Restaurant not found.");
+            throw new NotFoundException("Restaurant not found.");
         }
 
         if (restaurant.IsPaused())
         {
-            throw new InvalidOperationException("Bookings for this restaurant are currently paused. Please try again later.");
+            throw new ConflictException("Bookings for this restaurant are currently paused. Please try again later.");
         }
 
         // 2. Normalize date: if Unspecified, treat as restaurant local and convert to UTC
@@ -52,20 +53,20 @@ public class BookingService(
         // 0. Reject bookings in the past (same 5-min tolerance as booking cancellation).
         if (bookingDate < DateTime.UtcNow.AddMinutes(-Booking.CancellationGraceMinutes))
         {
-            throw new InvalidOperationException("Cannot create a booking in the past.");
+            throw new ConflictException("Cannot create a booking in the past.");
         }
 
         // Walk-in-only locations (or walk-in-only days) never take online bookings.
         // Admin-recorded bookings use AdminService.CreateBookingAsync and are unaffected.
         if (restaurant.IsWalkInOnlyAt(bookingDate))
         {
-            throw new InvalidOperationException(restaurant.WalkInOnly
+            throw new ConflictException(restaurant.WalkInOnly
                 ? "This location accepts walk-ins only and does not take online bookings."
                 : "This location accepts walk-ins only on the selected day. Please choose another day or just come in.");
         }
 
         if (bookingDto.TableId is null || bookingDto.SectionId is null)
-            throw new ArgumentException("TableId and SectionId are required.");
+            throw new ValidationException("TableId and SectionId are required.");
 
         // 1. Check DB for an existing confirmed booking on the same table+date
         bool alreadyBooked = await _bookingRepository.IsTableBookedOnDateAsync(
@@ -73,7 +74,7 @@ public class BookingService(
 
         if (alreadyBooked)
         {
-            throw new InvalidOperationException("This table is already booked for that time.");
+            throw new ConflictException("This table is already booked for that time.");
         }
 
         // 2. Check for an active hold by someone else
@@ -83,14 +84,14 @@ public class BookingService(
 
         if (heldByOther)
         {
-            throw new InvalidOperationException("This table is currently being held by another user. Please try again shortly.");
+            throw new ConflictException("This table is currently being held by another user. Please try again shortly.");
         }
 
         // 3. Check for seat capacity
         Table? table = await _tableRepository.GetByIdAsync(bookingDto.TableId.Value);
         if (table != null && bookingDto.Seats > table.Seats)
         {
-            throw new InvalidOperationException($"This table only has {table.Seats} seats, but {bookingDto.Seats} guests were requested.");
+            throw new ConflictException($"This table only has {table.Seats} seats, but {bookingDto.Seats} guests were requested.");
         }
 
         // 4. Persist the booking
@@ -157,7 +158,7 @@ public class BookingService(
             Table? table = booking.TableId.HasValue ? await _tableRepository.GetByIdAsync(booking.TableId.Value) : null;
             if (table != null && bookingDto.Seats > table.Seats)
             {
-                throw new InvalidOperationException($"This table only has {table.Seats} seats, but {bookingDto.Seats} guests were requested.");
+                throw new ConflictException($"This table only has {table.Seats} seats, but {bookingDto.Seats} guests were requested.");
             }
         }
 
@@ -204,7 +205,7 @@ public class BookingService(
 
         if (!booking.CanBeCancelledAt(DateTime.UtcNow))
         {
-            throw new InvalidOperationException("Cannot cancel a booking that has already passed.");
+            throw new ConflictException("Cannot cancel a booking that has already passed.");
         }
 
         booking.IsCancelled = true;

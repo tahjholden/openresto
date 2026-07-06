@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using OpenRestoApi.Core.Application.Exceptions;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Domain;
 
@@ -61,27 +62,27 @@ public class BrandService(IBrandSettingsRepository brandRepository, IConfigurati
     {
         if (appName != null && appName.Length > 32)
         {
-            throw new ArgumentException("App name cannot exceed 32 characters.");
+            throw new ValidationException("App name cannot exceed 32 characters.");
         }
 
         if (primaryColor != null && !IsValidHexColor(primaryColor))
         {
-            throw new ArgumentException("Invalid primary color hex code.");
+            throw new ValidationException("Invalid primary color hex code.");
         }
 
         if (accentColor != null && !IsValidHexColor(accentColor))
         {
-            throw new ArgumentException("Invalid accent color hex code.");
+            throw new ValidationException("Invalid accent color hex code.");
         }
 
         if (faviconIcon != null && LucideIconPaths.Get(faviconIcon) == null)
         {
-            throw new ArgumentException("Invalid favicon icon.");
+            throw new ValidationException("Invalid favicon icon.");
         }
 
         if (copyrightText != null && copyrightText.Length > 200)
         {
-            throw new ArgumentException("Copyright text cannot exceed 200 characters.");
+            throw new ValidationException("Copyright text cannot exceed 200 characters.");
         }
 
         BrandSettings? brand = await _brandRepository.GetAsync();

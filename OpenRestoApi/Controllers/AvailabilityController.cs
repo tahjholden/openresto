@@ -15,18 +15,9 @@ public class AvailabilityController(IAvailabilityService availabilityService) : 
     [HttpGet("/api/restaurants/{restaurantId}/availability")]
     public async Task<IActionResult> Get(int restaurantId, [FromQuery] DateTime date, [FromQuery] int seats)
     {
-        try
-        {
-            AvailabilityResponseDto result = await _availabilityService.GetAvailabilityAsync(restaurantId, date, seats);
-            return Ok(result);
-        }
-        catch (ArgumentException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while checking availability.", detail = ex.Message });
-        }
+        // NotFoundException (restaurant not found) → 404 and any unexpected exception
+        // → 500 are mapped by GlobalExceptionHandler with a { message } body.
+        AvailabilityResponseDto result = await _availabilityService.GetAvailabilityAsync(restaurantId, date, seats);
+        return Ok(result);
     }
 }

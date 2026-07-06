@@ -5,16 +5,16 @@ using OpenRestoApi.Core.Domain;
 
 namespace OpenRestoApi.Core.Application.Services;
 
-public class AvailabilityService(
+public sealed class AvailabilityService(
     IBookingRepository bookingRepository,
     IRestaurantRepository restaurantRepository,
-    IHoldService holdService)
+    IHoldService holdService) : IAvailabilityService
 {
     private readonly IBookingRepository _bookingRepository = bookingRepository;
     private readonly IRestaurantRepository _restaurantRepository = restaurantRepository;
     private readonly IHoldService _holdService = holdService;
 
-    public virtual async Task<AvailabilityResponseDto> GetAvailabilityAsync(int restaurantId, DateTime bookingDate, int seats)
+    public async Task<AvailabilityResponseDto> GetAvailabilityAsync(int restaurantId, DateTime bookingDate, int seats)
     {
         Restaurant? restaurant = await _restaurantRepository.GetByIdAsync(restaurantId)
             ?? throw new ArgumentException("Restaurant not found.");

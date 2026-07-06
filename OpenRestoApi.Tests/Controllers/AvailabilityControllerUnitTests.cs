@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using OpenRestoApi.Controllers;
-using OpenRestoApi.Core.Application.Services;
+using OpenRestoApi.Core.Application.Interfaces;
 
 namespace OpenRestoApi.Tests.Controllers;
 
@@ -11,7 +11,7 @@ public class AvailabilityControllerUnitTests
     public async Task Get_ReturnsInternalServerError_OnException()
     {
         // Arrange
-        var mockService = new Mock<AvailabilityService>(null!, null!, null!);
+        var mockService = new Mock<IAvailabilityService>();
         mockService.Setup(s => s.GetAvailabilityAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<int>()))
             .ThrowsAsync(new InvalidOperationException("Unexpected error"));
 
@@ -28,7 +28,7 @@ public class AvailabilityControllerUnitTests
     [Fact]
     public async Task Get_ReturnsNotFound_WhenServiceThrowsArgumentException()
     {
-        var mockService = new Mock<AvailabilityService>(null!, null!, null!);
+        var mockService = new Mock<IAvailabilityService>();
         mockService.Setup(s => s.GetAvailabilityAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<int>()))
             .ThrowsAsync(new ArgumentException("Restaurant not found"));
 
@@ -45,7 +45,7 @@ public class AvailabilityControllerUnitTests
     [Fact]
     public async Task Get_ReturnsOk_OnSuccess()
     {
-        var mockService = new Mock<AvailabilityService>(null!, null!, null!);
+        var mockService = new Mock<IAvailabilityService>();
         var response = new OpenRestoApi.Core.Application.DTOs.AvailabilityResponseDto { Slots = [] };
         mockService.Setup(s => s.GetAvailabilityAsync(1, It.IsAny<DateTime>(), 2))
             .ReturnsAsync(response);

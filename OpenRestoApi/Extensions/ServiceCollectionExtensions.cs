@@ -182,7 +182,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<EmailSettingsService>();
         services.AddScoped<HighlightService>();
         services.AddScoped<SocialLinkService>();
-        services.AddScoped<AvailabilityService>();
+        services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<MediaService>();
 
         services.AddSingleton<OpenRestoApi.Core.Application.Mappings.BookingMapper>();

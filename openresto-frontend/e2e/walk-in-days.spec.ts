@@ -1,5 +1,5 @@
 import { test, expect, type Browser } from "@playwright/test";
-import { buildUpdateRestaurantBody } from "./helpers";
+import { buildUpdateRestaurantBody, selectBookingDate } from "./helpers";
 import { ADMIN_STATE_FILE } from "./global-setup";
 
 const PASTA_PLACE_ID = 1;
@@ -72,18 +72,9 @@ test.describe("Walk-in-only day on the booking form", () => {
     await page.goto(`/book?restaurantId=${PASTA_PLACE_ID}`);
     await expect(page.getByText("Book a table")).toBeVisible({ timeout: 20_000 });
 
-    // Select tomorrow (a walk-in-only day) via the native setter so React's
-    // controlled input fires onChange (same technique as booking-flow.spec.ts).
-    await page.evaluate((value: string) => {
-      const input = document.querySelector('input[type="date"]') as HTMLInputElement;
-      const setter = Object.getOwnPropertyDescriptor(
-        window.HTMLInputElement.prototype,
-        "value"
-      )!.set!;
-      setter.call(input, value);
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-    }, tomorrowStr);
+    // Select tomorrow (a walk-in-only day) via the calendar-grid DatePicker
+    // (same helper as booking-flow.spec.ts).
+    await selectBookingDate(page, tomorrowStr);
 
     // The day-scoped notice renders in place of the slot list / booking form.
     await expect(page.getByText("Walk-ins only on this day").first()).toBeVisible({
@@ -96,16 +87,7 @@ test.describe("Walk-in-only day on the booking form", () => {
     await expect(page.getByText("Book a table")).toBeVisible({ timeout: 20_000 });
 
     // Select a different day that isn't in walkInDays.
-    await page.evaluate((value: string) => {
-      const input = document.querySelector('input[type="date"]') as HTMLInputElement;
-      const setter = Object.getOwnPropertyDescriptor(
-        window.HTMLInputElement.prototype,
-        "value"
-      )!.set!;
-      setter.call(input, value);
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-    }, otherDayStr);
+    await selectBookingDate(page, otherDayStr);
 
     // The day-scoped notice must NOT appear; instead the slot picker hydrates.
     await expect(page.getByText("Walk-ins only on this day")).toHaveCount(0);

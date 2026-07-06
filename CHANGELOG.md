@@ -87,4 +87,4 @@ Hello! Thanks for reading the changelog, and for the 50 stars on Github! This pr
 [1.0.0]: https://github.com/karanshukla/openresto/releases/tag/v1.0.0
 [1.1.0]: https://github.com/karanshukla/openresto/releases/tag/v1.1.0
 [1.1.1]: https://github.com/karanshukla/openresto/releases/tag/v1.1.1
-[1.2.0]: https://github.com/karanshukla/openresto/releases/tag/v1.2.0
+[1.2.0]: https://github.com/karanshukla/openresto/releases/tag/v1.2.1

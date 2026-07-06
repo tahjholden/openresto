@@ -1,14 +1,43 @@
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Modal, StyleSheet, View, Pressable } from "react-native";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { ThemedText } from "@/components/themed-text";
-import { getThemeColors, COLORS, TYPOGRAPHY } from "@/theme/theme";
+import { getThemeColors, COLORS, TYPOGRAPHY, BORDER_RADIUS, SHADOWS } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
 
-/** Convert a YYYY-MM-DD string to ISO day-of-week (1=Mon, 7=Sun) */
-function getIsoDay(dateStr: string): number {
-  const jsDay = new Date(dateStr + "T12:00:00").getDay(); // 0=Sun, 6=Sat
+const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const MONTH_LABELS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function toDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Convert a YYYY-MM-DD string (or Date) to ISO day-of-week (1=Mon, 7=Sun) */
+function isoDayOf(d: Date): number {
+  const jsDay = d.getDay(); // 0=Sun, 6=Sat
   return jsDay === 0 ? 7 : jsDay;
+}
+
+function startOfToday(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
 export default function DatePicker({
@@ -37,62 +66,206 @@ export default function DatePicker({
   const textColor = colors.text;
   const placeholderColor = colors.muted;
 
-  const maxDate = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 29);
-    return d.toISOString().split("T")[0];
-  })();
-  // Customers are hard-locked to today and later. Admins may back-date within a
-  // bounded one-year window so the picker stays reasonable (opt-in via allowPast).
+  const today = startOfToday();
   const minDate = (() => {
-    const d = new Date();
+    const d = new Date(today);
     if (allowPast) d.setDate(d.getDate() - 365);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return d;
   })();
+  const maxDate = (() => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + 29);
+    return d;
+  })();
+  const minDateStr = toDateStr(minDate);
+  const maxDateStr = toDateStr(maxDate);
 
-  const isClosedDay = !!(selectedDate && openDays && !openDays.includes(getIsoDay(selectedDate)));
+  const isClosedDay = !!(
+    selectedDate &&
+    openDays &&
+    !openDays.includes(isoDayOf(new Date(selectedDate + "T12:00:00")))
+  );
 
-  const [isFocused, setIsFocused] = useState(false);
+  const initialView = selectedDate ? new Date(selectedDate + "T12:00:00") : today;
+  const [open, setOpen] = useState(false);
+  const [viewYear, setViewYear] = useState(initialView.getFullYear());
+  const [viewMonth, setViewMonth] = useState(initialView.getMonth());
+
+  const openPicker = () => {
+    const base = selectedDate ? new Date(selectedDate + "T12:00:00") : today;
+    setViewYear(base.getFullYear());
+    setViewMonth(base.getMonth());
+    setOpen(true);
+  };
+
+  const prevMonthLastDay = new Date(viewYear, viewMonth, 0);
+  const canGoPrev = toDateStr(prevMonthLastDay) >= minDateStr;
+  const nextMonthFirstDay = new Date(viewYear, viewMonth + 1, 1);
+  const canGoNext = toDateStr(nextMonthFirstDay) <= maxDateStr;
+
+  const goPrevMonth = () => {
+    if (!canGoPrev) return;
+    if (viewMonth === 0) {
+      setViewYear((y) => y - 1);
+      setViewMonth(11);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  };
+
+  const goNextMonth = () => {
+    if (!canGoNext) return;
+    if (viewMonth === 11) {
+      setViewYear((y) => y + 1);
+      setViewMonth(0);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  };
+
+  const firstOfMonth = new Date(viewYear, viewMonth, 1);
+  const leadingBlanks = isoDayOf(firstOfMonth) - 1;
+  const totalDays = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const cells: (number | null)[] = [
+    ...Array(leadingBlanks).fill(null),
+    ...Array.from({ length: totalDays }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const selectedLabel = selectedDate
+    ? new Date(selectedDate + "T12:00:00").toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
 
   return (
     <View style={styles.wrapper} testID="date-picker-web">
-      <input
-        type="date"
-        value={selectedDate || ""}
-        min={minDate}
-        max={maxDate}
-        onChange={(e) => onSelect(e.target.value)}
-        style={
+      <Pressable
+        onPress={openPicker}
+        testID="date-picker-trigger"
+        style={[
+          styles.trigger,
           {
-            width: "100%",
-            height: "44px",
-            borderWidth: "1px",
-            borderStyle: "solid",
-            borderColor: isFocused ? primaryColor : isClosedDay ? COLORS.error : borderColor,
-            borderRadius: "8px",
-            paddingLeft: "12px",
-            paddingRight: "12px",
-            fontSize: "15px",
-            fontFamily: "inherit",
+            borderColor: open ? primaryColor : isClosedDay ? COLORS.error : borderColor,
             backgroundColor: bg,
-            color: selectedDate ? textColor : placeholderColor,
-            outline: "none",
-            boxSizing: "border-box",
-            cursor: "pointer",
-            transition: "border-color 0.2s",
-          } as React.CSSProperties
-        }
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-      />
+          },
+        ]}
+      >
+        <ThemedText style={{ color: selectedDate ? textColor : placeholderColor, fontSize: 15 }}>
+          {selectedLabel ?? "Select a date"}
+        </ThemedText>
+        <ThemedText style={[styles.chevron, { color: placeholderColor }]}>▾</ThemedText>
+      </Pressable>
+
       {isClosedDay && (
         <ThemedText style={styles.closedWarning}>
           Note: This restaurant is normally closed on this day. Please double-check another date.
         </ThemedText>
       )}
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={open}
+        onRequestClose={/* istanbul ignore next */ () => setOpen(false)}
+      >
+        <Pressable
+          style={styles.backdrop}
+          testID="date-picker-backdrop"
+          onPress={() => setOpen(false)}
+        >
+          <Pressable
+            style={[styles.calendar, { backgroundColor: colors.card, borderColor }, SHADOWS.popup]}
+            testID="date-picker-calendar"
+            onPress={(e) => e?.stopPropagation?.()}
+          >
+            <View style={styles.calendarHeader}>
+              <Pressable
+                onPress={goPrevMonth}
+                disabled={!canGoPrev}
+                testID="date-picker-prev-month"
+                style={styles.navButton}
+              >
+                <ThemedText
+                  style={{ color: canGoPrev ? textColor : placeholderColor, fontSize: 16 }}
+                >
+                  ‹
+                </ThemedText>
+              </Pressable>
+              <ThemedText style={{ fontSize: 14, fontWeight: "600" }}>
+                {MONTH_LABELS[viewMonth]} {viewYear}
+              </ThemedText>
+              <Pressable
+                onPress={goNextMonth}
+                disabled={!canGoNext}
+                testID="date-picker-next-month"
+                style={styles.navButton}
+              >
+                <ThemedText
+                  style={{ color: canGoNext ? textColor : placeholderColor, fontSize: 16 }}
+                >
+                  ›
+                </ThemedText>
+              </Pressable>
+            </View>
+
+            <View style={styles.weekdayRow}>
+              {WEEKDAY_LABELS.map((label) => (
+                <View key={label} style={styles.cell}>
+                  <ThemedText style={{ fontSize: 11, color: placeholderColor, fontWeight: "600" }}>
+                    {label}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+
+            {Array.from({ length: cells.length / 7 }, (_, row) => (
+              <View key={row} style={styles.weekRow}>
+                {cells.slice(row * 7, row * 7 + 7).map((dayNum, col) => {
+                  if (dayNum === null) return <View key={col} style={styles.cell} />;
+                  const cellDate = new Date(viewYear, viewMonth, dayNum);
+                  const cellStr = toDateStr(cellDate);
+                  const outOfRange = cellStr < minDateStr || cellStr > maxDateStr;
+                  const closedWeekday = !!openDays && !openDays.includes(isoDayOf(cellDate));
+                  const disabled = outOfRange || closedWeekday;
+                  const isSelected = cellStr === selectedDate;
+                  return (
+                    <Pressable
+                      key={col}
+                      disabled={disabled}
+                      testID={`date-picker-day-${cellStr}`}
+                      onPress={() => {
+                        onSelect(cellStr);
+                        setOpen(false);
+                      }}
+                      style={[
+                        styles.cell,
+                        styles.dayCell,
+                        isSelected && {
+                          backgroundColor: primaryColor,
+                          borderRadius: BORDER_RADIUS.sm,
+                        },
+                      ]}
+                    >
+                      <ThemedText
+                        style={{
+                          fontSize: 13,
+                          color: isSelected ? COLORS.white : disabled ? colors.disabled : textColor,
+                          fontWeight: isSelected ? "600" : "400",
+                        }}
+                      >
+                        {dayNum}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -101,9 +274,59 @@ const styles = StyleSheet.create({
   wrapper: {
     marginBottom: 0,
   },
+  trigger: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    height: 44,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+  },
+  chevron: {
+    fontSize: 14,
+  },
   closedWarning: {
     ...TYPOGRAPHY.caption,
     color: COLORS.error,
     marginTop: 4,
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  calendar: {
+    width: 280,
+    borderWidth: 1,
+    borderRadius: BORDER_RADIUS.card,
+    padding: 12,
+  },
+  calendarHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  navButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  weekdayRow: {
+    flexDirection: "row",
+  },
+  weekRow: {
+    flexDirection: "row",
+  },
+  cell: {
+    width: 36,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayCell: {
+    margin: 1,
   },
 });

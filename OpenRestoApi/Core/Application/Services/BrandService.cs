@@ -52,12 +52,6 @@ public class BrandService(AppDbContext db, IConfiguration configuration)
             };
     }
 
-    private static readonly HashSet<string> _validFaviconIcons = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "utensils", "wine", "coffee", "pizza", "flame",
-        "leaf", "star", "heart", "chef-hat", "fish"
-    };
-
     public async Task SaveAsync(
         string? appName,
         string? primaryColor,
@@ -81,7 +75,7 @@ public class BrandService(AppDbContext db, IConfiguration configuration)
             throw new ArgumentException("Invalid accent color hex code.");
         }
 
-        if (faviconIcon != null && !_validFaviconIcons.Contains(faviconIcon))
+        if (faviconIcon != null && LucideIconPaths.Get(faviconIcon) == null)
         {
             throw new ArgumentException("Invalid favicon icon.");
         }

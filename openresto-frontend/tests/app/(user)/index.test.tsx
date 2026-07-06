@@ -187,11 +187,15 @@ describe("HomeScreen", () => {
     expect(screen.getByText("Curated by the owner")).toBeTruthy();
   });
 
-  it("renders empty highlights gracefully", async () => {
+  it("renders empty highlights gracefully (section heading hidden too)", async () => {
     (fetchHighlights as jest.Mock).mockResolvedValue([]);
     renderWithProviders(<HomeScreen />);
     await waitFor(() => expect(screen.queryByTestId("loading-screen")).toBeNull());
+    // No highlights → the entire section (heading + "Curated by the owner" tag
+    // + grid) must be absent, not just the card body.
     expect(screen.queryByText("Wood-fired kitchen")).toBeNull();
+    expect(screen.queryByText("Restaurant highlights")).toBeNull();
+    expect(screen.queryByText("Curated by the owner")).toBeNull();
   });
 
   it("onScroll handler updates scrollY", async () => {

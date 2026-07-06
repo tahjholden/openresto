@@ -3,27 +3,15 @@ import { ThemedView } from "@/components/themed-view";
 import { RestaurantDto } from "@/api/restaurants";
 import { StyleSheet, View } from "react-native";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getThemeColors, COLORS } from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { getThemeColors } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { getHoursForDay, getIsoDayFromDateString, parseOpenDays } from "@/utils/openingHours";
-import { isWalkInOnlyOnDay } from "@/utils/walkIn";
-import { getNowInTimezone } from "@/utils/date";
-
-const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function RestaurantDetails({ restaurant }: { restaurant: RestaurantDto }) {
   const isDark = useColorScheme() === "dark";
   const colors = getThemeColors(isDark);
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
   const mutedColor = colors.muted;
   const borderColor = colors.border;
   const chipBg = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
-
-  const timezone = restaurant.timezone || "UTC";
-  const todayIsoDay = getIsoDayFromDateString(getNowInTimezone(timezone).dateStr);
-  const openDaysList = parseOpenDays(restaurant.openDays);
 
   return (
     <View style={styles.container}>
@@ -39,38 +27,6 @@ export default function RestaurantDetails({ restaurant }: { restaurant: Restaura
           </ThemedText>
         </View>
       ) : null}
-
-      <View style={[styles.divider, { backgroundColor: borderColor }]} />
-
-      <ThemedText type="defaultSemiBold" style={styles.sectionHeading}>
-        Opening Hours
-      </ThemedText>
-
-      <ThemedView style={[styles.hoursCard, { borderColor }]}>
-        {DAY_LABELS.map((label, idx) => {
-          const day = idx + 1;
-          const isOpenDay = openDaysList.includes(day);
-          const isToday = day === todayIsoDay;
-          const { open, close } = getHoursForDay(restaurant, day);
-          const walkInOnly = isOpenDay && isWalkInOnlyOnDay(restaurant, day);
-          return (
-            <View
-              key={day}
-              style={[styles.hoursRow, isToday && { backgroundColor: `${primaryColor}14` }]}
-            >
-              <ThemedText style={[styles.hoursDay, isToday && { color: primaryColor }]}>
-                {label}
-                {isToday ? " · Today" : ""}
-              </ThemedText>
-              <ThemedText
-                style={[styles.hoursValue, { color: isOpenDay ? colors.text : mutedColor }]}
-              >
-                {!isOpenDay ? "Closed" : walkInOnly ? "Walk-ins only" : `${open} – ${close}`}
-              </ThemedText>
-            </View>
-          );
-        })}
-      </ThemedView>
 
       <View style={[styles.divider, { backgroundColor: borderColor }]} />
 
@@ -127,25 +83,6 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 4,
-  },
-  hoursCard: {
-    borderWidth: 1,
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  hoursRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  hoursDay: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  hoursValue: {
-    fontSize: 14,
   },
   sectionCard: {
     borderWidth: 1,

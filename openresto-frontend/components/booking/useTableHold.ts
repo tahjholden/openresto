@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createHold, releaseHold, HoldResponse } from "@/api/holds";
+import { isHoldExpired, secondsUntilExpiry } from "@/components/booking/holdCountdown";
 import { isValidEmail } from "@/utils/validation";
 
 export type HoldStatus = "idle" | "pending" | "held" | "unavailable" | "expired";
@@ -53,9 +54,9 @@ export function useTableHold({
   function startCountdown(expiresAt: string) {
     clearCountdown();
     const update = () => {
-      const secs = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
+      const secs = secondsUntilExpiry(expiresAt);
       setSecondsLeft(secs);
-      if (secs === 0) {
+      if (isHoldExpired(secs)) {
         clearCountdown();
         setHoldStatus("expired");
         setHold(null);

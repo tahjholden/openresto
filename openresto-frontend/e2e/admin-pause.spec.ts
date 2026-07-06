@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { gotoAdminDashboard, futureDateStr } from "./helpers";
+import { gotoAdminDashboard, futureDateStr, expectVisibleWithReload } from "./helpers";
 
 const PASTA_PLACE_ID = 1;
 
@@ -31,7 +31,9 @@ test.describe("Admin pause bookings", () => {
 
     // ── Customer navigates to the booking form ─────────────────────────────────
     await page.goto(`/book?restaurantId=${PASTA_PLACE_ID}`);
-    await expect(page.getByText("Book a table")).toBeVisible({ timeout: 20_000 });
+    // The form hydrates from a rate-limited fetch; reload (cool-down first) if
+    // it hasn't rendered within the window — see expectVisibleWithReload.
+    await expectVisibleWithReload(page, page.getByText("Book a table"), { timeout: 20_000 });
 
     // Pick tomorrow via the native date input so we're not looking at today's
     // half-gone slot list for an unrelated reason

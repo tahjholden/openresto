@@ -51,6 +51,7 @@ export default defineConfig({
         "**/cancel-past-booking.spec.ts",
         "**/admin-change-email.spec.ts",
         "**/admin-reorder-sections.spec.ts",
+        "**/auth-security.spec.ts",
       ],
     },
     // ── Admin tests — pre-loaded auth cookie ────────────────────────────────
@@ -69,6 +70,7 @@ export default defineConfig({
         "**/cancel-past-booking.spec.ts",
         "**/admin-change-email.spec.ts",
         "**/admin-reorder-sections.spec.ts",
+        "**/auth-security.spec.ts",
       ],
     },
   ],

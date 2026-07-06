@@ -7,6 +7,7 @@ namespace OpenRestoApi.Infrastructure.Persistence.Repositories;
 
 [OnlyAccessibleBy("OpenRestoApi.Extensions.ServiceCollectionExtensions")]
 [OnlyAccessibleBy("OpenRestoApi.Tests.Services.BookingServiceTests")]
+[OnlyAccessibleBy("OpenRestoApi.Tests.Services.BookingConfirmationServiceTests")]
 [OnlyAccessibleBy("OpenRestoApi.Tests.Services.EmailSettingsServiceTests")]
 [ExternalAccessAllowed]
 internal class EmailFailureRepository(AppDbContext db) : IEmailFailureRepository

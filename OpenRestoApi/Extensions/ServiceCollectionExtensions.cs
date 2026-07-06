@@ -195,6 +195,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<OpenRestoApi.Infrastructure.Cookies.RecentBookingsCookie>();
         services.AddScoped<Func<ISmtpClient>>(_ => () => new SmtpClient());
         services.AddScoped<IEmailService, OpenRestoApi.Infrastructure.Email.EmailService>();
+        services.AddScoped<IEmailTemplateService, OpenRestoApi.Core.Application.Services.EmailTemplateService>();
+        services.AddScoped<IBookingConfirmationService, OpenRestoApi.Core.Application.Services.BookingConfirmationService>();
         services.AddScoped<INotificationService, OpenRestoApi.Core.Application.Services.NotificationService>();
         services.AddOptions<OpenRestoApi.Core.Application.Settings.VapidSettings>()
                 .BindConfiguration("Vapid");

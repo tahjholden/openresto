@@ -9,6 +9,7 @@ namespace OpenRestoApi.Infrastructure.Persistence.Repositories;
 [OnlyAccessibleBy("OpenRestoApi.Tests.Services.BrandServiceTests")]
 [OnlyAccessibleBy("OpenRestoApi.Tests.Services.MediaServiceTests")]
 [OnlyAccessibleBy("OpenRestoApi.Tests.Services.BookingServiceTests")]
+[OnlyAccessibleBy("OpenRestoApi.Tests.Services.BookingConfirmationServiceTests")]
 [ExternalAccessAllowed]
 internal class BrandSettingsRepository(AppDbContext db) : IBrandSettingsRepository
 {

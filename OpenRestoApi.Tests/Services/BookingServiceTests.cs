@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Moq;
 using OpenRestoApi.Core.Application.DTOs;
 using OpenRestoApi.Core.Application.Interfaces;
@@ -26,11 +25,9 @@ public class BookingServiceTests
     private static BookingService CreateService(
         AppDbContext db,
         IHoldService? holdService = null,
-        EmailSettingsService? emailSettingsService = null,
-        IEmailService? emailService = null)
+        IBookingConfirmationService? confirmationService = null)
     {
         holdService ??= new Mock<IHoldService>().Object;
-        var config = new Mock<IConfiguration>();
         return new BookingService(
             new BookingRepository(db),
             new TableRepository(db),
@@ -38,9 +35,7 @@ public class BookingServiceTests
             new RestaurantRepository(db),
             holdService,
             new BookingMapper(),
-            new BrandService(new BrandSettingsRepository(db), config.Object),
-            emailSettingsService,
-            emailService);
+            confirmationService);
     }
 
     private static void Seed(AppDbContext db)
@@ -703,207 +698,39 @@ public class BookingServiceTests
             () => svc.CancelBookingAsync(created.BookingRef!, "test@test.com"));
     }
 
-    // ── Booking Confirmation Emails ───────────────────────────────────────────
+    // ── Booking confirmation delegation ────────────────────────────────────────
+    // The full email pipeline (template rendering, SMTP send, failure logging) now lives in
+    // BookingConfirmationService (see BookingConfirmationServiceTests + EmailTemplateServiceTests).
+    // BookingService's only responsibility here is the delegation seam.
 
     [Fact]
-    public async Task CreateBookingAsync_SendsConfirmationEmail_WhenEnabled()
+    public async Task CreateBookingAsync_DelegatesToConfirmationService_WhenProvided()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_SendsConfirmationEmail_WhenEnabled));
+        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_DelegatesToConfirmationService_WhenProvided));
         Seed(db);
-        db.Set<EmailSettings>().Add(new EmailSettings
-        {
-            Host = "smtp.test.com",
-            Port = 587,
-            Username = "user@test.com",
-            EncryptedPassword = "enc",
-            SendBookingConfirmations = true,
-        });
-        db.SaveChanges();
+        var confirmationMock = new Mock<IBookingConfirmationService>();
+        BookingService svc = CreateService(db, confirmationService: confirmationMock.Object);
 
-        var emailServiceMock = new Mock<IEmailService>();
-        var emailSettingsService = new Mock<EmailSettingsService>(null!, null!, null!, null!);
-        emailSettingsService.Setup(s => s.GetAsync()).ReturnsAsync(
-            await db.Set<EmailSettings>().FirstAsync());
-
-        BookingService svc = CreateService(db, emailService: emailServiceMock.Object,
-            emailSettingsService: emailSettingsService.Object);
-
-        await svc.CreateBookingAsync(new BookingDto
+        BookingDto result = await svc.CreateBookingAsync(new BookingDto
         {
             RestaurantId = 1, SectionId = 1, TableId = 1,
             CustomerEmail = "guest@example.com", Seats = 2,
             Date = new DateTime(2026, 8, 1, 19, 0, 0, DateTimeKind.Utc),
         });
 
-        emailServiceMock.Verify(
-            e => e.SendEmailAsync("guest@example.com", It.IsAny<string>(), It.IsAny<string>()),
+        Assert.NotEmpty(result.BookingRef!);
+        // SendConfirmationAsync(Booking, Restaurant) called exactly once with the persisted booking.
+        confirmationMock.Verify(
+            c => c.SendConfirmationAsync(It.IsAny<Booking>(), It.IsAny<Restaurant>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task CreateBookingAsync_EmailHtml_ContainsRestaurantImage_WhenImageUrlSet()
+    public async Task CreateBookingAsync_Succeeds_WhenNoConfirmationServiceInjected()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_EmailHtml_ContainsRestaurantImage_WhenImageUrlSet));
-        db.Restaurants.Add(new Restaurant { Id = 1, Name = "Pic Restaurant", ImageUrl = "https://cdn.example.com/photo.jpg" });
-        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
-        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
-        db.SaveChanges();
-        db.Set<EmailSettings>().Add(new EmailSettings
-        {
-            Host = "smtp.test.com", Port = 587, Username = "u", EncryptedPassword = "enc",
-            SendBookingConfirmations = true,
-        });
-        db.SaveChanges();
-
-        string? capturedBody = null;
-        var emailServiceMock = new Mock<IEmailService>();
-        emailServiceMock
-            .Setup(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .Callback<string, string, string>((_, _, body) => capturedBody = body)
-            .Returns(Task.CompletedTask);
-
-        var emailSettingsService = new Mock<EmailSettingsService>(null!, null!, null!, null!);
-        emailSettingsService.Setup(s => s.GetAsync()).ReturnsAsync(
-            await db.Set<EmailSettings>().FirstAsync());
-
-        BookingService svc = CreateService(db, emailService: emailServiceMock.Object,
-            emailSettingsService: emailSettingsService.Object);
-
-        await svc.CreateBookingAsync(new BookingDto
-        {
-            RestaurantId = 1, SectionId = 1, TableId = 1,
-            CustomerEmail = "guest@example.com", Seats = 2,
-            Date = new DateTime(2026, 8, 1, 19, 0, 0, DateTimeKind.Utc),
-        });
-
-        Assert.NotNull(capturedBody);
-        Assert.Contains("https://cdn.example.com/photo.jpg", capturedBody);
-    }
-
-    [Fact]
-    public async Task CreateBookingAsync_EmailHtml_ContainsFaviconSvg_WhenNoRestaurantImageButFaviconSet()
-    {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_EmailHtml_ContainsFaviconSvg_WhenNoRestaurantImageButFaviconSet));
-        db.Restaurants.Add(new Restaurant { Id = 1, Name = "Icon Restaurant" });
-        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
-        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
-        db.Set<BrandSettings>().Add(new BrandSettings { FaviconIcon = "utensils" });
-        db.SaveChanges();
-        db.Set<EmailSettings>().Add(new EmailSettings
-        {
-            Host = "smtp.test.com", Port = 587, Username = "u", EncryptedPassword = "enc",
-            SendBookingConfirmations = true,
-        });
-        db.SaveChanges();
-
-        string? capturedBody = null;
-        var emailServiceMock = new Mock<IEmailService>();
-        emailServiceMock
-            .Setup(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .Callback<string, string, string>((_, _, body) => capturedBody = body)
-            .Returns(Task.CompletedTask);
-
-        var emailSettingsService = new Mock<EmailSettingsService>(null!, null!, null!, null!);
-        emailSettingsService.Setup(s => s.GetAsync()).ReturnsAsync(
-            await db.Set<EmailSettings>().FirstAsync());
-
-        BookingService svc = CreateService(db, emailService: emailServiceMock.Object,
-            emailSettingsService: emailSettingsService.Object);
-
-        await svc.CreateBookingAsync(new BookingDto
-        {
-            RestaurantId = 1, SectionId = 1, TableId = 1,
-            CustomerEmail = "guest@example.com", Seats = 2,
-            Date = new DateTime(2026, 8, 1, 19, 0, 0, DateTimeKind.Utc),
-        });
-
-        Assert.NotNull(capturedBody);
-        Assert.Contains("/api/brand/pwa-icon.svg", capturedBody);
-        Assert.DoesNotContain("cdn.example.com", capturedBody);
-    }
-
-    [Fact]
-    public async Task CreateBookingAsync_EmailHtml_HasNoImage_WhenNeitherRestaurantImageNorFaviconSet()
-    {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_EmailHtml_HasNoImage_WhenNeitherRestaurantImageNorFaviconSet));
-        db.Restaurants.Add(new Restaurant { Id = 1, Name = "Plain Restaurant" });
-        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
-        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
-        db.SaveChanges();
-        db.Set<EmailSettings>().Add(new EmailSettings
-        {
-            Host = "smtp.test.com", Port = 587, Username = "u", EncryptedPassword = "enc",
-            SendBookingConfirmations = true,
-        });
-        db.SaveChanges();
-
-        string? capturedBody = null;
-        var emailServiceMock = new Mock<IEmailService>();
-        emailServiceMock
-            .Setup(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .Callback<string, string, string>((_, _, body) => capturedBody = body)
-            .Returns(Task.CompletedTask);
-
-        var emailSettingsService = new Mock<EmailSettingsService>(null!, null!, null!, null!);
-        emailSettingsService.Setup(s => s.GetAsync()).ReturnsAsync(
-            await db.Set<EmailSettings>().FirstAsync());
-
-        BookingService svc = CreateService(db, emailService: emailServiceMock.Object,
-            emailSettingsService: emailSettingsService.Object);
-
-        await svc.CreateBookingAsync(new BookingDto
-        {
-            RestaurantId = 1, SectionId = 1, TableId = 1,
-            CustomerEmail = "guest@example.com", Seats = 2,
-            Date = new DateTime(2026, 8, 1, 19, 0, 0, DateTimeKind.Utc),
-        });
-
-        Assert.NotNull(capturedBody);
-        Assert.DoesNotContain("<img", capturedBody);
-    }
-
-    [Fact]
-    public async Task CreateBookingAsync_DoesNotSendEmail_WhenConfirmationsDisabled()
-    {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_DoesNotSendEmail_WhenConfirmationsDisabled));
+        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Succeeds_WhenNoConfirmationServiceInjected));
         Seed(db);
-        db.Set<EmailSettings>().Add(new EmailSettings
-        {
-            Host = "smtp.test.com",
-            Port = 587,
-            Username = "user@test.com",
-            EncryptedPassword = "enc",
-            SendBookingConfirmations = false,
-        });
-        db.SaveChanges();
-
-        var emailServiceMock = new Mock<IEmailService>();
-        var emailSettingsService = new Mock<EmailSettingsService>(null!, null!, null!, null!);
-        emailSettingsService.Setup(s => s.GetAsync()).ReturnsAsync(
-            await db.Set<EmailSettings>().FirstAsync());
-
-        BookingService svc = CreateService(db, emailService: emailServiceMock.Object,
-            emailSettingsService: emailSettingsService.Object);
-
-        await svc.CreateBookingAsync(new BookingDto
-        {
-            RestaurantId = 1, SectionId = 1, TableId = 1,
-            CustomerEmail = "guest@example.com", Seats = 2,
-            Date = new DateTime(2026, 8, 1, 19, 0, 0, DateTimeKind.Utc),
-        });
-
-        emailServiceMock.Verify(
-            e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
-            Times.Never);
-    }
-
-    [Fact]
-    public async Task CreateBookingAsync_DoesNotSendEmail_WhenNoEmailServices()
-    {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_DoesNotSendEmail_WhenNoEmailServices));
-        Seed(db);
-
-        // No emailSettingsService or emailService injected — booking should still succeed
+        // No IBookingConfirmationService — booking must still succeed (no email sent).
         BookingService svc = CreateService(db);
 
         BookingDto result = await svc.CreateBookingAsync(new BookingDto
@@ -914,79 +741,6 @@ public class BookingServiceTests
         });
 
         Assert.NotEmpty(result.BookingRef!);
-    }
-
-    [Fact]
-    public async Task CreateBookingAsync_StillSucceeds_WhenEmailSendFails()
-    {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_StillSucceeds_WhenEmailSendFails));
-        Seed(db);
-        db.Set<EmailSettings>().Add(new EmailSettings
-        {
-            Host = "smtp.test.com",
-            Port = 587,
-            Username = "user@test.com",
-            EncryptedPassword = "enc",
-            SendBookingConfirmations = true,
-        });
-        db.SaveChanges();
-
-        var emailServiceMock = new Mock<IEmailService>();
-        emailServiceMock
-            .Setup(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ThrowsAsync(new InvalidOperationException("SMTP failure"));
-
-        var emailSettingsService = new Mock<EmailSettingsService>(null!, null!, null!, null!);
-        emailSettingsService.Setup(s => s.GetAsync()).ReturnsAsync(
-            await db.Set<EmailSettings>().FirstAsync());
-
-        BookingService svc = CreateService(db, emailService: emailServiceMock.Object,
-            emailSettingsService: emailSettingsService.Object);
-
-        // Booking should succeed even though email throws
-        BookingDto result = await svc.CreateBookingAsync(new BookingDto
-        {
-            RestaurantId = 1, SectionId = 1, TableId = 1,
-            CustomerEmail = "guest@example.com", Seats = 2,
-            Date = new DateTime(2026, 8, 1, 19, 0, 0, DateTimeKind.Utc),
-        });
-
-        Assert.NotEmpty(result.BookingRef!);
-    }
-
-    [Fact]
-    public async Task CreateBookingAsync_DoesNotSendEmail_WhenCustomerEmailMissing()
-    {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_DoesNotSendEmail_WhenCustomerEmailMissing));
-        Seed(db);
-        db.Set<EmailSettings>().Add(new EmailSettings
-        {
-            Host = "smtp.test.com",
-            Port = 587,
-            Username = "user@test.com",
-            EncryptedPassword = "enc",
-            SendBookingConfirmations = true,
-        });
-        db.SaveChanges();
-
-        var emailServiceMock = new Mock<IEmailService>();
-        var emailSettingsService = new Mock<EmailSettingsService>(null!, null!, null!, null!);
-        emailSettingsService.Setup(s => s.GetAsync()).ReturnsAsync(
-            await db.Set<EmailSettings>().FirstAsync());
-
-        BookingService svc = CreateService(db, emailService: emailServiceMock.Object,
-            emailSettingsService: emailSettingsService.Object);
-
-        await svc.CreateBookingAsync(new BookingDto
-        {
-            RestaurantId = 1, SectionId = 1, TableId = 1,
-            CustomerEmail = null, Seats = 2,
-            Date = new DateTime(2026, 8, 1, 19, 0, 0, DateTimeKind.Utc),
-        });
-
-        emailServiceMock.Verify(
-            e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
-            Times.Never);
     }
 
     // ── Walk-in-only policy ───────────────────────────────────────────────────

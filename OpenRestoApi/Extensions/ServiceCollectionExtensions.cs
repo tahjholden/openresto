@@ -171,7 +171,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IHighlightRepository, HighlightRepository>();
         services.AddScoped<ISocialLinkRepository, SocialLinkRepository>();
 
-        services.AddScoped<AuthService>();
+        services.AddScoped<IPasswordService, PasswordService>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<ISecurityQuestionsService, SecurityQuestionsService>();
+        services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<BookingService>();
         services.AddScoped<AdminService>();
         services.AddScoped<RestaurantManagementService>();

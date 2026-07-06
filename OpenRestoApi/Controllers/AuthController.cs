@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using OpenRestoApi.Core.Application.DTOs;
+using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Application.Services;
 using OpenRestoApi.Core.Application.Utilities;
 
@@ -11,9 +12,10 @@ namespace OpenRestoApi.Controllers;
 [ApiController]
 [Route("api/admin/auth")]
 [EnableRateLimiting("auth")]
-public class AuthController(AuthService authService) : ControllerBase
+public class AuthController(IAuthService authService, ISecurityQuestionsService securityQuestions) : ControllerBase
 {
-    private readonly AuthService _authService = authService;
+    private readonly IAuthService _authService = authService;
+    private readonly ISecurityQuestionsService _securityQuestions = securityQuestions;
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest req)
@@ -89,7 +91,7 @@ public class AuthController(AuthService authService) : ControllerBase
     [HttpGet("pvq")]
     public async Task<IActionResult> GetPvqStatus()
     {
-        return Ok(await _authService.GetPvqStatusAsync());
+        return Ok(await _securityQuestions.GetStatusAsync());
     }
 
     [HttpPost("pvq/setup")]
@@ -99,14 +101,14 @@ public class AuthController(AuthService authService) : ControllerBase
         if (string.IsNullOrWhiteSpace(req.Question) || string.IsNullOrWhiteSpace(req.Answer))
             return BadRequest(new { message = "Question and answer are required." });
 
-        await _authService.SetupPvqAsync(req.Question, req.Answer);
+        await _securityQuestions.SetupAsync(req.Question, req.Answer);
         return Ok(new { message = "Security question configured." });
     }
 
     [HttpPost("pvq/verify")]
     public async Task<IActionResult> VerifyPvq([FromBody] VerifyPvqRequest req)
     {
-        PvqVerifyOutcome outcome = await _authService.VerifyPvqAsync(req.Email, req.Answer);
+        PvqVerifyOutcome outcome = await _securityQuestions.VerifyAsync(req.Email, req.Answer);
         return outcome.Status switch
         {
             PvqVerifyStatus.NotConfigured => BadRequest(new { message = "Security question not configured for this account." }),

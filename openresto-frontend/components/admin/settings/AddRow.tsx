@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Pressable } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/common/Input";
-import { COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { styles } from "./settings.styles";
@@ -88,7 +88,7 @@ export function AddRow({
             setExtra("");
           }}
         >
-          <Ionicons name="close-outline" size={20} color={COLORS.muted.light} />
+          <Ionicons name="close-outline" size={20} color={theme.colors.muted.light} />
         </Pressable>
       </View>
     </View>

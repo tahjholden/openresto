@@ -1,11 +1,11 @@
 import { StyleSheet } from "react-native";
-import { COLORS, BORDER_RADIUS, SPACING, TYPOGRAPHY, SHADOWS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 
 export const styles = StyleSheet.create({
   container: {
-    padding: SPACING.xxl,
-    paddingTop: SPACING.xxxl,
-    gap: SPACING.lg,
+    padding: theme.spacing.xxl,
+    paddingTop: theme.spacing.xxxl,
+    gap: theme.spacing.lg,
     maxWidth: 1200,
     width: "100%",
     alignSelf: "center",
@@ -25,7 +25,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-  pageSub: { ...TYPOGRAPHY.body },
+  pageSub: { ...theme.typography.body },
   unreadBadge: {
     minWidth: 20,
     height: 20,
@@ -52,7 +52,7 @@ export const styles = StyleSheet.create({
     gap: 7,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: theme.borderRadius.md,
     minHeight: 44,
   },
   markAllText: {
@@ -67,7 +67,7 @@ export const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 14,
     paddingVertical: 11,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
     flexWrap: "wrap",
   },
@@ -75,7 +75,7 @@ export const styles = StyleSheet.create({
   pushBannerBtn: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: theme.borderRadius.md,
     minWidth: 68,
     height: 32,
     alignItems: "center",
@@ -98,7 +98,7 @@ export const styles = StyleSheet.create({
   pill: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: theme.borderRadius.full,
     borderWidth: 1,
   },
   pillText: { fontSize: 13, fontWeight: "600" },
@@ -106,16 +106,16 @@ export const styles = StyleSheet.create({
 
   // ── List card
   listCard: {
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
     overflow: "hidden",
-    ...SHADOWS.sm,
+    ...theme.shadows.sm,
   },
   sectionDivider: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: theme.spacing.lg,
     paddingVertical: 7,
     borderBottomWidth: 1,
   },
@@ -128,7 +128,7 @@ export const styles = StyleSheet.create({
   notifRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingRight: SPACING.lg,
+    paddingRight: theme.spacing.lg,
     paddingVertical: 13,
     gap: 10,
   },
@@ -168,7 +168,7 @@ export const styles = StyleSheet.create({
   actionPinBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: theme.borderRadius.full,
     alignItems: "center",
     justifyContent: "center",
     minHeight: 30,
@@ -177,7 +177,7 @@ export const styles = StyleSheet.create({
   actionToggleBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: theme.borderRadius.full,
     alignItems: "center",
     justifyContent: "center",
     minHeight: 30,
@@ -186,12 +186,12 @@ export const styles = StyleSheet.create({
   actionDeleteBtn: {
     width: 30,
     height: 30,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: theme.borderRadius.full,
     alignItems: "center",
     justifyContent: "center",
   },
   swipeDeleteBg: {
-    backgroundColor: COLORS.error,
+    backgroundColor: theme.colors.error,
     width: 72,
     alignItems: "center",
     justifyContent: "center",
@@ -223,7 +223,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 72,
-    gap: SPACING.md,
+    gap: theme.spacing.md,
   },
   emptyIconRing: {
     width: 64,
@@ -235,12 +235,12 @@ export const styles = StyleSheet.create({
     marginBottom: 4,
   },
   emptyTitle: {
-    ...TYPOGRAPHY.bodyBold,
+    ...theme.typography.bodyBold,
     fontSize: 16,
     textAlign: "center",
   },
   emptyBody: {
-    ...TYPOGRAPHY.body,
+    ...theme.typography.body,
     textAlign: "center",
     maxWidth: 280,
     lineHeight: 22,

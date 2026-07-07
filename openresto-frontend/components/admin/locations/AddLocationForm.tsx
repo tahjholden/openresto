@@ -1,7 +1,7 @@
 import { Pressable, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedText } from "@/components/themed-text";
-import { BORDER_RADIUS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 
 export interface AddLocationFormProps {
   value: string;
@@ -39,7 +39,7 @@ export function AddLocationForm({
         padding: 14,
         borderWidth: 1,
         borderColor: isDark ? `${primaryColor}40` : `${primaryColor}30`,
-        borderRadius: BORDER_RADIUS.card,
+        borderRadius: theme.borderRadius.card,
         backgroundColor: isDark ? `${primaryColor}08` : `${primaryColor}04`,
       }}
     >
@@ -61,7 +61,7 @@ export function AddLocationForm({
         onPress={onSubmit}
         style={{
           backgroundColor: primaryColor,
-          borderRadius: BORDER_RADIUS.md,
+          borderRadius: theme.borderRadius.md,
           paddingHorizontal: 14,
           paddingVertical: 8,
           opacity: saving || !value.trim() ? 0.45 : 1,

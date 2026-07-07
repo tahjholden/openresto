@@ -10,7 +10,7 @@ import {
 } from "@/api/restaurants";
 import { reorderSections } from "@/api/admin";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { RestaurantInfoForm } from "./RestaurantInfoForm";
 import { SectionBlock } from "./SectionBlock";
 import { AddRow } from "./AddRow";
@@ -325,12 +325,17 @@ export function LocationCard({
                 onPress={handleDeleteImage}
                 disabled={imgUploading}
               >
-                <ThemedText style={[styles.secBtnText, { color: COLORS.error }]}>Remove</ThemedText>
+                <ThemedText style={[styles.secBtnText, { color: theme.colors.error }]}>
+                  Remove
+                </ThemedText>
               </Pressable>
             )}
             {imgMsg && (
               <ThemedText
-                style={{ fontSize: 12, color: imgMsg.ok ? COLORS.success : COLORS.error }}
+                style={{
+                  fontSize: 12,
+                  color: imgMsg.ok ? theme.colors.success : theme.colors.error,
+                }}
               >
                 {imgMsg.text}
               </ThemedText>

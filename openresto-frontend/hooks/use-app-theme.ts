@@ -1,7 +1,7 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { getThemeColors } from "@/theme/theme";
 import { useBrand } from "@/context/BrandContext";
-import { COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { useMemo } from "react";
 
 /**
@@ -16,7 +16,7 @@ export function useAppTheme() {
   // Memoize colors to prevent unnecessary re-renders when passing to style arrays
   const colors = useMemo(() => getThemeColors(isDark), [isDark]);
 
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const primaryColor = brand.primaryColor || theme.colors.primary;
 
   return { brand, isDark, colors, primaryColor };
 }

@@ -1,7 +1,7 @@
 import { Modal, Pressable, StyleSheet, View, TouchableWithoutFeedback } from "react-native";
 import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/themed-text";
-import { COLORS, BUTTON_SIZES, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 interface ConfirmModalProps {
@@ -50,7 +50,7 @@ export default function ConfirmModal({
                 style={[
                   styles.btn,
                   {
-                    backgroundColor: destructive ? COLORS.error : primaryColor,
+                    backgroundColor: destructive ? theme.colors.error : primaryColor,
                   },
                 ]}
                 onPress={() => {
@@ -78,16 +78,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
-    padding: SPACING.xxl,
+    padding: theme.spacing.xxl,
   },
   card: {
-    borderRadius: BORDER_RADIUS.modal,
+    borderRadius: theme.borderRadius.modal,
     borderWidth: 1,
-    padding: SPACING.xxl,
+    padding: theme.spacing.xxl,
     width: "100%",
     maxWidth: 400,
-    gap: SPACING.md,
-    ...SHADOWS.popup,
+    gap: theme.spacing.md,
+    ...theme.shadows.popup,
   },
   message: {
     fontSize: 14,
@@ -95,26 +95,26 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: "row",
-    gap: SPACING.xsm,
-    marginTop: SPACING.sm,
-    paddingTop: SPACING.lg,
+    gap: theme.spacing.xsm,
+    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.lg,
     borderTopWidth: 1,
   },
   btn: {
     flex: 1,
-    ...BUTTON_SIZES.secondary,
-    borderRadius: BORDER_RADIUS.lg,
+    ...theme.buttonSizes.secondary,
+    borderRadius: theme.borderRadius.lg,
     alignItems: "center",
   },
   cancelBtn: {
     borderWidth: 1,
   },
   btnText: {
-    ...TYPOGRAPHY.bodyBold,
+    ...theme.typography.bodyBold,
   },
   confirmBtnText: {
-    color: COLORS.white,
-    ...TYPOGRAPHY.bodyBold,
+    color: theme.colors.white,
+    ...theme.typography.bodyBold,
     fontWeight: "700",
   },
 });

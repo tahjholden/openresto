@@ -20,7 +20,7 @@ import ConfirmModal from "@/components/common/ConfirmModal";
 import { fetchRestaurants, RestaurantDto, SectionDto } from "@/api/restaurants";
 import { isValidEmail } from "@/utils/validation";
 import { adminCreateBooking } from "@/api/admin";
-import { SPACING, TYPOGRAPHY, BORDER_RADIUS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 function todayDate() {
@@ -287,7 +287,7 @@ export function NewBookingModal({ visible, onClose, onCreated }: NewBookingModal
                   <Button
                     onPress={handleSubmit}
                     disabled={!isValid || submitting}
-                    style={{ marginTop: SPACING.sm }}
+                    style={{ marginTop: theme.spacing.sm }}
                   >
                     {submitting ? "Creating…" : "Create Booking"}
                   </Button>
@@ -320,13 +320,13 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
-    padding: SPACING.xxl,
+    padding: theme.spacing.xxl,
   },
   sheet: {
     width: "100%",
     maxWidth: 560,
     maxHeight: "85%",
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
     overflow: "hidden",
     shadowColor: "#000",
@@ -339,8 +339,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     borderBottomWidth: 1,
   },
   title: {
@@ -349,27 +349,27 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   closeBtn: {
-    padding: SPACING.xs,
+    padding: theme.spacing.xs,
   },
   loadingContainer: {
-    padding: SPACING.xxxl,
+    padding: theme.spacing.xxxl,
     alignItems: "center",
   },
   body: {
     flex: 1,
   },
   bodyContent: {
-    padding: SPACING.lg,
-    gap: SPACING.md,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
   },
   errorBanner: {
     backgroundColor: "rgba(220,38,38,0.1)",
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
   },
-  errorText: { ...TYPOGRAPHY.label, color: "#dc2626" },
-  field: { gap: SPACING.xs },
-  label: { ...TYPOGRAPHY.label },
-  fieldRow: { flexDirection: "row", gap: SPACING.md },
+  errorText: { ...theme.typography.label, color: "#dc2626" },
+  field: { gap: theme.spacing.xs },
+  label: { ...theme.typography.label },
+  fieldRow: { flexDirection: "row", gap: theme.spacing.md },
   fieldHalf: { flex: 1 },
 });

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Modal, StyleSheet, View, Pressable } from "react-native";
 import { ThemedText } from "@/components/themed-text";
-import { COLORS, TYPOGRAPHY, BORDER_RADIUS, SHADOWS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -144,7 +144,7 @@ export default function DatePicker({
         style={[
           styles.trigger,
           {
-            borderColor: open ? primaryColor : isClosedDay ? COLORS.error : borderColor,
+            borderColor: open ? primaryColor : isClosedDay ? theme.colors.error : borderColor,
             backgroundColor: bg,
           },
         ]}
@@ -173,7 +173,11 @@ export default function DatePicker({
           onPress={() => setOpen(false)}
         >
           <Pressable
-            style={[styles.calendar, { backgroundColor: colors.card, borderColor }, SHADOWS.popup]}
+            style={[
+              styles.calendar,
+              { backgroundColor: colors.card, borderColor },
+              theme.shadows.popup,
+            ]}
             testID="date-picker-calendar"
             onPress={(e) => e?.stopPropagation?.()}
           >
@@ -241,14 +245,18 @@ export default function DatePicker({
                         styles.dayCell,
                         isSelected && {
                           backgroundColor: primaryColor,
-                          borderRadius: BORDER_RADIUS.sm,
+                          borderRadius: theme.borderRadius.sm,
                         },
                       ]}
                     >
                       <ThemedText
                         style={{
                           fontSize: 13,
-                          color: isSelected ? COLORS.white : disabled ? colors.disabled : textColor,
+                          color: isSelected
+                            ? theme.colors.white
+                            : disabled
+                              ? colors.disabled
+                              : textColor,
                           fontWeight: isSelected ? "600" : "400",
                         }}
                       >
@@ -283,8 +291,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   closedWarning: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.error,
+    ...theme.typography.caption,
+    color: theme.colors.error,
     marginTop: 4,
   },
   backdrop: {
@@ -297,7 +305,7 @@ const styles = StyleSheet.create({
   calendar: {
     width: 280,
     borderWidth: 1,
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     padding: 12,
   },
   calendarHeader: {

@@ -1,7 +1,7 @@
 import { View, Pressable } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { bookingDetailStyles as styles } from "./booking-detail.styles";
 
@@ -111,7 +111,7 @@ export function EmailGuestForm({
           <ThemedText
             style={[
               styles.emailResultText,
-              { color: emailResult.ok ? COLORS.success : COLORS.error },
+              { color: emailResult.ok ? theme.colors.success : theme.colors.error },
             ]}
           >
             {emailResult.message}

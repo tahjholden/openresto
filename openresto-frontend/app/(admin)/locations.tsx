@@ -5,7 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Ionicons } from "@expo/vector-icons";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import { BORDER_RADIUS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { fetchRestaurants, createRestaurant, RestaurantDto } from "@/api/restaurants";
 import {
   adminGetRestaurants,
@@ -136,7 +136,7 @@ export default function AdminLocationsScreen() {
             gap: 7,
             paddingHorizontal: 14,
             paddingVertical: 10,
-            borderRadius: BORDER_RADIUS.md,
+            borderRadius: theme.borderRadius.md,
             backgroundColor: primaryColor,
             minHeight: 44,
             opacity: addingLocation ? 0.5 : 1,
@@ -253,7 +253,7 @@ export default function AdminLocationsScreen() {
               justifyContent: "center",
               gap: 6,
               paddingVertical: 10,
-              borderRadius: BORDER_RADIUS.md,
+              borderRadius: theme.borderRadius.md,
               borderWidth: 1,
               borderColor: isPaused ? "#16a34a" : "#ca8a04",
               backgroundColor: isPaused ? "rgba(22,163,74,0.08)" : "rgba(234,179,8,0.08)",
@@ -298,7 +298,7 @@ export default function AdminLocationsScreen() {
               justifyContent: "center",
               gap: 6,
               paddingVertical: 10,
-              borderRadius: BORDER_RADIUS.md,
+              borderRadius: theme.borderRadius.md,
               borderWidth: 1,
               borderColor: borderColor,
               opacity:

@@ -1,4 +1,4 @@
-import { COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import type { NotificationType } from "@/api/notifications";
 
 /** Decodes a VAPID public key (base64url) into a Uint8Array for PushManager.subscribe. */
@@ -53,9 +53,9 @@ type TypeIcon = {
 };
 
 export const TYPE_ICONS: Record<NotificationType, TypeIcon> = {
-  BookingCreated: { name: "checkmark-circle-outline", color: COLORS.success },
-  BookingCancelled: { name: "close-circle-outline", color: COLORS.error },
-  RestaurantNearlyFull: { name: "warning-outline", color: COLORS.warning },
+  BookingCreated: { name: "checkmark-circle-outline", color: theme.colors.success },
+  BookingCancelled: { name: "close-circle-outline", color: theme.colors.error },
+  RestaurantNearlyFull: { name: "warning-outline", color: theme.colors.warning },
 };
 
 export const TYPE_FILTERS = [

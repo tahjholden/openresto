@@ -5,7 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, getThemeColors } from "@/theme/theme";
+import { theme, getThemeColors } from "@/theme/theme";
 import {
   getEmailSettings,
   saveEmailSettings,
@@ -74,10 +74,10 @@ export function EmailSettingsCard({
   // surface-2: the slightly recessed inner surface (used inside cards)
   const surface2 = isDark ? "#252729" : "#f9fafb";
   const borderStrong = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.2)";
-  const okColor = COLORS.success;
+  const okColor = theme.colors.success;
   const okSoft = isDark ? `${okColor}22` : "#dcfce7";
   const okBorder = `${okColor}50`;
-  const dangerColor = COLORS.error;
+  const dangerColor = theme.colors.error;
   const dangerSoft = isDark ? `${dangerColor}22` : "#fef2f2";
   const dangerBorder = `${dangerColor}50`;
 
@@ -500,10 +500,14 @@ export function EmailSettingsCard({
               style={[
                 styles.successBanner,
                 {
-                  backgroundColor: saveMsg.ok ? `${COLORS.success}10` : `${COLORS.warning}10`,
+                  backgroundColor: saveMsg.ok
+                    ? `${theme.colors.success}10`
+                    : `${theme.colors.warning}10`,
                   borderRadius: 8,
                   borderWidth: 1,
-                  borderColor: saveMsg.ok ? `${COLORS.success}30` : `${COLORS.warning}30`,
+                  borderColor: saveMsg.ok
+                    ? `${theme.colors.success}30`
+                    : `${theme.colors.warning}30`,
                   padding: 10,
                 },
               ]}
@@ -511,12 +515,12 @@ export function EmailSettingsCard({
               <Ionicons
                 name={saveMsg.ok ? "checkmark-circle" : "warning-outline"}
                 size={16}
-                color={saveMsg.ok ? COLORS.success : COLORS.warning}
+                color={saveMsg.ok ? theme.colors.success : theme.colors.warning}
               />
               <ThemedText
                 style={[
                   saveMsg.ok ? styles.successText : styles.secBtnText,
-                  { flex: 1, color: saveMsg.ok ? COLORS.success : COLORS.warning },
+                  { flex: 1, color: saveMsg.ok ? theme.colors.success : theme.colors.warning },
                 ]}
               >
                 {saveMsg.text}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Pressable } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/common/Input";
-import { COLORS, getThemeColors } from "@/theme/theme";
+import { theme, getThemeColors } from "@/theme/theme";
 import { TableDto, deleteTable, updateTable } from "@/api/restaurants";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -75,7 +75,9 @@ export function TableRow({
             if (success) onDeleted();
           }}
         >
-          <ThemedText style={[styles.smallBtnText, { color: COLORS.error }]}>Delete</ThemedText>
+          <ThemedText style={[styles.smallBtnText, { color: theme.colors.error }]}>
+            Delete
+          </ThemedText>
         </Pressable>
       </View>
     );

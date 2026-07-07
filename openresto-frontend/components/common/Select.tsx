@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Modal, Pressable, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useState } from "react";
-import { FORM_SIZES } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import * as Haptics from "expo-haptics";
 
@@ -105,12 +105,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderRadius: FORM_SIZES.inputBorderRadius,
-    paddingHorizontal: FORM_SIZES.inputPaddingH,
-    height: FORM_SIZES.inputHeight,
+    borderRadius: theme.formSizes.inputBorderRadius,
+    paddingHorizontal: theme.formSizes.inputPaddingH,
+    height: theme.formSizes.inputHeight,
   },
   triggerText: {
-    fontSize: FORM_SIZES.inputFontSize,
+    fontSize: theme.formSizes.inputFontSize,
   },
   chevron: {
     fontSize: 14,

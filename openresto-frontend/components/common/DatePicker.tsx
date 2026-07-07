@@ -2,7 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Modal, Pressable, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useState } from "react";
-import { FORM_SIZES, BORDER_RADIUS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 export function generateDateOptions(options?: {
@@ -134,10 +134,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    height: FORM_SIZES.inputHeight,
+    height: theme.formSizes.inputHeight,
     borderWidth: 1,
-    borderRadius: FORM_SIZES.inputBorderRadius,
-    paddingHorizontal: FORM_SIZES.inputPaddingH,
+    borderRadius: theme.formSizes.inputBorderRadius,
+    paddingHorizontal: theme.formSizes.inputPaddingH,
   },
   chevron: {
     fontSize: 14,
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   modalView: {
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
     maxHeight: 400,
     width: "100%",

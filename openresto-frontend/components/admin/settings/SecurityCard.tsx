@@ -5,7 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { validatePasswordChange } from "@/utils/validation";
 import {
   getPvqStatus,
@@ -189,7 +189,7 @@ export function SecurityCard({
                   {pvqStatus.question}
                 </ThemedText>
               ) : (
-                <ThemedText style={[styles.secRowSub, { color: COLORS.warning }]}>
+                <ThemedText style={[styles.secRowSub, { color: theme.colors.warning }]}>
                   Not configured — set one up to enable password reset
                 </ThemedText>
               )}

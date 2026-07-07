@@ -5,7 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/common/Input";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import {
   saveBrandSettings,
   adminGetSocialLinks,
@@ -152,7 +152,7 @@ export function FooterSettingsCard({
               <ThemedText
                 style={{
                   fontSize: 11,
-                  color: copyrightText.length > 200 ? COLORS.error : mutedColor,
+                  color: copyrightText.length > 200 ? theme.colors.error : mutedColor,
                 }}
               >
                 {copyrightText.length}/200

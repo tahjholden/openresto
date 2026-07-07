@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Pressable } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/common/Input";
-import { COLORS, getThemeColors } from "@/theme/theme";
+import { theme, getThemeColors } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { styles } from "./settings.styles";
@@ -53,7 +53,7 @@ export function EditableRow({
                 if (ok) await onDelete();
               }}
             >
-              <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+              <Ionicons name="trash-outline" size={16} color={theme.colors.error} />
             </Pressable>
           )}
         </View>

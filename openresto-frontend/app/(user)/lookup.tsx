@@ -19,15 +19,7 @@ import {
 } from "react-native";
 import { scrollIntoView } from "@/utils/scrollIntoView";
 import Input from "@/components/common/Input";
-import {
-  BUTTON_SIZES,
-  BORDER_RADIUS,
-  COLORS,
-  SHADOWS,
-  SPACING,
-  TYPOGRAPHY,
-  ThemeColors,
-} from "@/theme/theme";
+import { theme, ThemeColors } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import PageContainer from "@/components/layout/PageContainer";
 import { CachedBooking, fetchCachedBookings } from "@/utils/bookingCache";
@@ -175,10 +167,10 @@ export default function LookupScreen() {
                   ]}
                 >
                   {loading ? (
-                    <ActivityIndicator size="small" color={COLORS.white} />
+                    <ActivityIndicator size="small" color={theme.colors.white} />
                   ) : (
                     <>
-                      <Ionicons name="search" size={16} color={COLORS.white} />
+                      <Ionicons name="search" size={16} color={theme.colors.white} />
                       <ThemedText style={styles.searchBtnText}>Look Up</ThemedText>
                     </>
                   )}
@@ -248,7 +240,7 @@ export default function LookupScreen() {
                     }
                     disabled={cancelling || booking.isCancelled || bookingIsPast}
                   >
-                    <Ionicons name="trash-outline" size={15} color={COLORS.error} />
+                    <Ionicons name="trash-outline" size={15} color={theme.colors.error} />
                     <ThemedText style={styles.cancelBtnText}>
                       {booking.isCancelled
                         ? "Already Cancelled"
@@ -538,7 +530,7 @@ function BookingResultCard({
           <Ionicons
             name={booking.isCancelled ? "close-circle" : "checkmark-circle"}
             size={20}
-            color={booking.isCancelled ? COLORS.error : primaryColor}
+            color={booking.isCancelled ? theme.colors.error : primaryColor}
           />
           <ThemedText style={styles.resultTitle}>
             {booking.isCancelled ? "Booking Cancelled" : "Booking Found"}
@@ -596,96 +588,96 @@ const styles = StyleSheet.create({
   wideRow: { flexDirection: "row", gap: 24, alignItems: "flex-start" },
   wideCol: { flex: 1 },
   searchCard: {
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
-    padding: SPACING.xl,
-    gap: SPACING.md,
+    padding: theme.spacing.xl,
+    gap: theme.spacing.md,
     width: "100%",
-    ...SHADOWS.md,
+    ...theme.shadows.md,
   },
-  label: { ...TYPOGRAPHY.label, letterSpacing: 0.2 },
+  label: { ...theme.typography.label, letterSpacing: 0.2 },
   searchBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: SPACING.sm,
-    ...BUTTON_SIZES.primary,
-    borderRadius: BORDER_RADIUS.lg,
+    gap: theme.spacing.sm,
+    ...theme.buttonSizes.primary,
+    borderRadius: theme.borderRadius.lg,
     marginTop: 4,
   },
-  searchBtnText: { color: COLORS.white, ...TYPOGRAPHY.bodyBold, fontWeight: "700" },
-  helpText: { ...TYPOGRAPHY.caption, textAlign: "center", lineHeight: 18, marginTop: 4 },
+  searchBtnText: { color: theme.colors.white, ...theme.typography.bodyBold, fontWeight: "700" },
+  helpText: { ...theme.typography.caption, textAlign: "center", lineHeight: 18, marginTop: 4 },
   resultCard: {
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
-    padding: SPACING.xxl,
-    marginTop: SPACING.xl,
+    padding: theme.spacing.xxl,
+    marginTop: theme.spacing.xl,
     width: "100%",
     alignItems: "center",
-    gap: SPACING.lg,
-    ...SHADOWS.md,
+    gap: theme.spacing.lg,
+    ...theme.shadows.md,
   },
-  notFound: { ...TYPOGRAPHY.body, textAlign: "center" },
+  notFound: { ...theme.typography.body, textAlign: "center" },
   detailCard: {
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
     overflow: "hidden",
-    ...SHADOWS.md,
+    ...theme.shadows.md,
   },
   cardHeader: {
     alignItems: "center",
-    gap: SPACING.xsm,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl,
-    paddingBottom: SPACING.lg,
+    gap: theme.spacing.xsm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.xl,
+    paddingBottom: theme.spacing.lg,
   },
-  resultHeader: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
-  resultTitle: { ...TYPOGRAPHY.h3 },
+  resultHeader: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm },
+  resultTitle: { ...theme.typography.h3 },
   refBadge: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
   },
-  refText: { ...TYPOGRAPHY.bodyBold, fontWeight: "700", letterSpacing: 0.3 },
+  refText: { ...theme.typography.bodyBold, fontWeight: "700", letterSpacing: 0.3 },
   divider: { height: 1 },
-  refBadgeRow: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
+  refBadgeRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm },
   copyBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: SPACING.xsm,
-    paddingVertical: SPACING.xxs,
-    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: theme.spacing.xsm,
+    paddingVertical: theme.spacing.xxs,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
   },
-  copyBtnText: { ...TYPOGRAPHY.caption, fontWeight: "600" },
+  copyBtnText: { ...theme.typography.caption, fontWeight: "600" },
   iconStrip: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
     marginTop: 10,
-    paddingVertical: SPACING.xsm,
-    ...SHADOWS.md,
+    paddingVertical: theme.spacing.xsm,
+    ...theme.shadows.md,
   },
   iconGroup: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: theme.spacing.md,
   },
   iconGroupLabel: { fontSize: 11, fontWeight: "800", letterSpacing: 0.6, marginRight: 2 },
   iconGroupRow: { flexDirection: "row" },
-  iconBtn: { padding: SPACING.xsm, borderRadius: BORDER_RADIUS.md },
+  iconBtn: { padding: theme.spacing.xsm, borderRadius: theme.borderRadius.md },
   iconSep: { width: 1, alignSelf: "stretch" },
   actionsRow: { flexDirection: "row", gap: 10, marginTop: 10 },
   actionCard: {
     flex: 1,
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
     overflow: "hidden",
-    ...SHADOWS.md,
+    ...theme.shadows.md,
   },
   mapsWrap: { padding: 16, gap: 10, flex: 1 },
   mapsTitle: { fontSize: 11, fontWeight: "700", letterSpacing: 0.8, textTransform: "uppercase" },
@@ -706,22 +698,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     marginTop: 10,
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: theme.spacing.lg,
     paddingVertical: 14,
-    ...SHADOWS.md,
+    ...theme.shadows.md,
   },
-  cancelBtnText: { color: COLORS.error, ...TYPOGRAPHY.bodyBold },
-  recentSection: { marginTop: SPACING.xl, gap: SPACING.xsm, width: "100%" },
-  recentTitle: { ...TYPOGRAPHY.labelSmall, fontWeight: "700", letterSpacing: 0.8, marginBottom: 2 },
+  cancelBtnText: { color: theme.colors.error, ...theme.typography.bodyBold },
+  recentSection: { marginTop: theme.spacing.xl, gap: theme.spacing.xsm, width: "100%" },
+  recentTitle: {
+    ...theme.typography.labelSmall,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    marginBottom: 2,
+  },
   recentCard: {
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
     padding: 14,
-    ...SHADOWS.md,
+    ...theme.shadows.md,
   },
-  recentCardRow: { flexDirection: "row", alignItems: "center", gap: SPACING.md },
+  recentCardRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.md },
   recentRef: { fontSize: 14, fontWeight: "700", letterSpacing: -0.2, flex: 1 },
-  recentMeta: { ...TYPOGRAPHY.caption },
+  recentMeta: { ...theme.typography.caption },
 });

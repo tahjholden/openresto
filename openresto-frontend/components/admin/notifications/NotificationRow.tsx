@@ -3,7 +3,7 @@ import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeabl
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedText } from "@/components/themed-text";
 import { hexToRgba } from "@/utils/colors";
-import { COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import type { AdminNotificationDto } from "@/api/notifications";
 import { TYPE_ICONS, TYPE_LABELS, formatBookingDate, relativeTime } from "@/utils/notifications";
 import { styles } from "@/components/admin/notifications/notifications.styles";
@@ -170,9 +170,12 @@ export function NotificationRow({
             testID={`delete-notif-${n.id}`}
             onPress={() => onRequestDelete(n.id)}
             hitSlop={6}
-            style={[styles.actionDeleteBtn, { backgroundColor: hexToRgba(COLORS.error, 0.12) }]}
+            style={[
+              styles.actionDeleteBtn,
+              { backgroundColor: hexToRgba(theme.colors.error, 0.12) },
+            ]}
           >
-            <Ionicons name="trash-outline" size={13} color={COLORS.error} />
+            <Ionicons name="trash-outline" size={13} color={theme.colors.error} />
           </Pressable>
         </View>
 

@@ -6,7 +6,7 @@ import { ThemedText } from "@/components/themed-text";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { usePersistedState } from "@/hooks/use-persisted-state";
 import { hexToRgba } from "@/utils/colors";
-import { COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { fetchRestaurants } from "@/api/restaurants";
 import {
   getNotifications,
@@ -359,7 +359,7 @@ export default function NotificationsScreen() {
                 style={[
                   styles.markAllBtn,
                   {
-                    backgroundColor: COLORS.error,
+                    backgroundColor: theme.colors.error,
                     opacity: items.length === 0 ? 0.35 : 1,
                   },
                 ]}
@@ -384,7 +384,7 @@ export default function NotificationsScreen() {
                     style={[
                       styles.markAllBtn,
                       {
-                        backgroundColor: COLORS.error,
+                        backgroundColor: theme.colors.error,
                         opacity: !hasRead || clearingRead ? 0.35 : 1,
                       },
                     ]}

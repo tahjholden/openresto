@@ -2,7 +2,7 @@ import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedText } from "@/components/themed-text";
 import { BookingDetailDto } from "@/api/admin";
-import { STATUS_COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { StatusBadge } from "@/components/admin/bookings/StatusBadge";
 import { styles } from "@/components/admin/bookings/bookings.styles";
 import { focusedRowHighlight, rowA11yProps } from "@/components/admin/bookings/bookingRowProps";
@@ -93,11 +93,11 @@ export function BookingsCardList({
                   style={[
                     styles.badge,
                     {
-                      backgroundColor: STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"],
+                      backgroundColor: theme.status.cancelled.bg[isDark ? "dark" : "light"],
                     },
                   ]}
                 >
-                  <ThemedText style={[styles.badgeText, { color: STATUS_COLORS.cancelled.text }]}>
+                  <ThemedText style={[styles.badgeText, { color: theme.status.cancelled.text }]}>
                     Cancelled
                   </ThemedText>
                 </View>

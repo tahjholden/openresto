@@ -5,7 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import { SectionDto, TableDto, updateSection, deleteSection, addTable } from "@/api/restaurants";
 import { TableRow } from "./TableRow";
 import { AddRow } from "./AddRow";
-import { COLORS, getThemeColors } from "@/theme/theme";
+import { theme, getThemeColors } from "@/theme/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { styles } from "./settings.styles";
 import Input from "@/components/common/Input";
@@ -183,7 +183,7 @@ export function SectionBlock({
                   if (success) onSectionDeleted();
                 }}
               >
-                <ThemedText style={[styles.smallBtnText, { color: COLORS.error }]}>
+                <ThemedText style={[styles.smallBtnText, { color: theme.colors.error }]}>
                   Delete
                 </ThemedText>
               </Pressable>

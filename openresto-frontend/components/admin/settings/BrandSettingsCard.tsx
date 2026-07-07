@@ -5,7 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { saveBrandSettings, uploadHeroImage, deleteHeroImage } from "@/api/admin";
 import { useBrand } from "@/context/BrandContext";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -143,7 +143,10 @@ export function BrandSettingsCard({
             >
               <ThemedText style={styles.fieldLabel}>App Name</ThemedText>
               <ThemedText
-                style={{ fontSize: 11, color: appName.length > 32 ? COLORS.error : mutedColor }}
+                style={{
+                  fontSize: 11,
+                  color: appName.length > 32 ? theme.colors.error : mutedColor,
+                }}
               >
                 {appName.length}/32
               </ThemedText>
@@ -294,7 +297,7 @@ export function BrandSettingsCard({
                     onPress={handleDeleteHero}
                     disabled={heroUploading}
                   >
-                    <ThemedText style={[styles.secBtnText, { color: COLORS.error }]}>
+                    <ThemedText style={[styles.secBtnText, { color: theme.colors.error }]}>
                       Remove
                     </ThemedText>
                   </Pressable>

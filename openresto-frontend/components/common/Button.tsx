@@ -1,6 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { Pressable, PressableProps, StyleSheet, ViewStyle } from "react-native";
-import { BUTTON_SIZES, BORDER_RADIUS, TYPOGRAPHY, COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import * as Haptics from "expo-haptics";
 
@@ -20,7 +20,7 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const { colors, primaryColor } = useAppTheme();
-  const sizeStyles = BUTTON_SIZES[size];
+  const sizeStyles = theme.buttonSizes[size];
 
   const handlePress: PressableProps["onPress"] = (e) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -51,12 +51,12 @@ export default function Button({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: theme.borderRadius.md,
     alignItems: "center",
     justifyContent: "center",
   },
   buttonText: {
-    color: COLORS.white,
-    ...TYPOGRAPHY.bodyBold,
+    color: theme.colors.white,
+    ...theme.typography.bodyBold,
   },
 });

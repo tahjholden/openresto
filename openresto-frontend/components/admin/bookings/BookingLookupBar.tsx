@@ -1,7 +1,7 @@
 import { ActivityIndicator, Pressable, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedText } from "@/components/themed-text";
-import { COLORS, FORM_SIZES } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { styles } from "@/components/admin/bookings/bookings.styles";
 
 export type LookupStatus = "idle" | "not_found" | "multiple";
@@ -43,10 +43,10 @@ export function BookingLookupBar({
         <TextInput
           style={[
             {
-              height: FORM_SIZES.inputSmHeight,
-              paddingHorizontal: FORM_SIZES.inputPaddingH,
+              height: theme.formSizes.inputSmHeight,
+              paddingHorizontal: theme.formSizes.inputPaddingH,
               fontSize: 13,
-              borderRadius: FORM_SIZES.inputBorderRadius,
+              borderRadius: theme.formSizes.inputBorderRadius,
               borderWidth: 1,
               borderColor,
               backgroundColor: inputBg,
@@ -83,7 +83,7 @@ export function BookingLookupBar({
       </View>
 
       {status === "not_found" && (
-        <ThemedText style={{ fontSize: 12, color: COLORS.error, marginTop: -4 }}>
+        <ThemedText style={{ fontSize: 12, color: theme.colors.error, marginTop: -4 }}>
           No booking found.
         </ThemedText>
       )}

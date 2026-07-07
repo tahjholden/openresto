@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { BORDER_RADIUS, BUTTON_SIZES, SHADOWS, SPACING, TYPOGRAPHY, COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import PageContainer from "@/components/layout/PageContainer";
 import CalendarActions from "@/components/booking/CalendarActions";
@@ -157,13 +157,13 @@ export default function BookingConfirmationScreen() {
             <View
               style={[
                 styles.checkCircle,
-                { backgroundColor: booking.isCancelled ? COLORS.error : primaryColor },
+                { backgroundColor: booking.isCancelled ? theme.colors.error : primaryColor },
               ]}
             >
               <Ionicons
                 name={booking.isCancelled ? "close" : "checkmark"}
                 size={32}
-                color={COLORS.white}
+                color={theme.colors.white}
               />
             </View>
             <ThemedText style={styles.title}>
@@ -183,7 +183,7 @@ export default function BookingConfirmationScreen() {
                 {
                   backgroundColor: colors.card,
                   borderColor: colors.border,
-                  marginBottom: SPACING.lg,
+                  marginBottom: theme.spacing.lg,
                 },
               ]}
             >
@@ -343,7 +343,7 @@ export default function BookingConfirmationScreen() {
                         width: "100%",
                         height: 160,
                         border: 0,
-                        borderRadius: BORDER_RADIUS.md,
+                        borderRadius: theme.borderRadius.md,
                       },
                       loading: "lazy",
                     })}
@@ -419,7 +419,7 @@ export default function BookingConfirmationScreen() {
                   }
                   disabled={cancelling || booking.isCancelled || bookingIsPast}
                 >
-                  <Ionicons name="trash-outline" size={15} color={COLORS.error} />
+                  <Ionicons name="trash-outline" size={15} color={theme.colors.error} />
                   <ThemedText style={styles.cancelBtnText}>
                     {booking.isCancelled
                       ? "Already Cancelled"
@@ -469,10 +469,10 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center", gap: 12, padding: 24 },
   notFoundText: { fontSize: 16, marginTop: 8 },
   retryBtn: {
-    marginTop: SPACING.sm,
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.xsm,
-    borderRadius: BORDER_RADIUS.lg,
+    marginTop: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.xsm,
+    borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
   },
   retryBtnText: { fontSize: 14, fontWeight: "600" },
@@ -491,30 +491,30 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 15, textAlign: "center", lineHeight: 22 },
 
   // Two-column layout
-  wideRow: { flexDirection: "row", gap: SPACING.xl, alignItems: "stretch" },
-  narrowGap: { gap: SPACING.lg },
+  wideRow: { flexDirection: "row", gap: theme.spacing.xl, alignItems: "stretch" },
+  narrowGap: { gap: theme.spacing.lg },
   wideCol: { flex: 1 },
-  rightCol: { gap: SPACING.lg, flexDirection: "column" },
+  rightCol: { gap: theme.spacing.lg, flexDirection: "column" },
 
   // Detail rows card
   detailCard: {
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
     overflow: "hidden",
-    ...SHADOWS.md,
+    ...theme.shadows.md,
   },
 
   // Reference card
   refCard: {
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
-    padding: SPACING.lg,
+    padding: theme.spacing.lg,
     alignItems: "center",
-    gap: SPACING.md,
-    ...SHADOWS.md,
+    gap: theme.spacing.md,
+    ...theme.shadows.md,
   },
   refLabel: {
-    ...TYPOGRAPHY.labelSmall,
+    ...theme.typography.labelSmall,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.8,
@@ -522,58 +522,58 @@ const styles = StyleSheet.create({
   refRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: SPACING.xsm,
+    gap: theme.spacing.xsm,
     flexWrap: "wrap",
     justifyContent: "center",
   },
-  refBadge: { ...BUTTON_SIZES.secondary, borderRadius: BORDER_RADIUS.lg },
-  refValue: { ...TYPOGRAPHY.h2, fontWeight: "800" },
+  refBadge: { ...theme.buttonSizes.secondary, borderRadius: theme.borderRadius.lg },
+  refValue: { ...theme.typography.h2, fontWeight: "800" },
   copyBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: SPACING.xsm,
-    paddingVertical: SPACING.xxs,
-    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: theme.spacing.xsm,
+    paddingVertical: theme.spacing.xxs,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
   },
-  copyBtnText: { ...TYPOGRAPHY.caption, fontWeight: "600" },
-  refHint: { ...TYPOGRAPHY.caption, textAlign: "center" },
+  copyBtnText: { ...theme.typography.caption, fontWeight: "600" },
+  refHint: { ...theme.typography.caption, textAlign: "center" },
   savedNote: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingTop: SPACING.sm,
-    marginTop: SPACING.xsm,
+    paddingTop: theme.spacing.sm,
+    marginTop: theme.spacing.xsm,
     borderTopWidth: 1,
   },
-  savedNoteText: { ...TYPOGRAPHY.caption, opacity: 0.75 },
+  savedNoteText: { ...theme.typography.caption, opacity: 0.75 },
 
   // Calendar card
   actionCard: {
-    borderRadius: BORDER_RADIUS.card,
+    borderRadius: theme.borderRadius.card,
     borderWidth: 1,
-    padding: SPACING.lg,
-    gap: SPACING.xsm,
-    ...SHADOWS.md,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.xsm,
+    ...theme.shadows.md,
   },
 
-  directionsCard: { gap: SPACING.sm },
+  directionsCard: { gap: theme.spacing.sm },
   cancelBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    paddingVertical: SPACING.sm,
+    paddingVertical: theme.spacing.sm,
   },
-  cancelBtnText: { color: COLORS.error, ...TYPOGRAPHY.bodyBold },
+  cancelBtnText: { color: theme.colors.error, ...theme.typography.bodyBold },
   cancelHint: {
-    ...TYPOGRAPHY.caption,
+    ...theme.typography.caption,
     lineHeight: 18,
     textAlign: "center",
-    paddingHorizontal: SPACING.sm,
+    paddingHorizontal: theme.spacing.sm,
   },
   // Directions card — same pill style as restaurant card homepage
-  mapAddressRow: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
+  mapAddressRow: { flexDirection: "row", alignItems: "center", gap: theme.spacing.sm },
   mapMeta: { flexDirection: "row", alignItems: "flex-start", gap: 5, flex: 1 },
   mapAddress: { fontSize: 13, flex: 1, lineHeight: 18 },
   mapLinks: { flexDirection: "row", gap: 8, flexWrap: "wrap" },

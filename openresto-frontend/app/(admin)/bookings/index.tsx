@@ -23,7 +23,7 @@ import {
   Platform,
 } from "react-native";
 import { useRouter, Stack, useLocalSearchParams } from "expo-router";
-import { STATUS_COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
@@ -379,7 +379,7 @@ export default function AdminBookingsScreen() {
               [
                 { key: "active", label: "Active", color: PRIMARY },
                 { key: "past", label: "Past", color: "#7c3aed" },
-                { key: "cancelled", label: "Cancelled", color: STATUS_COLORS.cancelled.text },
+                { key: "cancelled", label: "Cancelled", color: theme.status.cancelled.text },
               ] as const
             ).map(({ key, label, color }) => (
               <Pressable

@@ -1,6 +1,6 @@
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
-import { COLORS, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
 interface AlertModalProps {
@@ -41,31 +41,31 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
-    padding: SPACING.xxl,
+    padding: theme.spacing.xxl,
   },
   card: {
-    borderRadius: BORDER_RADIUS.modal,
+    borderRadius: theme.borderRadius.modal,
     borderWidth: 1,
-    padding: SPACING.xxl,
+    padding: theme.spacing.xxl,
     width: "100%",
     maxWidth: 400,
-    gap: SPACING.md,
-    ...SHADOWS.popup,
+    gap: theme.spacing.md,
+    ...theme.shadows.popup,
   },
   message: {
-    ...TYPOGRAPHY.body,
+    ...theme.typography.body,
     fontSize: 14,
     lineHeight: 20,
   },
   btn: {
     paddingVertical: 11,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: theme.borderRadius.lg,
     alignItems: "center",
-    marginTop: SPACING.sm,
+    marginTop: theme.spacing.sm,
   },
   btnText: {
-    color: COLORS.white,
-    ...TYPOGRAPHY.bodyBold,
+    color: theme.colors.white,
+    ...theme.typography.bodyBold,
     fontWeight: "700",
   },
 });

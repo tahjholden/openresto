@@ -2,7 +2,7 @@ import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { ThemedText } from "@/components/themed-text";
 import { BookingDetailDto } from "@/api/admin";
-import { STATUS_COLORS } from "@/theme/theme";
+import { theme } from "@/theme/theme";
 import { initials } from "@/utils/formatters";
 import { isPast, StatusBadge } from "@/components/admin/bookings/StatusBadge";
 import { styles } from "@/components/admin/bookings/bookings.styles";
@@ -132,10 +132,10 @@ export function BookingsWideTable({
               <View
                 style={[
                   styles.badge,
-                  { backgroundColor: STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"] },
+                  { backgroundColor: theme.status.cancelled.bg[isDark ? "dark" : "light"] },
                 ]}
               >
-                <ThemedText style={[styles.badgeText, { color: STATUS_COLORS.cancelled.text }]}>
+                <ThemedText style={[styles.badgeText, { color: theme.status.cancelled.text }]}>
                   Cancelled
                 </ThemedText>
               </View>
@@ -150,7 +150,7 @@ export function BookingsWideTable({
                 accessibilityLabel="Cancel booking"
                 style={[
                   styles.rowActionBtn,
-                  { backgroundColor: STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"] },
+                  { backgroundColor: theme.status.cancelled.bg[isDark ? "dark" : "light"] },
                 ]}
                 onPress={(e) => {
                   // stopPropagation is present on web mouse events but not RN's
@@ -159,7 +159,7 @@ export function BookingsWideTable({
                   onCancelBooking(b);
                 }}
               >
-                <Ionicons name="close-outline" size={14} color={STATUS_COLORS.cancelled.text} />
+                <Ionicons name="close-outline" size={14} color={theme.status.cancelled.text} />
               </Pressable>
             )}
           </View>

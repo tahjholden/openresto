@@ -10,7 +10,7 @@ import { fetchCachedBookings } from "@/utils/bookingCache";
 import { BrandProvider } from "@/context/BrandContext";
 import { AppThemeProvider } from "@/context/ThemeContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Alert, Platform, Modal } from "react-native";
+import { Platform, Modal } from "react-native";
 
 // Polyfill fetch
 global.fetch = jest.fn(() =>
@@ -49,9 +49,6 @@ jest.mock("expo-router", () => ({
   useRouter: jest.fn(),
   useLocalSearchParams: jest.fn(() => ({})),
 }));
-
-// Mock Alert.alert
-jest.spyOn(Alert, "alert").mockImplementation(() => {});
 
 jest.mock("@/components/common/ConfirmModal", () => {
   const { View, Pressable, Text } = require("react-native");
@@ -101,8 +98,6 @@ describe("LookupScreen", () => {
     jest.clearAllMocks();
     (fetchCachedBookings as jest.Mock).mockResolvedValue([]);
     (getBookingByRef as jest.Mock).mockResolvedValue(null);
-    delete (window as any).alert;
-    (window as any).alert = jest.fn();
   });
 
   const renderWithProviders = (ui: React.ReactElement) => {
@@ -185,8 +180,9 @@ describe("LookupScreen", () => {
     expect(getBookingByRef).toHaveBeenCalledTimes(2); // Initial lookup + refresh after cancel
   });
 
-  it("shows error alert on cancellation failure (native)", async () => {
-    // Mock Platform to native
+  it("shows error modal on cancellation failure (native platform)", async () => {
+    // The error UI is now platform-independent (AlertModal, not Alert.alert),
+    // but this test still verifies the native path renders the modal correctly.
     const originalOS = Platform.OS;
     Object.defineProperty(Platform, "OS", { get: () => "ios", configurable: true });
 
@@ -205,7 +201,7 @@ describe("LookupScreen", () => {
     fireEvent.press(screen.getByText("Cancel This Booking"));
     fireEvent.press(screen.getByText("Cancel Booking"));
 
-    await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith("Error", expect.any(String)));
+    await waitFor(() => expect(screen.getByText("Failed to cancel booking.")).toBeTruthy());
 
     Object.defineProperty(Platform, "OS", { get: () => originalOS, configurable: true });
   });
@@ -249,8 +245,7 @@ describe("LookupScreen", () => {
     expect(screen.queryByTestId("confirm-modal")).toBeNull();
   });
 
-  it("shows web alert on cancellation failure", async () => {
-    Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
+  it("shows error modal on cancellation failure", async () => {
     (getBookingByRef as jest.Mock).mockResolvedValue(mockBooking);
     (cancelBookingByRef as jest.Mock).mockRejectedValue(new Error("Failed to cancel booking."));
     renderWithProviders(<LookupScreen />);
@@ -266,17 +261,12 @@ describe("LookupScreen", () => {
     fireEvent.press(screen.getByText("Cancel This Booking"));
     fireEvent.press(await screen.findByText("Cancel Booking"));
 
-    await waitFor(() =>
-      expect((window as any).alert).toHaveBeenCalledWith("Failed to cancel booking.")
-    );
+    await waitFor(() => expect(screen.getByText("Failed to cancel booking.")).toBeTruthy());
     expect(cancelBookingByRef).toHaveBeenCalledTimes(1);
     expect(getBookingByRef).toHaveBeenCalledTimes(1);
-
-    Object.defineProperty(Platform, "OS", { get: () => "ios", configurable: true });
   });
 
   it("surfaces the backend's specific rejection message instead of a generic one", async () => {
-    Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
     (getBookingByRef as jest.Mock).mockResolvedValue(mockBooking);
     (cancelBookingByRef as jest.Mock).mockRejectedValue(
       new Error("Cannot cancel a booking that has already passed.")
@@ -295,9 +285,7 @@ describe("LookupScreen", () => {
     fireEvent.press(await screen.findByText("Cancel Booking"));
 
     await waitFor(() =>
-      expect((window as any).alert).toHaveBeenCalledWith(
-        "Cannot cancel a booking that has already passed."
-      )
+      expect(screen.getByText("Cannot cancel a booking that has already passed.")).toBeTruthy()
     );
 
     Object.defineProperty(Platform, "OS", { get: () => "ios", configurable: true });

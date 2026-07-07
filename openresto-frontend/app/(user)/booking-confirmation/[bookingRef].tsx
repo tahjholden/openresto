@@ -3,7 +3,6 @@ import { getBookingByRef, getBookingById, cancelBookingByRef, BookingDto } from 
 import { fetchRestaurantById, RestaurantDto } from "@/api/restaurants";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
-  Alert,
   Linking,
   Platform,
   Pressable,
@@ -20,11 +19,13 @@ import CalendarActions from "@/components/booking/CalendarActions";
 import BookingDetailRows from "@/components/booking/BookingDetailRows";
 import BookingConfirmationSkeleton from "@/components/booking/BookingConfirmationSkeleton";
 import ConfirmModal from "@/components/common/ConfirmModal";
+import AlertModal from "@/components/common/AlertModal";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import ScrollToTopFab from "@/components/common/ScrollToTopFab";
 import Footer from "@/components/layout/Footer";
 import * as Haptics from "expo-haptics";
 import { isPast } from "@/components/admin/bookings/StatusBadge";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export default function BookingConfirmationScreen() {
   const { bookingRef, email } = useLocalSearchParams<{ bookingRef: string; email: string }>();
@@ -34,6 +35,7 @@ export default function BookingConfirmationScreen() {
   const [copied, setCopied] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const { errorMessage, showError, clearError } = useErrorHandler();
   const [mapCoords, setMapCoords] = useState<{ lat: number; lng: number } | null>(null);
   const router = useRouter();
   const { colors, primaryColor, isDark } = useAppTheme();
@@ -129,12 +131,7 @@ export default function BookingConfirmationScreen() {
       setBooking((prev) => (prev ? { ...prev, isCancelled: true } : prev));
       setShowCancelConfirm(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to cancel booking.";
-      if (Platform.OS === "web") {
-        window.alert(message);
-      } else {
-        Alert.alert("Error", message);
-      }
+      showError(err);
     } finally {
       setCancelling(false);
     }
@@ -451,6 +448,13 @@ export default function BookingConfirmationScreen() {
           destructive
           onConfirm={handleCancelBooking}
           onCancel={() => !cancelling && setShowCancelConfirm(false)}
+        />
+
+        <AlertModal
+          visible={errorMessage !== null}
+          title="Error"
+          message={errorMessage ?? ""}
+          onClose={clearError}
         />
 
         <Footer />

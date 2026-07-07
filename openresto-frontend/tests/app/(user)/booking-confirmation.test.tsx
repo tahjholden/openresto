@@ -9,7 +9,7 @@ import { fetchRestaurantById } from "@/api/restaurants";
 import { AppThemeProvider } from "@/context/ThemeContext";
 import { BrandProvider } from "@/context/BrandContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Alert, Platform } from "react-native";
+import { Platform } from "react-native";
 
 // Mock Platform.OS to web
 Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });
@@ -80,8 +80,6 @@ const mockWriteText = jest.fn();
   writeText: mockWriteText,
 };
 
-jest.spyOn(Alert, "alert").mockImplementation(() => {});
-
 jest.setTimeout(15000);
 
 describe("BookingConfirmationScreen", () => {
@@ -108,8 +106,6 @@ describe("BookingConfirmationScreen", () => {
     (getBookingByRef as jest.Mock).mockResolvedValue(mockBooking);
     (getBookingById as jest.Mock).mockResolvedValue(mockBooking);
     (fetchRestaurantById as jest.Mock).mockResolvedValue(mockRestaurant);
-    delete (window as any).alert;
-    (window as any).alert = jest.fn();
   });
 
   const renderWithProviders = (ui: React.ReactElement) => {
@@ -212,7 +208,7 @@ describe("BookingConfirmationScreen", () => {
     expect(screen.queryByText("Cancel This Booking")).toBeNull();
   });
 
-  it("shows web alert on cancellation failure", async () => {
+  it("shows error modal on cancellation failure", async () => {
     const { useLocalSearchParams } = require("expo-router");
     useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
     (cancelBookingByRef as jest.Mock).mockRejectedValue(new Error("Failed to cancel booking."));
@@ -223,9 +219,7 @@ describe("BookingConfirmationScreen", () => {
     fireEvent.press(screen.getByText("Cancel This Booking"));
     fireEvent.press(await screen.findByText("Cancel Booking"));
 
-    await waitFor(() =>
-      expect((window as any).alert).toHaveBeenCalledWith("Failed to cancel booking.")
-    );
+    await waitFor(() => expect(screen.getByText("Failed to cancel booking.")).toBeTruthy());
     expect(screen.queryByText("Booking Cancelled")).toBeNull();
   });
 
@@ -243,13 +237,13 @@ describe("BookingConfirmationScreen", () => {
     fireEvent.press(await screen.findByText("Cancel Booking"));
 
     await waitFor(() =>
-      expect((window as any).alert).toHaveBeenCalledWith(
-        "Cannot cancel a booking that has already passed."
-      )
+      expect(screen.getByText("Cannot cancel a booking that has already passed.")).toBeTruthy()
     );
   });
 
-  it("shows native alert on cancellation failure", async () => {
+  it("shows error modal on cancellation failure (native platform)", async () => {
+    // The error UI is now platform-independent (AlertModal, not Alert.alert),
+    // but this test still verifies the native path renders the modal correctly.
     Object.defineProperty(Platform, "OS", { get: () => "ios", configurable: true });
 
     const { useLocalSearchParams } = require("expo-router");
@@ -262,9 +256,7 @@ describe("BookingConfirmationScreen", () => {
     fireEvent.press(screen.getByText("Cancel This Booking"));
     fireEvent.press(await screen.findByText("Cancel Booking"));
 
-    await waitFor(() =>
-      expect(Alert.alert).toHaveBeenCalledWith("Error", "Failed to cancel booking.")
-    );
+    await waitFor(() => expect(screen.getByText("Failed to cancel booking.")).toBeTruthy());
     expect(screen.queryByText("Booking Cancelled")).toBeNull();
 
     Object.defineProperty(Platform, "OS", { get: () => "web", configurable: true });

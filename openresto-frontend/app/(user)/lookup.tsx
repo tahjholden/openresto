@@ -6,7 +6,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { registerFocusTarget, unregisterFocusTarget } from "@/utils/focusRegistry";
 import {
   ActivityIndicator,
-  Alert,
   Linking,
   Platform,
   Pressable,
@@ -33,6 +32,7 @@ import { Ionicons } from "@expo/vector-icons";
 import PageContainer from "@/components/layout/PageContainer";
 import { CachedBooking, fetchCachedBookings } from "@/utils/bookingCache";
 import ConfirmModal from "@/components/common/ConfirmModal";
+import AlertModal from "@/components/common/AlertModal";
 import CalendarActions from "@/components/booking/CalendarActions";
 import BookingDetailRows from "@/components/booking/BookingDetailRows";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -40,6 +40,7 @@ import { buildCalendarUrls } from "@/utils/calendar";
 import ScrollToTopFab from "@/components/common/ScrollToTopFab";
 import Footer from "@/components/layout/Footer";
 import { isPast } from "@/components/admin/bookings/StatusBadge";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export default function LookupScreen() {
   const [refInput, setRefInput] = useState("");
@@ -51,6 +52,7 @@ export default function LookupScreen() {
   const [cached, setCached] = useState<CachedBooking[]>([]);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const { errorMessage, showError, clearError } = useErrorHandler();
   const [scrollY, setScrollY] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const bookingCardRef = useRef<View>(null);
@@ -111,12 +113,7 @@ export default function LookupScreen() {
       await performLookup(booking.bookingRef, booking.customerEmail);
       setShowCancelConfirm(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to cancel booking.";
-      if (Platform.OS === "web") {
-        window.alert(message);
-      } else {
-        Alert.alert("Error", message);
-      }
+      showError(err);
     } finally {
       setCancelling(false);
     }
@@ -293,6 +290,13 @@ export default function LookupScreen() {
         destructive
         onConfirm={handleCancelBooking}
         onCancel={() => !cancelling && setShowCancelConfirm(false)}
+      />
+
+      <AlertModal
+        visible={errorMessage !== null}
+        title="Error"
+        message={errorMessage ?? ""}
+        onClose={clearError}
       />
     </ThemedView>
   );

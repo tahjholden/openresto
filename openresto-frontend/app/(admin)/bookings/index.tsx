@@ -9,13 +9,13 @@ import {
 import { fetchRestaurants, RestaurantDto } from "@/api/restaurants";
 import { getHoursForDay } from "@/utils/openingHours";
 import ConfirmModal from "@/components/common/ConfirmModal";
+import AlertModal from "@/components/common/AlertModal";
 import { NewBookingModal } from "@/components/admin/bookings/NewBookingModal";
 import { useEffect, useState } from "react";
 import { usePersistedState } from "@/hooks/use-persisted-state";
 import { useBookingsGrid } from "@/hooks/use-bookings-grid";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   useWindowDimensions,
@@ -34,6 +34,7 @@ import { BookingsCardList } from "@/components/admin/bookings/BookingsCardList";
 import { BookingLookupBar } from "@/components/admin/bookings/BookingLookupBar";
 import { styles } from "@/components/admin/bookings/bookings.styles";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { fmtDate } from "@/utils/formatters";
 
 type ViewMode = "timetable" | "list";
@@ -56,6 +57,7 @@ export default function AdminBookingsScreen() {
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [cancelTarget, setCancelTarget] = useState<BookingDetailDto | null>(null);
   const [showNewModal, setShowNewModal] = useState(false);
+  const { errorMessage, showError, clearError } = useErrorHandler();
   const [refreshKey, setRefreshKey] = useState(0);
   const [focusedRowId, setFocusedRowId] = useState<number | null>(null);
   const [detailInitialFocus, setDetailInitialFocus] = useState<"extend" | undefined>(undefined);
@@ -602,15 +604,17 @@ export default function AdminBookingsScreen() {
             await adminDeleteBooking(id);
             refreshBookings();
           } catch (err) {
-            const message = err instanceof Error ? err.message : "Failed to cancel the booking.";
-            if (Platform.OS === "web") {
-              window.alert(message);
-            } else {
-              Alert.alert("Error", message);
-            }
+            showError(err);
           }
         }}
         onCancel={() => setCancelTarget(null)}
+      />
+
+      <AlertModal
+        visible={errorMessage !== null}
+        title="Error"
+        message={errorMessage ?? ""}
+        onClose={clearError}
       />
     </ScrollView>
   );

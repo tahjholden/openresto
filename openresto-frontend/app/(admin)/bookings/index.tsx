@@ -1,11 +1,9 @@
 import { ThemedText } from "@/components/themed-text";
 import {
   getAdminBookings,
-  adminGetTables,
   adminDeleteBooking,
   adminLookupBookings,
   BookingDetailDto,
-  SectionWithTables,
   BookingStatusFilter,
 } from "@/api/admin";
 import { fetchRestaurants, RestaurantDto } from "@/api/restaurants";
@@ -14,27 +12,29 @@ import ConfirmModal from "@/components/common/ConfirmModal";
 import { NewBookingModal } from "@/components/admin/bookings/NewBookingModal";
 import { useEffect, useState } from "react";
 import { usePersistedState } from "@/hooks/use-persisted-state";
+import { useBookingsGrid } from "@/hooks/use-bookings-grid";
 import {
   ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
-  TextInput,
   useWindowDimensions,
   View,
   Platform,
 } from "react-native";
 import { useRouter, Stack, useLocalSearchParams } from "expo-router";
-import { COLORS, FORM_SIZES, STATUS_COLORS } from "@/theme/theme";
+import { STATUS_COLORS } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
-import { StatusBadge, isPast } from "@/components/admin/bookings/StatusBadge";
 import { AvailabilityGrid } from "@/components/admin/bookings/AvailabilityGrid";
 import { BookingDetailPopup } from "@/components/admin/bookings/BookingDetailPopup";
+import { BookingsWideTable } from "@/components/admin/bookings/BookingsWideTable";
+import { BookingsCardList } from "@/components/admin/bookings/BookingsCardList";
+import { BookingLookupBar } from "@/components/admin/bookings/BookingLookupBar";
 import { styles } from "@/components/admin/bookings/bookings.styles";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { fmtDate, isoDate, initials } from "@/utils/formatters";
+import { fmtDate } from "@/utils/formatters";
 
 type ViewMode = "timetable" | "list";
 
@@ -52,12 +52,6 @@ export default function AdminBookingsScreen() {
     "bookings:statusFilter",
     "active"
   );
-
-  // Intentionally not persisted — the timetable always opens on today.
-  const [gridDate, setGridDate] = useState(new Date());
-  const [gridSections, setGridSections] = useState<SectionWithTables[]>([]);
-  const [gridBookings, setGridBookings] = useState<BookingDetailDto[]>([]);
-  const [gridLoading, setGridLoading] = useState(false);
 
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [cancelTarget, setCancelTarget] = useState<BookingDetailDto | null>(null);
@@ -91,6 +85,16 @@ export default function AdminBookingsScreen() {
 
   const { colors, isDark, primaryColor: PRIMARY } = useAppTheme();
   const { width } = useWindowDimensions();
+
+  const {
+    gridDate,
+    gridSections,
+    gridBookings,
+    gridLoading,
+    loadGrid,
+    handleGridDateChange,
+    resetToToday,
+  } = useBookingsGrid({ restaurantId: selectedRestaurantId, viewMode });
 
   const selectedRestaurant = restaurants.find((r) => r.id === selectedRestaurantId);
   const gridIsoDay = gridDate.getDay() === 0 ? 7 : gridDate.getDay();
@@ -167,36 +171,10 @@ export default function AdminBookingsScreen() {
     if (viewMode === "timetable") loadGrid(id, gridDate);
   };
 
-  async function loadGrid(restaurantId: number, date: Date) {
-    setGridLoading(true);
-    const [sections, bookingsForDate] = await Promise.all([
-      adminGetTables(restaurantId),
-      getAdminBookings(restaurantId, isoDate(date)),
-    ]);
-    setGridSections(sections);
-    setGridBookings(bookingsForDate);
-    setGridLoading(false);
-  }
-
   const switchToTimetable = () => {
     setViewMode("timetable");
     if (selectedRestaurantId) loadGrid(selectedRestaurantId, gridDate);
   };
-
-  const handleGridDateChange = (delta: number) => {
-    const next = new Date(gridDate);
-    next.setDate(next.getDate() + delta);
-    setGridDate(next);
-    if (selectedRestaurantId) loadGrid(selectedRestaurantId, next);
-  };
-
-  // Load timetable on mount when restaurant is selected
-  useEffect(() => {
-    if (selectedRestaurantId && viewMode === "timetable") {
-      loadGrid(selectedRestaurantId, gridDate);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRestaurantId]);
 
   // Single source of truth for reconciling list + timetable after any booking mutation.
   const refreshBookings = () => {
@@ -230,17 +208,6 @@ export default function AdminBookingsScreen() {
   const openFocusedRow = (focus?: "extend") => {
     if (focusedRowId != null) openBooking(focusedRowId, focus);
   };
-
-  // Shared a11y/highlight props for a bookings-list row — kept identical
-  // between the wide-table and mobile-card layouts below so keyboard-focus
-  // state can't silently drift between the two renderings.
-  const rowA11yProps = (id: number) => ({
-    testID: `booking-row-${id}`,
-    accessibilityRole: "button" as const,
-    accessibilityState: { selected: id === focusedRowId },
-  });
-  const focusedRowHighlight = (id: number) =>
-    id === focusedRowId && { backgroundColor: `${PRIMARY}0D` };
 
   // Suppressed whenever a booking popup or modal is already open — otherwise
   // a stray j/k/Enter/e keypress (e.g. focus left on a non-text Pressable
@@ -330,52 +297,22 @@ export default function AdminBookingsScreen() {
         </View>
 
         <View style={styles.headerControls}>
-          {/* Lookup input */}
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <TextInput
-              style={[
-                {
-                  height: FORM_SIZES.inputSmHeight,
-                  paddingHorizontal: FORM_SIZES.inputPaddingH,
-                  fontSize: 13,
-                  borderRadius: FORM_SIZES.inputBorderRadius,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  backgroundColor: colors.input,
-                  color: colors.text,
-                  minWidth: 180,
-                },
-              ]}
-              placeholder="Email or reference…"
-              placeholderTextColor={colors.muted}
-              value={lookupQuery}
-              onChangeText={(t) => {
-                setLookupQuery(t);
-                if (lookupStatus !== "idle") setLookupStatus("idle");
-              }}
-              autoCapitalize="none"
-              returnKeyType="search"
-              onSubmitEditing={handleLookup}
-            />
-            <Pressable
-              onPress={handleLookup}
-              disabled={lookupLoading || !lookupQuery.trim()}
-              style={[
-                styles.newBookingBtn,
-                { backgroundColor: PRIMARY },
-                (!lookupQuery.trim() || lookupLoading) && { opacity: 0.5 },
-              ]}
-            >
-              {lookupLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="search-outline" size={15} color="#fff" />
-                  <ThemedText style={styles.newBookingBtnText}>Find</ThemedText>
-                </>
-              )}
-            </Pressable>
-          </View>
+          {/* Lookup input + Find button + status messages */}
+          <BookingLookupBar
+            query={lookupQuery}
+            loading={lookupLoading}
+            status={lookupStatus}
+            onQueryChange={(t) => {
+              setLookupQuery(t);
+              if (lookupStatus !== "idle") setLookupStatus("idle");
+            }}
+            onSubmit={handleLookup}
+            borderColor={colors.border}
+            inputBg={colors.input}
+            textColor={colors.text}
+            placeholderColor={colors.muted}
+            primaryColor={PRIMARY}
+          />
 
           {searchQuery ? (
             <Pressable
@@ -396,17 +333,6 @@ export default function AdminBookingsScreen() {
           )}
         </View>
       </View>
-
-      {lookupStatus === "not_found" && (
-        <ThemedText style={{ fontSize: 12, color: COLORS.error, marginTop: -4 }}>
-          No booking found.
-        </ThemedText>
-      )}
-      {lookupStatus === "multiple" && (
-        <ThemedText style={{ fontSize: 12, color: PRIMARY, marginTop: -4 }}>
-          Showing all matches…
-        </ThemedText>
-      )}
 
       {/* Toolbar */}
       <View
@@ -530,13 +456,7 @@ export default function AdminBookingsScreen() {
             >
               <Ionicons name="chevron-back" size={18} color={PRIMARY} />
             </Pressable>
-            <Pressable
-              onPress={() => {
-                setGridDate(new Date());
-                if (selectedRestaurantId) loadGrid(selectedRestaurantId, new Date());
-              }}
-              style={styles.gridDateLabel}
-            >
+            <Pressable onPress={resetToToday} style={styles.gridDateLabel}>
               <ThemedText style={styles.gridDateText}>{fmtDate(gridDate)}</ThemedText>
               {gridDate.toDateString() !== new Date().toDateString() && (
                 <ThemedText style={[styles.gridTodayHint, { color: PRIMARY }]}>
@@ -617,214 +537,29 @@ export default function AdminBookingsScreen() {
         </View>
       ) : isWide ? (
         /* ── Wide table view ── */
-        <View style={[styles.tableCard, { backgroundColor: cardBg, borderColor }]}>
-          <View style={[styles.tableHeader, { backgroundColor: isDark ? "#28292b" : "#f8f8f9" }]}>
-            <ThemedText style={[styles.thCell, styles.colTime, { color: mutedColor }]}>
-              TIME
-            </ThemedText>
-            <ThemedText style={[styles.thCell, styles.colGuest, { color: mutedColor }]}>
-              GUEST
-            </ThemedText>
-            <ThemedText style={[styles.thCell, styles.colParty, { color: mutedColor }]}>
-              PARTY
-            </ThemedText>
-            <ThemedText style={[styles.thCell, styles.colTable, { color: mutedColor }]}>
-              TABLE
-            </ThemedText>
-            <ThemedText style={[styles.thCell, styles.colStatus, { color: mutedColor }]}>
-              STATUS
-            </ThemedText>
-            <View style={styles.colAction} />
-          </View>
-
-          {sorted.map((b, i) => (
-            <Pressable
-              key={b.id}
-              {...rowA11yProps(b.id)}
-              style={[
-                styles.tableRow,
-                i > 0 && { borderTopWidth: 1, borderTopColor: borderColor },
-                { cursor: "pointer" } as const,
-                focusedRowHighlight(b.id),
-              ]}
-              onPress={() => openBooking(b.id)}
-            >
-              {/* Avatar + time */}
-              <View
-                style={[styles.colTime, { flexDirection: "row", alignItems: "center", gap: 8 }]}
-              >
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    backgroundColor: `${PRIMARY}18`,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ThemedText style={{ fontSize: 11, fontWeight: "700", color: PRIMARY }}>
-                    {initials(b.customerName ?? b.customerEmail)}
-                  </ThemedText>
-                </View>
-                <View>
-                  <ThemedText style={styles.tdTime}>
-                    {new Date(b.date).toLocaleTimeString(undefined, {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </ThemedText>
-                  <ThemedText style={[styles.tdDate, { color: mutedColor }]}>
-                    {new Date(b.date).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </ThemedText>
-                </View>
-              </View>
-
-              <View style={styles.colGuest}>
-                <ThemedText style={styles.tdGuest} numberOfLines={1}>
-                  {b.customerName ?? b.customerEmail}
-                </ThemedText>
-                {b.customerName ? (
-                  <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
-                    {b.customerEmail}
-                  </ThemedText>
-                ) : null}
-                {b.bookingRef && (
-                  <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
-                    {b.bookingRef}
-                  </ThemedText>
-                )}
-              </View>
-
-              <View style={styles.colParty}>
-                <View style={styles.partyPill}>
-                  <Ionicons name="people-outline" size={12} color={mutedColor} />
-                  <ThemedText style={[styles.tdParty, { color: mutedColor }]}>{b.seats}</ThemedText>
-                </View>
-              </View>
-
-              <ThemedText style={[styles.tdTableNum, styles.colTable, { color: mutedColor }]}>
-                {b.tableName}
-              </ThemedText>
-
-              <View style={styles.colStatus}>
-                {b.isCancelled ? (
-                  <View
-                    style={[
-                      styles.badge,
-                      { backgroundColor: STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"] },
-                    ]}
-                  >
-                    <ThemedText style={[styles.badgeText, { color: STATUS_COLORS.cancelled.text }]}>
-                      Cancelled
-                    </ThemedText>
-                  </View>
-                ) : (
-                  <StatusBadge date={b.date} isDark={isDark} />
-                )}
-              </View>
-
-              <View style={styles.colAction}>
-                {!b.isCancelled && !isPast(b.date) && (
-                  <Pressable
-                    accessibilityLabel="Cancel booking"
-                    style={[
-                      styles.rowActionBtn,
-                      { backgroundColor: STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"] },
-                    ]}
-                    onPress={(e) => {
-                      (e as { stopPropagation?: () => void }).stopPropagation?.();
-                      setCancelTarget(b);
-                    }}
-                  >
-                    <Ionicons name="close-outline" size={14} color={STATUS_COLORS.cancelled.text} />
-                  </Pressable>
-                )}
-              </View>
-            </Pressable>
-          ))}
-        </View>
+        <BookingsWideTable
+          bookings={sorted}
+          focusedRowId={focusedRowId}
+          onOpenBooking={(id) => openBooking(id)}
+          onCancelBooking={(b) => setCancelTarget(b)}
+          borderColor={borderColor}
+          cardBg={cardBg}
+          mutedColor={mutedColor}
+          isDark={isDark}
+          primaryColor={PRIMARY}
+        />
       ) : (
         /* ── Mobile card list ── */
-        <View style={styles.cardList}>
-          {sorted.map((b) => (
-            <Pressable
-              key={b.id}
-              {...rowA11yProps(b.id)}
-              style={[
-                styles.listCard,
-                { backgroundColor: cardBg, borderColor },
-                focusedRowHighlight(b.id),
-              ]}
-              onPress={() => openBooking(b.id)}
-            >
-              <View style={styles.listCardRow}>
-                <View
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: `${PRIMARY}18`,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ThemedText style={{ fontSize: 13, fontWeight: "700", color: PRIMARY }}>
-                    {initials(b.customerName ?? b.customerEmail)}
-                  </ThemedText>
-                </View>
-                <View style={styles.listCardInfo}>
-                  <ThemedText style={styles.tdGuest} numberOfLines={1}>
-                    {b.customerName ?? b.customerEmail}
-                  </ThemedText>
-                  {b.customerName ? (
-                    <ThemedText style={[styles.tdNotes, { color: mutedColor }]} numberOfLines={1}>
-                      {b.customerEmail}
-                    </ThemedText>
-                  ) : null}
-                  <ThemedText style={[styles.tdTime, { fontSize: 13 }]}>
-                    {new Date(b.date).toLocaleString(undefined, {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </ThemedText>
-                  <View style={styles.partyPill}>
-                    <Ionicons name="people-outline" size={12} color={mutedColor} />
-                    <ThemedText style={[styles.tdDate, { color: mutedColor }]}>
-                      {b.seats} guests · {b.tableName}
-                    </ThemedText>
-                  </View>
-                </View>
-                <View style={styles.listCardRight}>
-                  {b.isCancelled ? (
-                    <View
-                      style={[
-                        styles.badge,
-                        {
-                          backgroundColor: STATUS_COLORS.cancelled.bg[isDark ? "dark" : "light"],
-                        },
-                      ]}
-                    >
-                      <ThemedText
-                        style={[styles.badgeText, { color: STATUS_COLORS.cancelled.text }]}
-                      >
-                        Cancelled
-                      </ThemedText>
-                    </View>
-                  ) : (
-                    <StatusBadge date={b.date} isDark={isDark} />
-                  )}
-                </View>
-              </View>
-            </Pressable>
-          ))}
-        </View>
+        <BookingsCardList
+          bookings={sorted}
+          focusedRowId={focusedRowId}
+          onOpenBooking={(id) => openBooking(id)}
+          borderColor={borderColor}
+          cardBg={cardBg}
+          mutedColor={mutedColor}
+          isDark={isDark}
+          primaryColor={PRIMARY}
+        />
       )}
 
       {/* Booking detail popup */}

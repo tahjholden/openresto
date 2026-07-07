@@ -6,6 +6,7 @@ import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/theme/theme";
+import { validatePasswordChange } from "@/utils/validation";
 import {
   getPvqStatus,
   setupPvq,
@@ -80,12 +81,9 @@ export function SecurityCard({
   };
 
   const handleChangePw = async () => {
-    if (newPw !== confirmPw) {
-      setMsg({ text: "Passwords do not match.", ok: false });
-      return;
-    }
-    if (newPw.length < 6) {
-      setMsg({ text: "Password must be at least 6 characters.", ok: false });
+    const v = validatePasswordChange(newPw, confirmPw);
+    if (!v.ok) {
+      setMsg({ text: v.error, ok: false });
       return;
     }
     setSaving(true);

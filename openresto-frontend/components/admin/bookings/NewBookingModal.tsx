@@ -18,6 +18,7 @@ import { getHoursForDate } from "@/utils/openingHours";
 import Button from "@/components/common/Button";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { fetchRestaurants, RestaurantDto, SectionDto } from "@/api/restaurants";
+import { isValidEmail } from "@/utils/validation";
 import { adminCreateBooking } from "@/api/admin";
 import { SPACING, TYPOGRAPHY, BORDER_RADIUS } from "@/theme/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
@@ -129,7 +130,7 @@ export function NewBookingModal({ visible, onClose, onCreated }: NewBookingModal
   };
 
   const isValid =
-    !!restaurantId && !!sectionId && !!tableId && email.includes("@") && !!date && !!time;
+    !!restaurantId && !!sectionId && !!tableId && isValidEmail(email) && !!date && !!time;
 
   const doSubmit = async () => {
     setSubmitting(true);

@@ -8,6 +8,7 @@ import { Pressable, ScrollView, StyleSheet, TextInput, View, Platform } from "re
 import { useRouter, Stack } from "expo-router";
 import { COLORS, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "@/theme/theme";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { isValidEmail, validatePasswordChange } from "@/utils/validation";
 import { Ionicons } from "@expo/vector-icons";
 
 type Stage = "login" | "pvq-email" | "pvq-answer" | "reset" | "done";
@@ -84,12 +85,9 @@ export default function AdminLoginScreen() {
   // ── Forgot password: step 3 — set new password ───────────────────────────
 
   const handleResetPassword = async () => {
-    if (newPassword !== confirmPassword) {
-      setFpError("Passwords do not match.");
-      return;
-    }
-    if (newPassword.length < 6) {
-      setFpError("Password must be at least 6 characters.");
+    const v = validatePasswordChange(newPassword, confirmPassword);
+    if (!v.ok) {
+      setFpError(v.error);
       return;
     }
     setFpError(null);
@@ -151,7 +149,7 @@ export default function AdminLoginScreen() {
 
             <Button
               onPress={handleLogin}
-              disabled={!email.includes("@") || password.length === 0 || loginLoading}
+              disabled={!isValidEmail(email) || password.length === 0 || loginLoading}
               style={styles.submitBtn}
             >
               {loginLoading ? "Signing in…" : "Sign In"}
@@ -207,7 +205,7 @@ export default function AdminLoginScreen() {
 
             <Button
               onPress={handleFetchQuestion}
-              disabled={!fpEmail.includes("@") || fpLoading}
+              disabled={!isValidEmail(fpEmail) || fpLoading}
               style={styles.submitBtn}
             >
               {fpLoading ? "Checking…" : "Continue"}

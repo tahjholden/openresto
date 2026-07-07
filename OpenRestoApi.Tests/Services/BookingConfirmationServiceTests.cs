@@ -11,14 +11,6 @@ namespace OpenRestoApi.Tests.Services;
 
 public class BookingConfirmationServiceTests
 {
-    private static AppDbContext CreateDb(string name)
-    {
-        DbContextOptions<AppDbContext> opts = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(name)
-            .Options;
-        return new AppDbContext(opts);
-    }
-
     private static BookingConfirmationService CreateService(
         AppDbContext db,
         Mock<IEmailService>? emailServiceMock = null,
@@ -86,7 +78,7 @@ public class BookingConfirmationServiceTests
     [Fact]
     public async Task SendConfirmationAsync_SendsEmail_WhenEnabled()
     {
-        using AppDbContext db = CreateDb(nameof(SendConfirmationAsync_SendsEmail_WhenEnabled));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendConfirmationAsync_SendsEmail_WhenEnabled));
         (Booking booking, Restaurant restaurant) = MakeBookingAndRestaurant(db);
         var emailServiceMock = new Mock<IEmailService>();
         var settings = new EmailSettings { SendBookingConfirmations = true };
@@ -102,7 +94,7 @@ public class BookingConfirmationServiceTests
     [Fact]
     public async Task SendConfirmationAsync_EmailHtml_ContainsRestaurantImage_WhenImageUrlSet()
     {
-        using AppDbContext db = CreateDb(nameof(SendConfirmationAsync_EmailHtml_ContainsRestaurantImage_WhenImageUrlSet));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendConfirmationAsync_EmailHtml_ContainsRestaurantImage_WhenImageUrlSet));
         (Booking booking, Restaurant restaurant) = MakeBookingAndRestaurant(db, imageUrl: "https://cdn.example.com/photo.jpg", restaurantName: "Pic Restaurant");
         string? capturedBody = null;
         var emailServiceMock = new Mock<IEmailService>();
@@ -121,7 +113,7 @@ public class BookingConfirmationServiceTests
     [Fact]
     public async Task SendConfirmationAsync_EmailHtml_ContainsFaviconSvg_WhenNoRestaurantImageButFaviconSet()
     {
-        using AppDbContext db = CreateDb(nameof(SendConfirmationAsync_EmailHtml_ContainsFaviconSvg_WhenNoRestaurantImageButFaviconSet));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendConfirmationAsync_EmailHtml_ContainsFaviconSvg_WhenNoRestaurantImageButFaviconSet));
         db.Set<BrandSettings>().Add(new BrandSettings { FaviconIcon = "utensils" });
         (Booking booking, Restaurant restaurant) = MakeBookingAndRestaurant(db, restaurantName: "Icon Restaurant");
         string? capturedBody = null;
@@ -142,7 +134,7 @@ public class BookingConfirmationServiceTests
     [Fact]
     public async Task SendConfirmationAsync_EmailHtml_HasNoImage_WhenNeitherRestaurantImageNorFaviconSet()
     {
-        using AppDbContext db = CreateDb(nameof(SendConfirmationAsync_EmailHtml_HasNoImage_WhenNeitherRestaurantImageNorFaviconSet));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendConfirmationAsync_EmailHtml_HasNoImage_WhenNeitherRestaurantImageNorFaviconSet));
         (Booking booking, Restaurant restaurant) = MakeBookingAndRestaurant(db, restaurantName: "Plain Restaurant");
         string? capturedBody = null;
         var emailServiceMock = new Mock<IEmailService>();
@@ -163,7 +155,7 @@ public class BookingConfirmationServiceTests
     [Fact]
     public async Task SendConfirmationAsync_DoesNotSendEmail_WhenConfirmationsDisabled()
     {
-        using AppDbContext db = CreateDb(nameof(SendConfirmationAsync_DoesNotSendEmail_WhenConfirmationsDisabled));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendConfirmationAsync_DoesNotSendEmail_WhenConfirmationsDisabled));
         (Booking booking, Restaurant restaurant) = MakeBookingAndRestaurant(db);
         var emailServiceMock = new Mock<IEmailService>();
         BookingConfirmationService svc = CreateService(db, emailServiceMock, MockSettingsService(new EmailSettings { SendBookingConfirmations = false }));
@@ -178,7 +170,7 @@ public class BookingConfirmationServiceTests
     [Fact]
     public async Task SendConfirmationAsync_DoesNotSendEmail_WhenCustomerEmailMissing()
     {
-        using AppDbContext db = CreateDb(nameof(SendConfirmationAsync_DoesNotSendEmail_WhenCustomerEmailMissing));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendConfirmationAsync_DoesNotSendEmail_WhenCustomerEmailMissing));
         (Booking booking, Restaurant restaurant) = MakeBookingAndRestaurant(db, customerEmail: null!);
         var emailServiceMock = new Mock<IEmailService>();
         BookingConfirmationService svc = CreateService(db, emailServiceMock, MockSettingsService(new EmailSettings { SendBookingConfirmations = true }));
@@ -193,7 +185,7 @@ public class BookingConfirmationServiceTests
     [Fact]
     public async Task SendConfirmationAsync_DoesNotSendEmail_WhenSettingsServiceNull()
     {
-        using AppDbContext db = CreateDb(nameof(SendConfirmationAsync_DoesNotSendEmail_WhenSettingsServiceNull));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendConfirmationAsync_DoesNotSendEmail_WhenSettingsServiceNull));
         (Booking booking, Restaurant restaurant) = MakeBookingAndRestaurant(db);
         var emailServiceMock = new Mock<IEmailService>();
         // No emailSettingsService passed — null short-circuit must skip the send entirely.
@@ -209,7 +201,7 @@ public class BookingConfirmationServiceTests
     [Fact]
     public async Task SendConfirmationAsync_DoesNotSendEmail_WhenEmailServiceNull()
     {
-        using AppDbContext db = CreateDb(nameof(SendConfirmationAsync_DoesNotSendEmail_WhenEmailServiceNull));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendConfirmationAsync_DoesNotSendEmail_WhenEmailServiceNull));
         (Booking booking, Restaurant restaurant) = MakeBookingAndRestaurant(db);
         // Pass a null IEmailService directly (Mock.Object is non-null, so use the ctor).
         var config = new Mock<IConfiguration>();
@@ -229,7 +221,7 @@ public class BookingConfirmationServiceTests
     [Fact]
     public async Task SendConfirmationAsync_NeverThrows_WhenEmailSendFails()
     {
-        using AppDbContext db = CreateDb(nameof(SendConfirmationAsync_NeverThrows_WhenEmailSendFails));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendConfirmationAsync_NeverThrows_WhenEmailSendFails));
         (Booking booking, Restaurant restaurant) = MakeBookingAndRestaurant(db);
         var emailServiceMock = new Mock<IEmailService>();
         emailServiceMock
@@ -244,7 +236,7 @@ public class BookingConfirmationServiceTests
     [Fact]
     public async Task SendConfirmationAsync_PersistsEmailFailure_WhenSendThrowsAndRepositoryConfigured()
     {
-        using AppDbContext db = CreateDb(nameof(SendConfirmationAsync_PersistsEmailFailure_WhenSendThrowsAndRepositoryConfigured));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendConfirmationAsync_PersistsEmailFailure_WhenSendThrowsAndRepositoryConfigured));
         (Booking booking, Restaurant restaurant) = MakeBookingAndRestaurant(db);
         var emailServiceMock = new Mock<IEmailService>();
         emailServiceMock
@@ -265,7 +257,7 @@ public class BookingConfirmationServiceTests
     [Fact]
     public async Task SendConfirmationAsync_DoesNotPersistFailure_WhenRepositoryNull()
     {
-        using AppDbContext db = CreateDb(nameof(SendConfirmationAsync_DoesNotPersistFailure_WhenRepositoryNull));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendConfirmationAsync_DoesNotPersistFailure_WhenRepositoryNull));
         (Booking booking, Restaurant restaurant) = MakeBookingAndRestaurant(db);
         var emailServiceMock = new Mock<IEmailService>();
         emailServiceMock

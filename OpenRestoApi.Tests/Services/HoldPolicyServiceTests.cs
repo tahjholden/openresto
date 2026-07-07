@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Moq;
 using OpenRestoApi.Core.Application.Interfaces;
 using OpenRestoApi.Core.Application.Services;
@@ -10,14 +9,6 @@ namespace OpenRestoApi.Tests.Services;
 
 public class HoldPolicyServiceTests
 {
-    private static AppDbContext CreateDb(string name)
-    {
-        DbContextOptions<AppDbContext> opts = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(name)
-            .Options;
-        return new AppDbContext(opts);
-    }
-
     private static void SeedRestaurant(AppDbContext db)
     {
         // Uniform 00:00–23:59 UTC so opening-hours never rejects unless overridden.
@@ -34,7 +25,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_ReturnsNotFound_WhenRestaurantMissing()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_ReturnsNotFound_WhenRestaurantMissing));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_ReturnsNotFound_WhenRestaurantMissing));
         HoldPolicyService svc = NewService(db);
 
         HoldPolicyResult result = await svc.ValidateAsync(999, 1, DateTime.UtcNow.AddDays(1));
@@ -46,7 +37,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_ReturnsRejected_ForPastDate()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_ReturnsRejected_ForPastDate));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_ReturnsRejected_ForPastDate));
         SeedRestaurant(db);
         HoldPolicyService svc = NewService(db);
 
@@ -59,7 +50,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_ReturnsRejected_WhenBookingsPaused()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_ReturnsRejected_WhenBookingsPaused));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_ReturnsRejected_WhenBookingsPaused));
         db.Restaurants.Add(new Restaurant
         {
             Id = 1, Name = "T", OpenTime = "00:00", CloseTime = "23:59", Timezone = "UTC",
@@ -78,7 +69,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_ReturnsRejected_WhenLocationIsWalkInOnly()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_ReturnsRejected_WhenLocationIsWalkInOnly));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_ReturnsRejected_WhenLocationIsWalkInOnly));
         db.Restaurants.Add(new Restaurant
         {
             Id = 1, Name = "T", OpenTime = "00:00", CloseTime = "23:59", Timezone = "UTC",
@@ -97,7 +88,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_ReturnsRejected_WhenDateFallsOnWalkInDay()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_ReturnsRejected_WhenDateFallsOnWalkInDay));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_ReturnsRejected_WhenDateFallsOnWalkInDay));
         DateTime testDate = DateTime.UtcNow.Date.AddDays(1).AddHours(12);
         int isoDay = (int)testDate.DayOfWeek == 0 ? 7 : (int)testDate.DayOfWeek;
 
@@ -118,7 +109,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_ReturnsRejected_WhenOutsidePerDayHours()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_ReturnsRejected_WhenOutsidePerDayHours));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_ReturnsRejected_WhenOutsidePerDayHours));
         db.Restaurants.Add(new Restaurant
         {
             Id = 1, Name = "T", Timezone = "UTC", OpenTime = "09:00", CloseTime = "17:00",
@@ -138,7 +129,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_ReturnsEligible_WithinPerDayHours()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_ReturnsEligible_WithinPerDayHours));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_ReturnsEligible_WithinPerDayHours));
         db.Restaurants.Add(new Restaurant
         {
             Id = 1, Name = "T", Timezone = "UTC", OpenTime = "09:00", CloseTime = "17:00",
@@ -161,7 +152,7 @@ public class HoldPolicyServiceTests
         int isoDay = (int)testDate.DayOfWeek == 0 ? 7 : (int)testDate.DayOfWeek;
         string otherDay = isoDay == 1 ? "2" : "1";
 
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_ReturnsRejected_WhenDayNotInOpenDays));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_ReturnsRejected_WhenDayNotInOpenDays));
         db.Restaurants.Add(new Restaurant
         {
             Id = 1, Name = "T", Timezone = "UTC", OpenTime = "00:00", CloseTime = "23:59",
@@ -178,7 +169,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_UsesDefaultHours_WhenStoredTimesAreUnparseable()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_UsesDefaultHours_WhenStoredTimesAreUnparseable));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_UsesDefaultHours_WhenStoredTimesAreUnparseable));
         db.Restaurants.Add(new Restaurant
         {
             Id = 1, Name = "T", Timezone = "UTC", OpenTime = "", CloseTime = ""
@@ -197,7 +188,7 @@ public class HoldPolicyServiceTests
     public async Task ValidateAsync_HandlesOvernightHours_WhenRequestedTimeIsBeforeMidnightClose()
     {
         // Open 18:00, close 02:00 (after midnight) — 23:00 should be within hours.
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_HandlesOvernightHours_WhenRequestedTimeIsBeforeMidnightClose));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_HandlesOvernightHours_WhenRequestedTimeIsBeforeMidnightClose));
         db.Restaurants.Add(new Restaurant
         {
             Id = 1, Name = "T", Timezone = "UTC", OpenTime = "18:00", CloseTime = "02:00"
@@ -215,7 +206,7 @@ public class HoldPolicyServiceTests
     public async Task ValidateAsync_ReturnsRejected_OutsideOvernightHoursWindow()
     {
         // Open 18:00, close 02:00 — noon falls outside both segments of the window.
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_ReturnsRejected_OutsideOvernightHoursWindow));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_ReturnsRejected_OutsideOvernightHoursWindow));
         db.Restaurants.Add(new Restaurant
         {
             Id = 1, Name = "T", Timezone = "UTC", OpenTime = "18:00", CloseTime = "02:00"
@@ -232,7 +223,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_TreatsEqualOpenAndCloseTimes_AsAlwaysOpen()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_TreatsEqualOpenAndCloseTimes_AsAlwaysOpen));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_TreatsEqualOpenAndCloseTimes_AsAlwaysOpen));
         db.Restaurants.Add(new Restaurant
         {
             Id = 1, Name = "T", Timezone = "UTC", OpenTime = "00:00", CloseTime = "00:00"
@@ -249,7 +240,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_FallsBackToUtc_WhenTimezoneIsInvalid()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_FallsBackToUtc_WhenTimezoneIsInvalid));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_FallsBackToUtc_WhenTimezoneIsInvalid));
         db.Restaurants.Add(new Restaurant
         {
             Id = 1, Name = "T", Timezone = "Not/A/Real/Timezone", OpenTime = "00:00", CloseTime = "23:59"
@@ -267,7 +258,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_ReturnsBooked_WhenTableHasConfirmedBooking()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_ReturnsBooked_WhenTableHasConfirmedBooking));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_ReturnsBooked_WhenTableHasConfirmedBooking));
         SeedRestaurant(db);
         var date = DateTime.UtcNow.Date.AddDays(1).AddHours(12);
         db.Bookings.Add(new Booking
@@ -286,7 +277,7 @@ public class HoldPolicyServiceTests
     [Fact]
     public async Task ValidateAsync_PassesRestaurantConfiguredDuration_ToBookingConflictCheck()
     {
-        using AppDbContext db = CreateDb(nameof(ValidateAsync_PassesRestaurantConfiguredDuration_ToBookingConflictCheck));
+        using AppDbContext db = TestDbFactory.Create(nameof(ValidateAsync_PassesRestaurantConfiguredDuration_ToBookingConflictCheck));
         db.Restaurants.Add(new Restaurant
         {
             Id = 1, Name = "T", Timezone = "UTC", OpenTime = "00:00", CloseTime = "23:59",

@@ -13,14 +13,6 @@ public class AuthServiceTests
     // 32+ char HS256 test key.
     private const string TestKey = "test-key-must-be-at-least-32-characters-long-for-hs256!!";
 
-    private static AppDbContext CreateDb(string name)
-    {
-        DbContextOptions<AppDbContext> opts = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(name)
-            .Options;
-        return new AppDbContext(opts);
-    }
-
     private static IConfiguration BuildConfig(string? adminEmail = null, string? adminPassword = null)
     {
         var dict = new Dictionary<string, string?>
@@ -63,7 +55,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_Returns_Jwt_On_Correct_Email_And_Password()
     {
-        using AppDbContext db = CreateDb(nameof(LoginAsync_Returns_Jwt_On_Correct_Email_And_Password));
+        using AppDbContext db = TestDbFactory.Create(nameof(LoginAsync_Returns_Jwt_On_Correct_Email_And_Password));
         SeedCredential(db, "admin@example.com", "secret123");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -75,7 +67,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_Is_Case_Insensitive_On_Email()
     {
-        using AppDbContext db = CreateDb(nameof(LoginAsync_Is_Case_Insensitive_On_Email));
+        using AppDbContext db = TestDbFactory.Create(nameof(LoginAsync_Is_Case_Insensitive_On_Email));
         SeedCredential(db, "admin@example.com", "secret123");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -87,7 +79,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_Returns_Null_On_Wrong_Email()
     {
-        using AppDbContext db = CreateDb(nameof(LoginAsync_Returns_Null_On_Wrong_Email));
+        using AppDbContext db = TestDbFactory.Create(nameof(LoginAsync_Returns_Null_On_Wrong_Email));
         SeedCredential(db, "admin@example.com", "secret123");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -99,7 +91,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_Returns_Null_On_Wrong_Password()
     {
-        using AppDbContext db = CreateDb(nameof(LoginAsync_Returns_Null_On_Wrong_Password));
+        using AppDbContext db = TestDbFactory.Create(nameof(LoginAsync_Returns_Null_On_Wrong_Password));
         SeedCredential(db, "admin@example.com", "secret123");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -111,7 +103,7 @@ public class AuthServiceTests
     [Fact]
     public async Task LoginAsync_Bootstraps_Credential_From_Config_On_First_Run()
     {
-        using AppDbContext db = CreateDb(nameof(LoginAsync_Bootstraps_Credential_From_Config_On_First_Run));
+        using AppDbContext db = TestDbFactory.Create(nameof(LoginAsync_Bootstraps_Credential_From_Config_On_First_Run));
         // No pre-seeded credential — bootstrap path should read Admin:Email/Password from config.
         AuthService svc = CreateService(db, BuildConfig(adminEmail: "boot@openresto.com", adminPassword: "configured-pw"));
 
@@ -127,7 +119,7 @@ public class AuthServiceTests
     [Fact]
     public async Task ChangePasswordAsync_Rejects_Wrong_Current_Password()
     {
-        using AppDbContext db = CreateDb(nameof(ChangePasswordAsync_Rejects_Wrong_Current_Password));
+        using AppDbContext db = TestDbFactory.Create(nameof(ChangePasswordAsync_Rejects_Wrong_Current_Password));
         SeedCredential(db, "admin@example.com", "old");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -141,7 +133,7 @@ public class AuthServiceTests
     [Fact]
     public async Task ChangePasswordAsync_Succeeds_And_New_Password_Works()
     {
-        using AppDbContext db = CreateDb(nameof(ChangePasswordAsync_Succeeds_And_New_Password_Works));
+        using AppDbContext db = TestDbFactory.Create(nameof(ChangePasswordAsync_Succeeds_And_New_Password_Works));
         SeedCredential(db, "admin@example.com", "old");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -158,7 +150,7 @@ public class AuthServiceTests
     [InlineData("12345")]
     public async Task ChangePasswordAsync_Throws_ArgumentException_When_New_Password_Too_Short(string weak)
     {
-        using AppDbContext db = CreateDb(nameof(ChangePasswordAsync_Throws_ArgumentException_When_New_Password_Too_Short) + weak);
+        using AppDbContext db = TestDbFactory.Create(nameof(ChangePasswordAsync_Throws_ArgumentException_When_New_Password_Too_Short) + weak);
         SeedCredential(db, "admin@example.com", "pw");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -171,7 +163,7 @@ public class AuthServiceTests
     [Fact]
     public async Task ChangeEmailAsync_Returns_New_Jwt_On_Success()
     {
-        using AppDbContext db = CreateDb(nameof(ChangeEmailAsync_Returns_New_Jwt_On_Success));
+        using AppDbContext db = TestDbFactory.Create(nameof(ChangeEmailAsync_Returns_New_Jwt_On_Success));
         SeedCredential(db, "admin@example.com", "pw");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -185,7 +177,7 @@ public class AuthServiceTests
     [Fact]
     public async Task ChangeEmailAsync_Throws_When_New_Email_Equals_Current()
     {
-        using AppDbContext db = CreateDb(nameof(ChangeEmailAsync_Throws_When_New_Email_Equals_Current));
+        using AppDbContext db = TestDbFactory.Create(nameof(ChangeEmailAsync_Throws_When_New_Email_Equals_Current));
         SeedCredential(db, "admin@example.com", "pw");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -197,7 +189,7 @@ public class AuthServiceTests
     [Fact]
     public async Task ChangeEmailAsync_Returns_Null_On_Wrong_Password()
     {
-        using AppDbContext db = CreateDb(nameof(ChangeEmailAsync_Returns_Null_On_Wrong_Password));
+        using AppDbContext db = TestDbFactory.Create(nameof(ChangeEmailAsync_Returns_Null_On_Wrong_Password));
         SeedCredential(db, "admin@example.com", "pw");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -213,7 +205,7 @@ public class AuthServiceTests
     [InlineData("   ")]
     public async Task ChangeEmailAsync_Throws_ArgumentException_When_Email_Invalid(string malformed)
     {
-        using AppDbContext db = CreateDb(nameof(ChangeEmailAsync_Throws_ArgumentException_When_Email_Invalid) + malformed.GetHashCode());
+        using AppDbContext db = TestDbFactory.Create(nameof(ChangeEmailAsync_Throws_ArgumentException_When_Email_Invalid) + malformed.GetHashCode());
         SeedCredential(db, "admin@example.com", "pw");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -226,7 +218,7 @@ public class AuthServiceTests
     [Fact]
     public async Task ResetPasswordAsync_Returns_False_For_Unknown_Token()
     {
-        using AppDbContext db = CreateDb(nameof(ResetPasswordAsync_Returns_False_For_Unknown_Token));
+        using AppDbContext db = TestDbFactory.Create(nameof(ResetPasswordAsync_Returns_False_For_Unknown_Token));
         SeedCredential(db, "admin@example.com", "pw");
         AuthService svc = CreateService(db, BuildConfig());
 
@@ -238,7 +230,7 @@ public class AuthServiceTests
     [Fact]
     public async Task ResetPasswordAsync_Returns_False_For_Expired_Token()
     {
-        using AppDbContext db = CreateDb(nameof(ResetPasswordAsync_Returns_False_For_Expired_Token));
+        using AppDbContext db = TestDbFactory.Create(nameof(ResetPasswordAsync_Returns_False_For_Expired_Token));
         SeedCredential(db, "admin@example.com", "pw");
         // Manually attach an expired reset token to the credential row.
         AdminCredential cred = await db.AdminCredentials.SingleAsync();
@@ -255,7 +247,7 @@ public class AuthServiceTests
     [Fact]
     public async Task ResetPasswordAsync_Succeeds_Clears_Token_And_Allows_New_Password()
     {
-        using AppDbContext db = CreateDb(nameof(ResetPasswordAsync_Succeeds_Clears_Token_And_Allows_New_Password));
+        using AppDbContext db = TestDbFactory.Create(nameof(ResetPasswordAsync_Succeeds_Clears_Token_And_Allows_New_Password));
         SeedCredential(db, "admin@example.com", "pw");
         // Issue a valid (non-expired) token via the SecurityQuestionsService — the only
         // legitimate producer of reset tokens. This also exercises the cross-service contract.
@@ -280,7 +272,7 @@ public class AuthServiceTests
     [InlineData("12345")]
     public async Task ResetPasswordAsync_Throws_ArgumentException_When_New_Password_Too_Short(string weak)
     {
-        using AppDbContext db = CreateDb(nameof(ResetPasswordAsync_Throws_ArgumentException_When_New_Password_Too_Short) + weak);
+        using AppDbContext db = TestDbFactory.Create(nameof(ResetPasswordAsync_Throws_ArgumentException_When_New_Password_Too_Short) + weak);
         SeedCredential(db, "admin@example.com", "pw");
         AdminCredential cred = await db.AdminCredentials.SingleAsync();
         cred.ResetToken = "valid-token";

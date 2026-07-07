@@ -12,14 +12,6 @@ namespace OpenRestoApi.Tests.Services;
 
 public class EmailSettingsServiceTests
 {
-    private static AppDbContext CreateDb(string name)
-    {
-        DbContextOptions<AppDbContext> opts = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(name)
-            .Options;
-        return new AppDbContext(opts);
-    }
-
     private static EmailSettingsService CreateService(AppDbContext db, Mock<CredentialProtector>? protectorMock = null, Mock<IEmailService>? emailMock = null)
     {
         protectorMock ??= new Mock<CredentialProtector>(Mock.Of<IDataProtectionProvider>());
@@ -34,7 +26,7 @@ public class EmailSettingsServiceTests
     [Fact]
     public async Task GetAsync_ReturnsNull_WhenNoSettings()
     {
-        using AppDbContext db = CreateDb(nameof(GetAsync_ReturnsNull_WhenNoSettings));
+        using AppDbContext db = TestDbFactory.Create(nameof(GetAsync_ReturnsNull_WhenNoSettings));
         var svc = CreateService(db);
         Assert.Null(await svc.GetAsync());
     }
@@ -42,7 +34,7 @@ public class EmailSettingsServiceTests
     [Fact]
     public async Task GetAsync_ReturnsExistingSettings()
     {
-        using AppDbContext db = CreateDb(nameof(GetAsync_ReturnsExistingSettings));
+        using AppDbContext db = TestDbFactory.Create(nameof(GetAsync_ReturnsExistingSettings));
         db.Set<EmailSettings>().Add(new EmailSettings { Host = "smtp.example.com", Port = 587 });
         await db.SaveChangesAsync();
 
@@ -55,7 +47,7 @@ public class EmailSettingsServiceTests
     [Fact]
     public async Task SaveAsync_CreatesNewSettings_WhenNoneExist()
     {
-        using AppDbContext db = CreateDb(nameof(SaveAsync_CreatesNewSettings_WhenNoneExist));
+        using AppDbContext db = TestDbFactory.Create(nameof(SaveAsync_CreatesNewSettings_WhenNoneExist));
         var svc = CreateService(db);
         await svc.SaveAsync("smtp.test.com", 465, "user@test.com", null, true, null, null);
 
@@ -70,7 +62,7 @@ public class EmailSettingsServiceTests
     [Fact]
     public async Task SaveAsync_UpdatesExistingSettings()
     {
-        using AppDbContext db = CreateDb(nameof(SaveAsync_UpdatesExistingSettings));
+        using AppDbContext db = TestDbFactory.Create(nameof(SaveAsync_UpdatesExistingSettings));
         db.Set<EmailSettings>().Add(new EmailSettings { Host = "old.host", Port = 587 });
         await db.SaveChangesAsync();
 
@@ -86,7 +78,7 @@ public class EmailSettingsServiceTests
     [Fact]
     public async Task SaveAsync_EncryptsPassword_WhenProvided()
     {
-        using AppDbContext db = CreateDb(nameof(SaveAsync_EncryptsPassword_WhenProvided));
+        using AppDbContext db = TestDbFactory.Create(nameof(SaveAsync_EncryptsPassword_WhenProvided));
         var protectorMock = new Mock<CredentialProtector>(Mock.Of<IDataProtectionProvider>());
         protectorMock.Setup(p => p.Encrypt("secret")).Returns("encrypted-secret");
 
@@ -101,7 +93,7 @@ public class EmailSettingsServiceTests
     [Fact]
     public async Task SaveAsync_SkipsEncryption_WhenPasswordIsMask()
     {
-        using AppDbContext db = CreateDb(nameof(SaveAsync_SkipsEncryption_WhenPasswordIsMask));
+        using AppDbContext db = TestDbFactory.Create(nameof(SaveAsync_SkipsEncryption_WhenPasswordIsMask));
         db.Set<EmailSettings>().Add(new EmailSettings { Host = "smtp", Port = 587, EncryptedPassword = "existing-encrypted" });
         await db.SaveChangesAsync();
 
@@ -117,7 +109,7 @@ public class EmailSettingsServiceTests
     [Fact]
     public async Task SaveAsync_SkipsEncryption_WhenPasswordIsNull()
     {
-        using AppDbContext db = CreateDb(nameof(SaveAsync_SkipsEncryption_WhenPasswordIsNull));
+        using AppDbContext db = TestDbFactory.Create(nameof(SaveAsync_SkipsEncryption_WhenPasswordIsNull));
         var protectorMock = new Mock<CredentialProtector>(Mock.Of<IDataProtectionProvider>());
         var svc = CreateService(db, protectorMock);
         await svc.SaveAsync("smtp.test.com", 587, "user", null, true, null, null);
@@ -128,7 +120,7 @@ public class EmailSettingsServiceTests
     [Fact]
     public async Task SaveAsync_PersistsFromNameAndFromEmail()
     {
-        using AppDbContext db = CreateDb(nameof(SaveAsync_PersistsFromNameAndFromEmail));
+        using AppDbContext db = TestDbFactory.Create(nameof(SaveAsync_PersistsFromNameAndFromEmail));
         var svc = CreateService(db);
         await svc.SaveAsync("smtp.test.com", 587, "user", null, true, "My Restaurant", "no-reply@myrestaurant.com");
 
@@ -140,7 +132,7 @@ public class EmailSettingsServiceTests
     [Fact]
     public async Task SaveAsync_SetsSendBookingConfirmations()
     {
-        using AppDbContext db = CreateDb(nameof(SaveAsync_SetsSendBookingConfirmations));
+        using AppDbContext db = TestDbFactory.Create(nameof(SaveAsync_SetsSendBookingConfirmations));
         var svc = CreateService(db);
         await svc.SaveAsync("smtp.test.com", 587, "user", null, true, null, null, sendBookingConfirmations: true);
 
@@ -151,7 +143,7 @@ public class EmailSettingsServiceTests
     [Fact]
     public async Task TestConnectionAsync_ReturnsTrue_WhenServiceSucceeds()
     {
-        using AppDbContext db = CreateDb(nameof(TestConnectionAsync_ReturnsTrue_WhenServiceSucceeds));
+        using AppDbContext db = TestDbFactory.Create(nameof(TestConnectionAsync_ReturnsTrue_WhenServiceSucceeds));
         var emailMock = new Mock<IEmailService>();
         emailMock.Setup(e => e.TestConnectionAsync()).ReturnsAsync(true);
 
@@ -162,7 +154,7 @@ public class EmailSettingsServiceTests
     [Fact]
     public async Task TestConnectionAsync_ReturnsFalse_WhenServiceFails()
     {
-        using AppDbContext db = CreateDb(nameof(TestConnectionAsync_ReturnsFalse_WhenServiceFails));
+        using AppDbContext db = TestDbFactory.Create(nameof(TestConnectionAsync_ReturnsFalse_WhenServiceFails));
         var emailMock = new Mock<IEmailService>();
         emailMock.Setup(e => e.TestConnectionAsync()).ReturnsAsync(false);
 

@@ -13,16 +13,6 @@ namespace OpenRestoApi.Tests.Services;
 
 public class BookingServiceTests
 {
-    // Each test gets a fresh in-memory database with a unique name to avoid
-    // cross-test state leakage.
-    private static AppDbContext CreateDb(string name)
-    {
-        DbContextOptions<AppDbContext> opts = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(name)
-            .Options;
-        return new AppDbContext(opts);
-    }
-
     private static BookingService CreateService(
         AppDbContext db,
         IHoldService? holdService = null,
@@ -39,21 +29,13 @@ public class BookingServiceTests
             confirmationService);
     }
 
-    private static void Seed(AppDbContext db)
-    {
-        db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant" });
-        db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
-        db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
-        db.SaveChanges();
-    }
-
     // ── CreateBookingAsync ────────────────────────────────────────────────────
 
     [Fact]
     public async Task CreateBookingAsync_ReturnsDto_WithCorrectFields()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_ReturnsDto_WithCorrectFields));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_ReturnsDto_WithCorrectFields));
+        TestSeed.BasicRestaurant(db);
 
         BookingService svc = CreateService(db);
         var dto = new BookingDto
@@ -76,8 +58,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_PersistsToDatabase()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_PersistsToDatabase));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_PersistsToDatabase));
+        TestSeed.BasicRestaurant(db);
 
         BookingService svc = CreateService(db);
         var dto = new BookingDto
@@ -105,8 +87,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_GeneratesUniqueBookingRefs()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_GeneratesUniqueBookingRefs));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_GeneratesUniqueBookingRefs));
+        TestSeed.BasicRestaurant(db);
         // Add a second table so we can create two bookings on the same date
         db.Tables.Add(new Table { Id = 2, Name = "T2", Seats = 4, SectionId = 1 });
         db.SaveChanges();
@@ -125,8 +107,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_Throws_WhenTableAlreadyBooked()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Throws_WhenTableAlreadyBooked));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_Throws_WhenTableAlreadyBooked));
+        TestSeed.BasicRestaurant(db);
 
         BookingService svc = CreateService(db);
         var dto = new BookingDto
@@ -160,8 +142,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_Throws_WhenTableHeldByOther()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Throws_WhenTableHeldByOther));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_Throws_WhenTableHeldByOther));
+        TestSeed.BasicRestaurant(db);
 
         var holdMock = new Mock<IHoldService>();
         holdMock
@@ -188,8 +170,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_ReleasesHold_AfterSuccess()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_ReleasesHold_AfterSuccess));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_ReleasesHold_AfterSuccess));
+        TestSeed.BasicRestaurant(db);
 
         var holdMock = new Mock<IHoldService>();
         holdMock
@@ -222,7 +204,7 @@ public class BookingServiceTests
     [InlineData(480)]
     public async Task CreateBookingAsync_EndTime_UsesRestaurantConfiguredDuration(int durationMinutes)
     {
-        using AppDbContext db = CreateDb($"{nameof(CreateBookingAsync_EndTime_UsesRestaurantConfiguredDuration)}_{durationMinutes}");
+        using AppDbContext db = TestDbFactory.Create($"{nameof(CreateBookingAsync_EndTime_UsesRestaurantConfiguredDuration)}_{durationMinutes}");
         db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", DefaultBookingDurationMinutes = durationMinutes });
         db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
         db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
@@ -248,8 +230,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_EndTime_DefaultsToOneHour_WhenRestaurantDurationNotSet()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_EndTime_DefaultsToOneHour_WhenRestaurantDurationNotSet));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_EndTime_DefaultsToOneHour_WhenRestaurantDurationNotSet));
+        TestSeed.BasicRestaurant(db);
 
         BookingService svc = CreateService(db);
         DateTime date = DateTime.UtcNow.AddDays(7);
@@ -269,7 +251,7 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_Throws_WhenNewBookingDurationOverlapsLaterBooking()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Throws_WhenNewBookingDurationOverlapsLaterBooking));
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_Throws_WhenNewBookingDurationOverlapsLaterBooking));
         db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", DefaultBookingDurationMinutes = 120 });
         db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
         db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
@@ -308,7 +290,7 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_Throws_WhenOverlapsLegacyBookingWithoutEndTime_UsingConfiguredDuration()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Throws_WhenOverlapsLegacyBookingWithoutEndTime_UsingConfiguredDuration));
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_Throws_WhenOverlapsLegacyBookingWithoutEndTime_UsingConfiguredDuration));
         db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", DefaultBookingDurationMinutes = 90 });
         db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
         db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
@@ -348,8 +330,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_StoresSpecialRequests()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_StoresSpecialRequests));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_StoresSpecialRequests));
+        TestSeed.BasicRestaurant(db);
 
         BookingService svc = CreateService(db);
         var dto = new BookingDto
@@ -373,8 +355,8 @@ public class BookingServiceTests
     [Fact]
     public async Task GetBookingByIdAsync_ReturnsDto_WhenFound()
     {
-        using AppDbContext db = CreateDb(nameof(GetBookingByIdAsync_ReturnsDto_WhenFound));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(GetBookingByIdAsync_ReturnsDto_WhenFound));
+        TestSeed.BasicRestaurant(db);
 
         BookingService svc = CreateService(db);
         BookingDto created = await svc.CreateBookingAsync(new BookingDto
@@ -396,8 +378,8 @@ public class BookingServiceTests
     [Fact]
     public async Task GetBookingByIdAsync_ReturnsNull_WhenNotFound()
     {
-        using AppDbContext db = CreateDb(nameof(GetBookingByIdAsync_ReturnsNull_WhenNotFound));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(GetBookingByIdAsync_ReturnsNull_WhenNotFound));
+        TestSeed.BasicRestaurant(db);
 
         BookingDto? result = await CreateService(db).GetBookingByIdAsync(999);
 
@@ -409,8 +391,8 @@ public class BookingServiceTests
     [Fact]
     public async Task GetBookingByRefAsync_ReturnsDto_WhenFound()
     {
-        using AppDbContext db = CreateDb(nameof(GetBookingByRefAsync_ReturnsDto_WhenFound));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(GetBookingByRefAsync_ReturnsDto_WhenFound));
+        TestSeed.BasicRestaurant(db);
 
         BookingService svc = CreateService(db);
         BookingDto created = await svc.CreateBookingAsync(new BookingDto
@@ -432,8 +414,8 @@ public class BookingServiceTests
     [Fact]
     public async Task GetBookingByRefAsync_ReturnsNull_WhenNotFound()
     {
-        using AppDbContext db = CreateDb(nameof(GetBookingByRefAsync_ReturnsNull_WhenNotFound));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(GetBookingByRefAsync_ReturnsNull_WhenNotFound));
+        TestSeed.BasicRestaurant(db);
 
         BookingDto? result = await CreateService(db).GetBookingByRefAsync("no-such-ref");
 
@@ -445,8 +427,8 @@ public class BookingServiceTests
     [Fact]
     public async Task GetBookingsByRestaurantAsync_ReturnsOnlyMatchingRestaurant()
     {
-        using AppDbContext db = CreateDb(nameof(GetBookingsByRestaurantAsync_ReturnsOnlyMatchingRestaurant));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(GetBookingsByRestaurantAsync_ReturnsOnlyMatchingRestaurant));
+        TestSeed.BasicRestaurant(db);
         // Second restaurant + table
         db.Restaurants.Add(new Restaurant { Id = 2, Name = "Other Place" });
         db.Sections.Add(new Section { Id = 2, Name = "Main", RestaurantId = 2 });
@@ -471,8 +453,8 @@ public class BookingServiceTests
     [Fact]
     public async Task DeleteBookingAsync_RemovesFromDatabase()
     {
-        using AppDbContext db = CreateDb(nameof(DeleteBookingAsync_RemovesFromDatabase));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(DeleteBookingAsync_RemovesFromDatabase));
+        TestSeed.BasicRestaurant(db);
 
         BookingService svc = CreateService(db);
         BookingDto created = await svc.CreateBookingAsync(new BookingDto
@@ -495,8 +477,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_Throws_WhenSeatsExceedTableCapacity()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Throws_WhenSeatsExceedTableCapacity));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_Throws_WhenSeatsExceedTableCapacity));
+        TestSeed.BasicRestaurant(db);
 
         BookingService svc = CreateService(db);
         var dto = new BookingDto
@@ -518,8 +500,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_Succeeds_WhenSeatsEqualTableCapacity()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Succeeds_WhenSeatsEqualTableCapacity));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_Succeeds_WhenSeatsEqualTableCapacity));
+        TestSeed.BasicRestaurant(db);
 
         BookingService svc = CreateService(db);
         var dto = new BookingDto
@@ -541,8 +523,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_Throws_WhenBookingInPast()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Throws_WhenBookingInPast));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_Throws_WhenBookingInPast));
+        TestSeed.BasicRestaurant(db);
         BookingService svc = CreateService(db);
         var dto = new BookingDto { RestaurantId = 1, Date = DateTime.UtcNow.AddHours(-1) };
         await Assert.ThrowsAsync<ConflictException>(() => svc.CreateBookingAsync(dto));
@@ -551,8 +533,8 @@ public class BookingServiceTests
     [Fact]
     public async Task UpdateBookingAsync_SetsDefaultEndTime_WhenMissing()
     {
-        using AppDbContext db = CreateDb(nameof(UpdateBookingAsync_SetsDefaultEndTime_WhenMissing));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(UpdateBookingAsync_SetsDefaultEndTime_WhenMissing));
+        TestSeed.BasicRestaurant(db);
         BookingService svc = CreateService(db);
         DateTime date = DateTime.UtcNow.AddHours(1);
         BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, Seats = 2 });
@@ -567,8 +549,8 @@ public class BookingServiceTests
     [Fact]
     public async Task UpdateBookingAsync_FixesInvalidEndTime()
     {
-        using AppDbContext db = CreateDb(nameof(UpdateBookingAsync_FixesInvalidEndTime));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(UpdateBookingAsync_FixesInvalidEndTime));
+        TestSeed.BasicRestaurant(db);
         BookingService svc = CreateService(db);
         DateTime date = DateTime.UtcNow.AddHours(1);
         BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = date, Seats = 2 });
@@ -583,7 +565,7 @@ public class BookingServiceTests
     [Fact]
     public async Task UpdateBookingAsync_SetsDefaultEndTime_UsingRestaurantConfiguredDuration_WhenMissing()
     {
-        using AppDbContext db = CreateDb(nameof(UpdateBookingAsync_SetsDefaultEndTime_UsingRestaurantConfiguredDuration_WhenMissing));
+        using AppDbContext db = TestDbFactory.Create(nameof(UpdateBookingAsync_SetsDefaultEndTime_UsingRestaurantConfiguredDuration_WhenMissing));
         db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", DefaultBookingDurationMinutes = 90 });
         db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
         db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
@@ -603,7 +585,7 @@ public class BookingServiceTests
     [Fact]
     public async Task UpdateBookingAsync_FixesInvalidEndTime_UsingRestaurantConfiguredDuration()
     {
-        using AppDbContext db = CreateDb(nameof(UpdateBookingAsync_FixesInvalidEndTime_UsingRestaurantConfiguredDuration));
+        using AppDbContext db = TestDbFactory.Create(nameof(UpdateBookingAsync_FixesInvalidEndTime_UsingRestaurantConfiguredDuration));
         db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", DefaultBookingDurationMinutes = 90 });
         db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
         db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
@@ -623,7 +605,7 @@ public class BookingServiceTests
     [Fact]
     public async Task CancelBookingAsync_ReturnsFalse_WhenNotFound()
     {
-        using AppDbContext db = CreateDb(nameof(CancelBookingAsync_ReturnsFalse_WhenNotFound));
+        using AppDbContext db = TestDbFactory.Create(nameof(CancelBookingAsync_ReturnsFalse_WhenNotFound));
         BookingService svc = CreateService(db);
         Assert.False(await svc.CancelBookingAsync("invalid", "test@test.com"));
     }
@@ -631,8 +613,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CancelBookingAsync_ReturnsFalse_WhenEmailMismatch()
     {
-        using AppDbContext db = CreateDb(nameof(CancelBookingAsync_ReturnsFalse_WhenEmailMismatch));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CancelBookingAsync_ReturnsFalse_WhenEmailMismatch));
+        TestSeed.BasicRestaurant(db);
         BookingService svc = CreateService(db);
         BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow.AddHours(1), CustomerEmail = "real@test.com", Seats = 2 });
         Assert.False(await svc.CancelBookingAsync(created.BookingRef!, "wrong@test.com"));
@@ -641,8 +623,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CancelBookingAsync_ReturnsTrue_WhenAlreadyCancelled()
     {
-        using AppDbContext db = CreateDb(nameof(CancelBookingAsync_ReturnsTrue_WhenAlreadyCancelled));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CancelBookingAsync_ReturnsTrue_WhenAlreadyCancelled));
+        TestSeed.BasicRestaurant(db);
         BookingService svc = CreateService(db);
         BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow.AddHours(1), CustomerEmail = "test@test.com", Seats = 2 });
         await svc.CancelBookingAsync(created.BookingRef!, "test@test.com");
@@ -652,8 +634,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CancelBookingAsync_Throws_WhenBookingDateIsInThePast()
     {
-        using AppDbContext db = CreateDb(nameof(CancelBookingAsync_Throws_WhenBookingDateIsInThePast));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CancelBookingAsync_Throws_WhenBookingDateIsInThePast));
+        TestSeed.BasicRestaurant(db);
         BookingService svc = CreateService(db);
         BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow.AddHours(1), CustomerEmail = "test@test.com", Seats = 2 });
 
@@ -671,8 +653,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CancelBookingAsync_Succeeds_WithinFiveMinuteGracePeriod()
     {
-        using AppDbContext db = CreateDb(nameof(CancelBookingAsync_Succeeds_WithinFiveMinuteGracePeriod));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CancelBookingAsync_Succeeds_WithinFiveMinuteGracePeriod));
+        TestSeed.BasicRestaurant(db);
         BookingService svc = CreateService(db);
         BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow.AddHours(1), CustomerEmail = "test@test.com", Seats = 2 });
 
@@ -686,8 +668,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CancelBookingAsync_Throws_JustOutsideFiveMinuteGracePeriod()
     {
-        using AppDbContext db = CreateDb(nameof(CancelBookingAsync_Throws_JustOutsideFiveMinuteGracePeriod));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CancelBookingAsync_Throws_JustOutsideFiveMinuteGracePeriod));
+        TestSeed.BasicRestaurant(db);
         BookingService svc = CreateService(db);
         BookingDto created = await svc.CreateBookingAsync(new BookingDto { RestaurantId = 1, SectionId = 1, TableId = 1, Date = DateTime.UtcNow.AddHours(1), CustomerEmail = "test@test.com", Seats = 2 });
 
@@ -707,8 +689,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_DelegatesToConfirmationService_WhenProvided()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_DelegatesToConfirmationService_WhenProvided));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_DelegatesToConfirmationService_WhenProvided));
+        TestSeed.BasicRestaurant(db);
         var confirmationMock = new Mock<IBookingConfirmationService>();
         BookingService svc = CreateService(db, confirmationService: confirmationMock.Object);
 
@@ -729,8 +711,8 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_Succeeds_WhenNoConfirmationServiceInjected()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Succeeds_WhenNoConfirmationServiceInjected));
-        Seed(db);
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_Succeeds_WhenNoConfirmationServiceInjected));
+        TestSeed.BasicRestaurant(db);
         // No IBookingConfirmationService — booking must still succeed (no email sent).
         BookingService svc = CreateService(db);
 
@@ -761,7 +743,7 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_Throws_WhenLocationIsWalkInOnly()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Throws_WhenLocationIsWalkInOnly));
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_Throws_WhenLocationIsWalkInOnly));
         db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", WalkInOnly = true });
         db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
         db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
@@ -786,7 +768,7 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_Throws_WhenDateFallsOnWalkInDay()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Throws_WhenDateFallsOnWalkInDay));
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_Throws_WhenDateFallsOnWalkInDay));
         db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", Timezone = "UTC", WalkInDays = "6" });
         db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
         db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });
@@ -809,7 +791,7 @@ public class BookingServiceTests
     [Fact]
     public async Task CreateBookingAsync_Succeeds_OnNonWalkInDay()
     {
-        using AppDbContext db = CreateDb(nameof(CreateBookingAsync_Succeeds_OnNonWalkInDay));
+        using AppDbContext db = TestDbFactory.Create(nameof(CreateBookingAsync_Succeeds_OnNonWalkInDay));
         db.Restaurants.Add(new Restaurant { Id = 1, Name = "Test Restaurant", Timezone = "UTC", WalkInDays = "6" });
         db.Sections.Add(new Section { Id = 1, Name = "Main", RestaurantId = 1 });
         db.Tables.Add(new Table { Id = 1, Name = "T1", Seats = 4, SectionId = 1 });

@@ -4,7 +4,11 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useBrand } from "@/context/BrandContext";
 import { getThemeColors } from "@/theme/theme";
 
-jest.mock("@/hooks/use-color-scheme");
+// Override the global jest.setup.ts mock (which returns a plain "light") with a
+// controllable jest.fn() so each test can drive light/dark mode.
+jest.mock("@/hooks/use-color-scheme", () => ({
+  useColorScheme: jest.fn(),
+}));
 jest.mock("@/context/BrandContext");
 jest.mock("@/theme/theme");
 

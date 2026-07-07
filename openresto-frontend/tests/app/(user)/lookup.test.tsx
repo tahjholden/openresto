@@ -2,23 +2,13 @@
  * @jest-environment jsdom
  */
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react-native";
+import { screen, waitFor, fireEvent } from "@testing-library/react-native";
 import LookupScreen from "@/app/(user)/lookup";
 import { getBookingByRef, cancelBookingByRef } from "@/api/bookings";
 import { fetchRestaurantById } from "@/api/restaurants";
 import { fetchCachedBookings } from "@/utils/bookingCache";
-import { BrandProvider } from "@/context/BrandContext";
-import { AppThemeProvider } from "@/context/ThemeContext";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { renderWithProviders } from "@/tests/helpers/renderWithProviders";
 import { Platform, Modal } from "react-native";
-
-// Polyfill fetch
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    ok: true,
-    json: () => Promise.resolve({ appName: "Open Resto", primaryColor: "#0a7ea4" }),
-  })
-) as jest.Mock;
 
 // Mock Modal to always render children
 jest.mock("@/components/layout/Footer", () => {
@@ -50,30 +40,7 @@ jest.mock("expo-router", () => ({
   useLocalSearchParams: jest.fn(() => ({})),
 }));
 
-jest.mock("@/components/common/ConfirmModal", () => {
-  const { View, Pressable, Text } = require("react-native");
-  return function MockConfirmModal({
-    visible,
-    onConfirm,
-    onCancel,
-    message,
-    confirmLabel,
-    cancelLabel,
-  }: any) {
-    if (!visible) return null;
-    return (
-      <View testID="confirm-modal">
-        <Text>{message}</Text>
-        <Pressable onPress={onConfirm}>
-          <Text>{confirmLabel || "Confirm"}</Text>
-        </Pressable>
-        <Pressable onPress={onCancel}>
-          <Text>{cancelLabel || "Cancel"}</Text>
-        </Pressable>
-      </View>
-    );
-  };
-});
+jest.mock("@/components/common/ConfirmModal", () => require("../../../jest-mocks/ConfirmModal"));
 
 jest.setTimeout(15000);
 
@@ -99,21 +66,6 @@ describe("LookupScreen", () => {
     (fetchCachedBookings as jest.Mock).mockResolvedValue([]);
     (getBookingByRef as jest.Mock).mockResolvedValue(null);
   });
-
-  const renderWithProviders = (ui: React.ReactElement) => {
-    return render(
-      <SafeAreaProvider
-        initialMetrics={{
-          frame: { x: 0, y: 0, width: 0, height: 0 },
-          insets: { top: 0, left: 0, right: 0, bottom: 0 },
-        }}
-      >
-        <AppThemeProvider>
-          <BrandProvider>{ui}</BrandProvider>
-        </AppThemeProvider>
-      </SafeAreaProvider>
-    );
-  };
 
   it("renders search form by default", async () => {
     renderWithProviders(<LookupScreen />);

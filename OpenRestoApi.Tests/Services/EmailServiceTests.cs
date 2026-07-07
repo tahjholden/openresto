@@ -1,7 +1,6 @@
 using MailKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.EntityFrameworkCore;
 using MimeKit;
 using Moq;
 using OpenRestoApi.Core.Application.Exceptions;
@@ -13,18 +12,10 @@ namespace OpenRestoApi.Tests.Services;
 
 public class EmailServiceTests
 {
-    private static AppDbContext CreateDb(string name)
-    {
-        DbContextOptions<AppDbContext> opts = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(name)
-            .Options;
-        return new AppDbContext(opts);
-    }
-
     [Fact]
     public async Task TestConnectionAsync_ReturnsFalse_WhenNoSettings()
     {
-        using AppDbContext db = CreateDb(nameof(TestConnectionAsync_ReturnsFalse_WhenNoSettings));
+        using AppDbContext db = TestDbFactory.Create(nameof(TestConnectionAsync_ReturnsFalse_WhenNoSettings));
         var protector = new Mock<CredentialProtector>(new Mock<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>().Object);
         var clientMock = new Mock<ISmtpClient>();
         var service = new EmailService(db, protector.Object, () => clientMock.Object);
@@ -37,7 +28,7 @@ public class EmailServiceTests
     [Fact]
     public async Task TestConnectionAsync_ConnectsAndAuthenticates_WhenSettingsExist_Port587()
     {
-        using AppDbContext db = CreateDb(nameof(TestConnectionAsync_ConnectsAndAuthenticates_WhenSettingsExist_Port587));
+        using AppDbContext db = TestDbFactory.Create(nameof(TestConnectionAsync_ConnectsAndAuthenticates_WhenSettingsExist_Port587));
         db.Set<EmailSettings>().Add(new EmailSettings
         {
             Host = "smtp.test.com",
@@ -64,7 +55,7 @@ public class EmailServiceTests
     [Fact]
     public async Task TestConnectionAsync_Connects_WhenSettingsExist_Port25_NoSsl()
     {
-        using AppDbContext db = CreateDb(nameof(TestConnectionAsync_Connects_WhenSettingsExist_Port25_NoSsl));
+        using AppDbContext db = TestDbFactory.Create(nameof(TestConnectionAsync_Connects_WhenSettingsExist_Port25_NoSsl));
         db.Set<EmailSettings>().Add(new EmailSettings
         {
             Host = "smtp.test.com",
@@ -90,7 +81,7 @@ public class EmailServiceTests
     [Fact]
     public async Task SendEmailAsync_Throws_WhenNoSettings()
     {
-        using AppDbContext db = CreateDb(nameof(SendEmailAsync_Throws_WhenNoSettings));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendEmailAsync_Throws_WhenNoSettings));
         var protector = new Mock<CredentialProtector>(new Mock<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>().Object);
         var clientMock = new Mock<ISmtpClient>();
         var service = new EmailService(db, protector.Object, () => clientMock.Object);
@@ -102,7 +93,7 @@ public class EmailServiceTests
     [Fact]
     public async Task SendEmailAsync_SendsMessage_WhenSettingsExist()
     {
-        using AppDbContext db = CreateDb(nameof(SendEmailAsync_SendsMessage_WhenSettingsExist));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendEmailAsync_SendsMessage_WhenSettingsExist));
         db.Set<EmailSettings>().Add(new EmailSettings
         {
             Host = "smtp.test.com",
@@ -132,7 +123,7 @@ public class EmailServiceTests
     [Fact]
     public async Task SendEmailAsync_UsesUsername_WhenFromEmailMissing()
     {
-        using AppDbContext db = CreateDb(nameof(SendEmailAsync_UsesUsername_WhenFromEmailMissing));
+        using AppDbContext db = TestDbFactory.Create(nameof(SendEmailAsync_UsesUsername_WhenFromEmailMissing));
         db.Set<EmailSettings>().Add(new EmailSettings
         {
             Host = "smtp.test.com",

@@ -19,9 +19,8 @@ import Button from "@/components/common/Button";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { fetchRestaurants, RestaurantDto, SectionDto } from "@/api/restaurants";
 import { adminCreateBooking } from "@/api/admin";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getThemeColors, COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { SPACING, TYPOGRAPHY, BORDER_RADIUS } from "@/theme/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 
 function todayDate() {
   return new Date().toISOString().split("T")[0];
@@ -46,12 +45,9 @@ interface NewBookingModalProps {
 }
 
 export function NewBookingModal({ visible, onClose, onCreated }: NewBookingModalProps) {
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
+  const { colors, primaryColor: PRIMARY } = useAppTheme();
   const borderColor = colors.border;
   const mutedColor = colors.muted;
-  const brand = useBrand();
-  const PRIMARY = brand.primaryColor || COLORS.primary;
 
   const [restaurants, setRestaurants] = useState<RestaurantDto[]>([]);
   const [loading, setLoading] = useState(true);

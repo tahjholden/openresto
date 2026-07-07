@@ -1,11 +1,10 @@
 import { forwardRef } from "react";
 import { StyleSheet, TextInput, TextInputProps, View } from "react-native";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { FORM_SIZES, getThemeColors } from "@/theme/theme";
+import { FORM_SIZES } from "@/theme/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 
 const Input = forwardRef<TextInput, TextInputProps>(function Input({ style, ...props }, ref) {
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
+  const { colors } = useAppTheme();
 
   return (
     <View style={styles.container}>

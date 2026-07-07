@@ -3,11 +3,10 @@ import { usePathname, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useTheme } from "@/context/ThemeContext";
 import { logout } from "@/api/auth";
-import { COLORS, BORDER_RADIUS, FORM_SIZES, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { COLORS, BORDER_RADIUS, FORM_SIZES, TYPOGRAPHY } from "@/theme/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { hexToRgba } from "@/utils/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
@@ -53,13 +52,10 @@ const NAV_ITEMS = [
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
+  const { colors, isDark, brand, primaryColor: PRIMARY } = useAppTheme();
   const { toggle } = useTheme();
   const [locationCount, setLocationCount] = useState(0);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
-  const brand = useBrand();
-  const PRIMARY = brand.primaryColor || COLORS.primary;
   const insets = useSafeAreaInsets();
 
   const [lookupQuery, setLookupQuery] = useState("");

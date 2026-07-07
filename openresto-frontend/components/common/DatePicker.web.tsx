@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Modal, StyleSheet, View, Pressable } from "react-native";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { ThemedText } from "@/components/themed-text";
-import { getThemeColors, COLORS, TYPOGRAPHY, BORDER_RADIUS, SHADOWS } from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { COLORS, TYPOGRAPHY, BORDER_RADIUS, SHADOWS } from "@/theme/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTH_LABELS = [
@@ -57,10 +56,7 @@ export default function DatePicker({
    */
   allowPast?: boolean;
 }) {
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const { colors, primaryColor } = useAppTheme();
   const borderColor = colors.border;
   const bg = colors.input;
   const textColor = colors.text;

@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/theme/theme";
 import { saveBrandSettings, uploadHeroImage, deleteHeroImage } from "@/api/admin";
 import { useBrand } from "@/context/BrandContext";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { FAVICON_ICONS, buildFaviconDataUri } from "@/constants/faviconIcons";
 import { AnimatedAccordion } from "@/components/common/AnimatedAccordion";
 import { styles } from "./settings.styles";
@@ -24,7 +25,7 @@ export function BrandSettingsCard({
   cardBg: string;
 }) {
   const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const { primaryColor } = useAppTheme();
   const [appName, setAppName] = useState(brand.appName);
   const [brandPrimaryColor, setBrandPrimaryColor] = useState(brand.primaryColor);
   const [faviconIcon, setFaviconIcon] = useState<string | undefined>(brand.faviconIcon);

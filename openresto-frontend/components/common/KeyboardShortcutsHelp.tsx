@@ -1,7 +1,7 @@
 import { Modal, Pressable, StyleSheet, View, TouchableWithoutFeedback } from "react-native";
 import { ThemedText } from "@/components/themed-text";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
+import { BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "@/theme/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { SHORTCUTS_BY_SCOPE, ShortcutScope } from "@/constants/keyboardShortcuts";
 
 interface KeyboardShortcutsHelpProps {
@@ -15,8 +15,7 @@ export default function KeyboardShortcutsHelp({
   scope,
   onClose,
 }: KeyboardShortcutsHelpProps) {
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
+  const { colors } = useAppTheme();
   const shortcuts = SHORTCUTS_BY_SCOPE[scope];
 
   return (

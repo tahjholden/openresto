@@ -13,7 +13,7 @@ import {
   getEmailFailures,
   type EmailFailureDto,
 } from "@/api/admin";
-import { useBrand } from "@/context/BrandContext";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { AnimatedAccordion } from "@/components/common/AnimatedAccordion";
 import { styles } from "./settings.styles";
 
@@ -161,8 +161,7 @@ export function EmailSettingsCard({
   const [activeProviderId, setActiveProviderId] = useState<string | null>(null);
   const [failures, setFailures] = useState<EmailFailureDto[]>([]);
 
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const { primaryColor } = useAppTheme();
   const accentSoft = `${primaryColor}18`;
 
   const { width } = useWindowDimensions();

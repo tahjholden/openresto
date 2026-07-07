@@ -2,9 +2,8 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Modal, Pressable, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useState } from "react";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getThemeColors, COLORS, FORM_SIZES, BORDER_RADIUS } from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { FORM_SIZES, BORDER_RADIUS } from "@/theme/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 
 export function generateDateOptions(options?: {
   allowPast?: boolean;
@@ -49,10 +48,7 @@ export default function DatePicker({
   allowPast?: boolean;
 }) {
   const [modalVisible, setModalVisible] = useState(false);
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const { colors, primaryColor } = useAppTheme();
   const borderColor = colors.border;
   const placeholderColor = colors.muted;
   const backgroundColor = colors.input;

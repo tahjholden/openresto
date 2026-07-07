@@ -5,8 +5,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Ionicons } from "@expo/vector-icons";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, BORDER_RADIUS, getThemeColors } from "@/theme/theme";
+import { BORDER_RADIUS } from "@/theme/theme";
 import { fetchRestaurants, createRestaurant, RestaurantDto } from "@/api/restaurants";
 import {
   adminDeleteRestaurant,
@@ -17,7 +16,7 @@ import {
   extendRestaurantBookings,
   BookingDetailDto,
 } from "@/api/admin";
-import { useBrand } from "@/context/BrandContext";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { usePersistedState } from "@/hooks/use-persisted-state";
 import { AnimatedAccordion } from "@/components/common/AnimatedAccordion";
 
@@ -84,7 +83,6 @@ export default function AdminLocationsScreen() {
   const [extending, setExtending] = useState(false);
   const [extendedBookings, setExtendedBookings] = useState<BookingDetailDto[] | null>(null);
   const [extendNoActive, setExtendNoActive] = useState(false);
-  const isDark = useColorScheme() === "dark";
   const {
     state: confirmState,
     confirm: confirmAction,
@@ -92,9 +90,7 @@ export default function AdminLocationsScreen() {
     handleCancel,
   } = useConfirmLocal();
 
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
-  const colors = getThemeColors(isDark);
+  const { colors, isDark, primaryColor } = useAppTheme();
   const borderColor = colors.border;
   const cardBg = colors.card;
   const mutedColor = colors.muted;

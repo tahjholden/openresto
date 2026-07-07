@@ -1,17 +1,8 @@
 import { Modal, Pressable, StyleSheet, View, TouchableWithoutFeedback } from "react-native";
 import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/themed-text";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import {
-  COLORS,
-  BUTTON_SIZES,
-  BORDER_RADIUS,
-  SHADOWS,
-  SPACING,
-  TYPOGRAPHY,
-  getThemeColors,
-} from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { COLORS, BUTTON_SIZES, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "@/theme/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 
 interface ConfirmModalProps {
   visible: boolean;
@@ -34,9 +25,7 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
-  const brand = useBrand();
+  const { colors, primaryColor } = useAppTheme();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
@@ -61,9 +50,7 @@ export default function ConfirmModal({
                 style={[
                   styles.btn,
                   {
-                    backgroundColor: destructive
-                      ? COLORS.error
-                      : brand.primaryColor || COLORS.primary,
+                    backgroundColor: destructive ? COLORS.error : primaryColor,
                   },
                 ]}
                 onPress={() => {

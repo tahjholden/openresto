@@ -1,5 +1,3 @@
-import { StyleSheet } from "react-native";
-
 export const COLORS = {
   primary: "#0a7ea4",
   primaryDark: "#085f7a",
@@ -263,49 +261,4 @@ export const getThemeColors = (isDark: boolean) => ({
   error: COLORS.error,
   warning: COLORS.warning,
   info: COLORS.info,
-});
-
-export const commonStyles = StyleSheet.create({
-  flexCenter: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  flexRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  flexRowBetween: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  flexRowStart: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  flexColumn: {
-    flexDirection: "column",
-  },
-  gap: {
-    gap: SPACING.md,
-  },
-  paddingH: {
-    paddingHorizontal: SPACING.lg,
-  },
-  paddingV: {
-    paddingVertical: SPACING.lg,
-  },
-  padding: {
-    padding: SPACING.lg,
-  },
-  marginH: {
-    marginHorizontal: SPACING.lg,
-  },
-  marginV: {
-    marginVertical: SPACING.lg,
-  },
-  margin: {
-    margin: SPACING.lg,
-  },
 });

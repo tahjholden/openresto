@@ -25,10 +25,9 @@ import {
   Platform,
 } from "react-native";
 import { useRouter, Stack, useLocalSearchParams } from "expo-router";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, FORM_SIZES, getThemeColors, STATUS_COLORS } from "@/theme/theme";
+import { COLORS, FORM_SIZES, STATUS_COLORS } from "@/theme/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { useBrand } from "@/context/BrandContext";
+import { useAppTheme } from "@/hooks/use-app-theme";
 
 import { StatusBadge, isPast } from "@/components/admin/bookings/StatusBadge";
 import { AvailabilityGrid } from "@/components/admin/bookings/AvailabilityGrid";
@@ -90,11 +89,8 @@ export default function AdminBookingsScreen() {
     if (create === "1") setShowNewModal(true);
   }, [create]);
 
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
+  const { colors, isDark, primaryColor: PRIMARY } = useAppTheme();
   const { width } = useWindowDimensions();
-  const brand = useBrand();
-  const PRIMARY = brand.primaryColor || COLORS.primary;
 
   const selectedRestaurant = restaurants.find((r) => r.id === selectedRestaurantId);
   const gridIsoDay = gridDate.getDay() === 0 ? 7 : gridDate.getDay();

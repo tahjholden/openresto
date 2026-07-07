@@ -4,8 +4,8 @@ import { View, Pressable, ActivityIndicator } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/common/Input";
 import { Ionicons } from "@expo/vector-icons";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getThemeColors, COLORS } from "@/theme/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
+import { COLORS, ThemeColors } from "@/theme/theme";
 import {
   saveBrandSettings,
   adminGetSocialLinks,
@@ -14,7 +14,6 @@ import {
   adminDeleteSocialLink,
   AdminSocialLinkDto,
 } from "@/api/admin";
-import { useBrand } from "@/context/BrandContext";
 import { AnimatedAccordion } from "@/components/common/AnimatedAccordion";
 import { styles } from "./settings.styles";
 
@@ -69,10 +68,7 @@ export function FooterSettingsCard({
   mutedColor: string;
   cardBg: string;
 }) {
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const { colors, isDark, brand, primaryColor } = useAppTheme();
   const surface2 = isDark ? "#252729" : "#f9fafb";
 
   const [copyrightText, setCopyrightText] = useState(brand.copyrightText ?? "");
@@ -407,7 +403,7 @@ function SocialLinkEditForm({
   surface2: string;
   borderColor: string;
   mutedColor: string;
-  colors: ReturnType<typeof getThemeColors>;
+  colors: ThemeColors;
 }) {
   return (
     <View

@@ -6,9 +6,8 @@ import { login, getPvqStatus, verifyPvq, resetPassword } from "@/api/auth";
 import { useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, TextInput, View, Platform } from "react-native";
 import { useRouter, Stack } from "expo-router";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { COLORS, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "@/theme/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { Ionicons } from "@expo/vector-icons";
 
 type Stage = "login" | "pvq-email" | "pvq-answer" | "reset" | "done";
@@ -35,10 +34,7 @@ export default function AdminLoginScreen() {
   const passwordRef = useRef<TextInput>(null);
 
   const router = useRouter();
-  const isDark = useColorScheme() === "dark";
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
-  const colors = getThemeColors(isDark);
+  const { colors, brand, primaryColor } = useAppTheme();
   const mutedColor = colors.muted;
 
   // ── Login ────────────────────────────────────────────────────────────────
@@ -377,8 +373,7 @@ export default function AdminLoginScreen() {
 }
 
 function BackButton({ onPress }: { onPress: () => void }) {
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
+  const { colors } = useAppTheme();
   return (
     <Pressable style={styles.backBtn} onPress={onPress}>
       <Ionicons name="arrow-back" size={16} color={colors.muted} />

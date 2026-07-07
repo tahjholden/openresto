@@ -1,8 +1,7 @@
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "@/components/themed-text";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { COLORS, BORDER_RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "@/theme/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 
 interface AlertModalProps {
   visible: boolean;
@@ -19,9 +18,7 @@ export default function AlertModal({
   buttonLabel = "OK",
   onClose,
 }: AlertModalProps) {
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
-  const brand = useBrand();
+  const { colors, primaryColor } = useAppTheme();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -29,10 +26,7 @@ export default function AlertModal({
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <ThemedText type="h3">{title}</ThemedText>
           <ThemedText style={[styles.message, { color: colors.muted }]}>{message}</ThemedText>
-          <Pressable
-            style={[styles.btn, { backgroundColor: brand.primaryColor || COLORS.primary }]}
-            onPress={onClose}
-          >
+          <Pressable style={[styles.btn, { backgroundColor: primaryColor }]} onPress={onClose}>
             <ThemedText style={styles.btnText}>{buttonLabel}</ThemedText>
           </Pressable>
         </View>

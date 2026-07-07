@@ -6,7 +6,7 @@ import { SectionDto, TableDto, updateSection, deleteSection, addTable } from "@/
 import { TableRow } from "./TableRow";
 import { AddRow } from "./AddRow";
 import { COLORS, getThemeColors } from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { styles } from "./settings.styles";
 import Input from "@/components/common/Input";
 
@@ -45,8 +45,7 @@ export function SectionBlock({
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) {
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const { primaryColor } = useAppTheme();
   const surface2 = isDark ? "#252729" : "#f9fafb";
   const cardBg = isDark ? "#1e2022" : "#ffffff";
   const totalSeats = section.tables.reduce((s, t) => s + t.seats, 0);

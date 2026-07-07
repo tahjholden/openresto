@@ -14,7 +14,7 @@ import {
   checkSession,
   PvqStatus,
 } from "@/api/auth";
-import { useBrand } from "@/context/BrandContext";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { AnimatedAccordion } from "@/components/common/AnimatedAccordion";
 import { styles } from "./settings.styles";
 
@@ -43,8 +43,7 @@ export function SecurityCard({
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [expanded, setExpanded] = usePersistedState("settings:security:expanded", true);
 
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const { primaryColor } = useAppTheme();
 
   useEffect(() => {
     getPvqStatus().then(setPvqStatus);

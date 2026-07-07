@@ -11,9 +11,7 @@ import { useTableHold } from "./useTableHold";
 import HoldStatusBanner from "./HoldStatusBanner";
 import PopularTimesPicker from "./PopularTimesPicker";
 import { fetchAvailability, TimeSlotDto } from "@/api/availability";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { getThemeColors, COLORS } from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { getNowInTimezone, formatCurrentTimeInTimezone } from "@/utils/date";
 import { getHoursForDate, HoursSource } from "@/utils/openingHours";
 import { isWalkInOnlyOnDate, walkInDaysLabel } from "@/utils/walkIn";
@@ -88,10 +86,7 @@ export default function BookingForm({
   initialTime?: string;
   initialSeats?: number;
 }) {
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
-  const brand = useBrand();
-  const PRIMARY = brand.primaryColor || COLORS.primary;
+  const { colors, primaryColor: PRIMARY } = useAppTheme();
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");

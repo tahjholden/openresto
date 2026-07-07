@@ -3,12 +3,10 @@ import { View, Pressable } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import Input from "@/components/common/Input";
 import TimePicker from "@/components/common/TimePicker";
-import { COLORS, getThemeColors } from "@/theme/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { DayHoursDto, RestaurantDto, updateRestaurant } from "@/api/restaurants";
 import { getHoursForDay, hasCustomHours, parseOpenDays } from "@/utils/openingHours";
 import { parseWalkInDays } from "@/utils/walkIn";
-import { useBrand } from "@/context/BrandContext";
 import { Ionicons } from "@expo/vector-icons";
 
 const TIMEZONES = [
@@ -117,10 +115,7 @@ export function RestaurantInfoForm({
   restaurant: RestaurantDto;
   onSaved: (patch: Partial<RestaurantDto>) => void;
 }) {
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const { colors, isDark, primaryColor } = useAppTheme();
 
   const mutedColor = colors.muted;
   const borderColor = colors.border;

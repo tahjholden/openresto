@@ -1,8 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { Pressable, PressableProps, StyleSheet, ViewStyle } from "react-native";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { COLORS, BUTTON_SIZES, BORDER_RADIUS, TYPOGRAPHY, getThemeColors } from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { BUTTON_SIZES, BORDER_RADIUS, TYPOGRAPHY, COLORS } from "@/theme/theme";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import * as Haptics from "expo-haptics";
 
 interface ButtonProps extends Omit<PressableProps, "style"> {
@@ -20,10 +19,7 @@ export default function Button({
   onPress,
   ...props
 }: ButtonProps) {
-  const isDark = useColorScheme() === "dark";
-  const colors = getThemeColors(isDark);
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const { colors, primaryColor } = useAppTheme();
   const sizeStyles = BUTTON_SIZES[size];
 
   const handlePress: PressableProps["onPress"] = (e) => {

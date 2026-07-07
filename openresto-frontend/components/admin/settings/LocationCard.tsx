@@ -14,7 +14,7 @@ import { COLORS } from "@/theme/theme";
 import { RestaurantInfoForm } from "./RestaurantInfoForm";
 import { SectionBlock } from "./SectionBlock";
 import { AddRow } from "./AddRow";
-import { useBrand } from "@/context/BrandContext";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { summarizeHours } from "@/utils/openingHours";
 import { styles } from "./settings.styles";
 
@@ -80,8 +80,7 @@ export function LocationCard({
   mutedColor: string;
   confirmAction: (msg: string) => Promise<boolean>;
 }) {
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const { primaryColor } = useAppTheme();
   const accentSoft = `${primaryColor}18`;
 
   const [imgUploading, setImgUploading] = useState(false);

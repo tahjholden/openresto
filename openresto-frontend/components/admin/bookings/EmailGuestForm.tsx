@@ -2,7 +2,7 @@ import { View, Pressable } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/theme/theme";
-import { useBrand } from "@/context/BrandContext";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { bookingDetailStyles as styles } from "./booking-detail.styles";
 
 interface ThemeColors {
@@ -40,8 +40,7 @@ export function EmailGuestForm({
   setEmailBody,
   onSendEmail,
 }: EmailGuestFormProps) {
-  const brand = useBrand();
-  const PRIMARY = brand.primaryColor || COLORS.primary;
+  const { primaryColor: PRIMARY } = useAppTheme();
   return (
     <View style={[styles.section, { borderColor }]}>
       <View style={styles.sectionHeader}>

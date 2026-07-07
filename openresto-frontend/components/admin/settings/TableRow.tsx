@@ -5,7 +5,7 @@ import Input from "@/components/common/Input";
 import { COLORS, getThemeColors } from "@/theme/theme";
 import { TableDto, deleteTable, updateTable } from "@/api/restaurants";
 import { Ionicons } from "@expo/vector-icons";
-import { useBrand } from "@/context/BrandContext";
+import { useAppTheme } from "@/hooks/use-app-theme";
 import { hexToRgba } from "@/utils/colors";
 import { styles } from "./settings.styles";
 
@@ -34,8 +34,7 @@ export function TableRow({
   const [saving, setSaving] = useState(false);
   const colors = getThemeColors(isDark);
   const mutedColor = colors.muted;
-  const brand = useBrand();
-  const primaryColor = brand.primaryColor || COLORS.primary;
+  const { primaryColor } = useAppTheme();
 
   if (!editing) {
     return (

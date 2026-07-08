@@ -37,7 +37,7 @@ export default function HoldStatusBanner({
       return (
         <ThemedView style={styles.holdRow}>
           <ThemedText style={[styles.holdHeld, { color: colors.success }]}>
-            ✓ Table held — expires in {mins}:{secs.toString().padStart(2, "0")}
+            ✓ Table held - expires in {mins}:{secs.toString().padStart(2, "0")}
           </ThemedText>
         </ThemedView>
       );

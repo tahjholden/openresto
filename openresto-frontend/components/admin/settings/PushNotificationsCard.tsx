@@ -150,7 +150,7 @@ export function PushNotificationsCard() {
       : isActive
         ? "Push notifications active for all locations"
         : isDenied
-          ? "Notifications blocked — enable in browser settings"
+          ? "Notifications blocked - enable in browser settings"
           : isUnconfigured
             ? "VAPID keys not configured"
             : pushState === "unavailable"

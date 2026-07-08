@@ -78,7 +78,7 @@ export function PushBanner({ restaurantId, primaryColor, isDark }: PushBannerPro
       const permission = await Notification.requestPermission();
       if (permission === "denied") {
         setPushStatus("denied");
-        setErrorMsg("Blocked by browser — allow notifications in site settings.");
+        setErrorMsg("Blocked by browser - allow notifications in site settings.");
         setWorking(false);
         return;
       }
@@ -102,7 +102,7 @@ export function PushBanner({ restaurantId, primaryColor, isDark }: PushBannerPro
       setPushStatus("active");
     } catch (err) {
       console.error("Push subscribe error:", err);
-      setErrorMsg("Failed to enable — try again.");
+      setErrorMsg("Failed to enable - try again.");
     }
     setWorking(false);
   };
@@ -120,7 +120,7 @@ export function PushBanner({ restaurantId, primaryColor, isDark }: PushBannerPro
       >
         <Ionicons name="notifications-off-outline" size={16} color={theme.colors.warning} />
         <ThemedText style={[styles.pushBannerText, { color: theme.colors.warning }]}>
-          Push notifications blocked — enable in browser site settings.
+          Push notifications blocked - enable in browser site settings.
         </ThemedText>
       </View>
     );

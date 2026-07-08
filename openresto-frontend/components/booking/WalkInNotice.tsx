@@ -30,7 +30,7 @@ export default function WalkInNotice({
     scope === "location"
       ? "This location doesn't take online bookings. Tables are first come, first served. Just drop by during opening hours."
       : daysLabel
-        ? `This location doesn't take online bookings on ${daysLabel}. Pick another day, or simply come in — walk-ins are always welcome.`
+        ? `This location doesn't take online bookings on ${daysLabel}. Pick another day, or simply come in - walk-ins are always welcome.`
         : "Online booking isn't available for the selected date. Pick another day, or simply come in. Walk-ins are always welcome.";
 
   return (

@@ -194,7 +194,7 @@ describe("PushNotificationsCard", () => {
       render(<PushNotificationsCard />);
 
       await waitFor(() => {
-        expect(screen.getByText("Notifications blocked — enable in browser settings")).toBeTruthy();
+        expect(screen.getByText("Notifications blocked - enable in browser settings")).toBeTruthy();
       });
     });
   });
@@ -281,7 +281,7 @@ describe("PushNotificationsCard", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Notifications blocked — enable in browser settings")).toBeTruthy();
+        expect(screen.getByText("Notifications blocked - enable in browser settings")).toBeTruthy();
       });
     });
 

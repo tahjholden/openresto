@@ -576,7 +576,7 @@ describe("NotificationsScreen", () => {
     render(<NotificationsScreen />);
     await waitFor(() =>
       expect(
-        screen.getByText("Push notifications blocked — enable in browser site settings.")
+        screen.getByText("Push notifications blocked - enable in browser site settings.")
       ).toBeTruthy()
     );
   });

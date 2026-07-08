@@ -190,7 +190,7 @@ export function SecurityCard({
                 </ThemedText>
               ) : (
                 <ThemedText style={[styles.secRowSub, { color: theme.colors.warning }]}>
-                  Not configured — set one up to enable password reset
+                  Not configured - set one up to enable password reset
                 </ThemedText>
               )}
             </View>

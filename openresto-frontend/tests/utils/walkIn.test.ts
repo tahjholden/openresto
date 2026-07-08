@@ -57,7 +57,7 @@ describe("walkInDaysLabel", () => {
 
   it("joins multiple days with 'and'", () => {
     expect(walkInDaysLabel({ walkInDays: "6,7" })).toBe("Saturdays and Sundays");
-    expect(walkInDaysLabel({ walkInDays: "1,3,5" })).toBe("Mondays, Wednesdays and Fridays");
+    expect(walkInDaysLabel({ walkInDays: "1,3,5" })).toBe("Mon, Wed and Fri");
   });
 
   it("sorts and deduplicates", () => {

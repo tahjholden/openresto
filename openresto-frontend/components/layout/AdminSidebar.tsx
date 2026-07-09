@@ -120,7 +120,7 @@ export default function AdminSidebar() {
           paddingTop: Math.max(insets.top, 8),
           paddingBottom: Math.max(insets.bottom, 8),
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         Platform.OS === "web" ? { position: "sticky" as any, top: 0 } : { height: "100%" },
       ]}
     >

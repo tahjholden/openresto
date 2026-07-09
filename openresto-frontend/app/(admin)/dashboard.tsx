@@ -175,7 +175,6 @@ export default function AdminDashboardScreen() {
                   <Pressable
                     key={action.title}
                     onPress={() => (action.route ? router.push(action.route) : action.onPress?.())}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     style={({ hovered }: any) => [
                       styles.actionCard,
                       { backgroundColor: colors.card, borderColor: colors.border },
@@ -364,7 +363,6 @@ function BookingItem({
   return (
     <Pressable
       onPress={onPress}
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       style={({ hovered }: any) => [
         styles.bookingItem,
         { borderTopColor: colors.border },

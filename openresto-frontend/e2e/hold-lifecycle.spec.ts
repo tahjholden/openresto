@@ -28,8 +28,8 @@ test.describe("Hold lifecycle", () => {
     restaurantId = restaurant.id;
     sectionId = restaurant.sections[0].id;
     // Pick the table with the most seats to avoid seat-count filters elsewhere
-    const tables: Array<{ id: number; seats: number }> = restaurant.sections.flatMap(
-      (s: { id: number; tables: Array<{ id: number; seats: number }> }) => s.tables
+    const tables: { id: number; seats: number }[] = restaurant.sections.flatMap(
+      (s: { id: number; tables: { id: number; seats: number }[] }) => s.tables
     );
     tableId = tables.sort((a, b) => b.seats - a.seats)[0].id;
   });
@@ -41,10 +41,10 @@ test.describe("Hold lifecycle", () => {
     );
     expect(availRes.ok()).toBeTruthy();
     const { slots } = (await availRes.json()) as {
-      slots: Array<{ time: string; isAvailable: boolean; availableTableIds: number[] }>;
+      slots: { time: string; isAvailable: boolean; availableTableIds: number[] }[];
     };
     const targetSlot = (
-      slots as Array<{ time: string; isAvailable: boolean; availableTableIds: number[] }>
+      slots as { time: string; isAvailable: boolean; availableTableIds: number[] }[]
     ).find((s) => s.isAvailable && s.availableTableIds.includes(tableId));
     expect(targetSlot).toBeTruthy();
 
@@ -82,8 +82,8 @@ test.describe("Hold lifecycle", () => {
     // If the retry still fails, proceed with an empty slot list (test will still
     // pass if the hold was released — the next test checks that path)
     const body2 = (availRes2.ok() ? await availRes2.json() : { slots: [] }) as {
-      slots?: Array<{ time: string; isAvailable: boolean; availableTableIds: number[] }>;
-      Slots?: Array<{ time: string; isAvailable: boolean; availableTableIds: number[] }>;
+      slots?: { time: string; isAvailable: boolean; availableTableIds: number[] }[];
+      Slots?: { time: string; isAvailable: boolean; availableTableIds: number[] }[];
     };
     const slots2 = body2.slots ?? body2.Slots ?? [];
     const slotAfterHold = slots2.find((s) => s.time === targetSlot!.time);
@@ -105,7 +105,7 @@ test.describe("Hold lifecycle", () => {
       `/api/restaurants/${restaurantId}/availability?date=${testDate}&seats=2`
     );
     const { slots } = (await availRes.json()) as {
-      slots: Array<{ time: string; isAvailable: boolean; availableTableIds: number[] }>;
+      slots: { time: string; isAvailable: boolean; availableTableIds: number[] }[];
     };
     const hasAvailableTable = slots.some((s) => s.availableTableIds.includes(tableId));
 

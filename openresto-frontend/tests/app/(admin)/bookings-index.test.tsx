@@ -480,7 +480,6 @@ describe("AdminBookingsScreen", () => {
   });
 
   it("NewBookingModal onCreated callback sets selected booking id", async () => {
-    const { NewBookingModal } = require("@/components/admin/bookings/NewBookingModal");
     // The NewBookingModal is mocked to null, but we can verify the callback is wired
     // by checking that showNewModal opens when button is pressed
     render(<AdminBookingsScreen />);
@@ -678,7 +677,6 @@ describe("AdminBookingsScreen", () => {
     render(<AdminBookingsScreen />);
     await waitFor(() => expect(screen.getByText("List")).toBeTruthy());
     // Open new booking modal via header button
-    const newBtns = screen.queryAllByText("New Booking");
     // Header button is present in timetable view
     expect(screen.getByText("Bookings")).toBeTruthy();
     // Close the modal

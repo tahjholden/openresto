@@ -39,7 +39,7 @@ test.describe("Auth security perimeter", () => {
       `/api/admin/bookings?restaurantId=${RESTAURANT_ID}&email=${encodeURIComponent(AUTH_TEST_EMAIL)}&status=all`
     );
     if (res.ok()) {
-      const bookings = (await res.json()) as Array<{ id: number }>;
+      const bookings = (await res.json()) as { id: number }[];
       for (const b of bookings) {
         await page.request.delete(`/api/admin/bookings/${b.id}`);
       }

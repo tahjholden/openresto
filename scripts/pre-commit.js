@@ -69,14 +69,14 @@ if (prettierFiles.length > 0) {
   }
 }
 
-// 3. Frontend Linter (ESLint via Expo)
+// 3. Frontend Linter (oxlint)
 const frontendFiles = stagedFiles.filter(
   (f) => f.startsWith("openresto-frontend/") && /\.(js|jsx|ts|tsx)$/.test(f),
 );
 if (frontendFiles.length > 0) {
   console.log("Running Frontend Linter (Full Project)...");
   try {
-    execSync(`npx expo lint --fix`, {
+    execSync(`npm run lint:staged`, {
       cwd: "openresto-frontend",
       stdio: "inherit",
     });

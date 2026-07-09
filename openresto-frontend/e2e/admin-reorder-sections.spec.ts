@@ -71,7 +71,7 @@ test.describe("Admin reorder sections", () => {
     const publicRes = await page.request.get(`/api/restaurants/${RESTAURANT_ID}`);
     expect(publicRes.ok()).toBeTruthy();
     const body = await publicRes.json();
-    const names = (body.sections as Array<{ name: string }>).map((s) => s.name);
+    const names = (body.sections as { name: string }[]).map((s) => s.name);
     expect(names).toEqual(["Patio", "Indoor"]);
   });
 

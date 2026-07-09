@@ -36,9 +36,6 @@ describe("CalendarActions", () => {
   });
 
   it("renders compact variant and handles clicks", () => {
-    const { downloadIcs } = (buildCalendarUrls as jest.Mock).mock.results[0]?.value || {
-      downloadIcs: jest.fn(),
-    };
     render(<CalendarActions {...props} variant="compact" />);
 
     expect(screen.getByText("ADD TO CALENDAR")).toBeTruthy();

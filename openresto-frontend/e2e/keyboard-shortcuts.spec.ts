@@ -49,10 +49,10 @@ test.describe("Admin keyboard shortcuts", () => {
       `/api/admin/bookings?restaurantId=${RESTAURANT_ID}&status=all`
     );
     if (res.ok()) {
-      const bookings = (await res.json()) as Array<{
+      const bookings = (await res.json()) as {
         id: number;
         customerEmail?: string;
-      }>;
+      }[];
       for (const b of bookings) {
         if (b.customerEmail?.startsWith("e2e-shortcuts-")) {
           await page.request.delete(`/api/admin/bookings/${b.id}`);

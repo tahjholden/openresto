@@ -95,7 +95,7 @@ describe("AdminDashboardScreen", () => {
   });
 
   it("renders metrics and recent bookings after loading", async () => {
-    const { getByTestId, queryByTestId } = renderWithProviders(<AdminDashboardScreen />);
+    const { queryByTestId } = renderWithProviders(<AdminDashboardScreen />);
 
     await waitFor(() => expect(queryByTestId("dashboard-spinner")).toBeNull());
 

@@ -14,7 +14,6 @@ global.fetch = jest.fn(() =>
 ) as jest.Mock;
 
 jest.mock("expo-router", () => {
-  const React = require("react");
   const Link = ({ children }: any) => children;
   return {
     Link,

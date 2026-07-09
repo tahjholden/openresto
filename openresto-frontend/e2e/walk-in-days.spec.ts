@@ -26,7 +26,6 @@ test.describe("Walk-in-only day on the booking form", () => {
   const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
   // A guaranteed-non-walk-in day: the ISO day after tomorrow, wrapped.
-  const otherIsoDay = (tomorrowIsoDay % 7) + 1;
   const otherDay = new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000);
   const otherDayStr = otherDay.toISOString().split("T")[0];
 

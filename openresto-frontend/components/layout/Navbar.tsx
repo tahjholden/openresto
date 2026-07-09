@@ -154,7 +154,6 @@ export default function Navbar({ onScrollToTop }: NavbarProps) {
 
           <Pressable
             onPress={toggle}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             style={({ hovered }: any) => [
               styles.themeBtn,
               isMobile && { marginLeft: 0 },

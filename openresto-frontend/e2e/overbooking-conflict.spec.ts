@@ -44,7 +44,7 @@ test.describe("Overbooking is prevented (409 conflicts)", () => {
       `/api/admin/bookings?restaurantId=${RESTAURANT_ID}&email=${encodeURIComponent(OVERBOOK_EMAIL)}&status=all`
     );
     if (res.ok()) {
-      const bookings = (await res.json()) as Array<{ id: number }>;
+      const bookings = (await res.json()) as { id: number }[];
       for (const b of bookings) {
         await page.request.delete(`/api/admin/bookings/${b.id}`);
       }
@@ -181,7 +181,7 @@ test.describe("Overbooking is prevented (409 conflicts)", () => {
     );
     expect(res.ok()).toBeTruthy();
     const { slots } = (await res.json()) as {
-      slots: Array<{ time: string; availableTableIds: number[] }>;
+      slots: { time: string; availableTableIds: number[] }[];
     };
     const slot = slots.find((s) => s.time === "19:00");
     expect(slot).toBeTruthy();

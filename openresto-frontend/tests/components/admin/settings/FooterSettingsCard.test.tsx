@@ -33,7 +33,7 @@ jest.mock("@/hooks/use-color-scheme", () => ({
 }));
 
 jest.mock("@/hooks/use-persisted-state", () => ({
-  usePersistedState: (_key: string, defaultValue: unknown) => {
+  usePersistedState: (_key: string, _defaultValue: unknown) => {
     const { useState } = require("react");
     return useState(true); // always start expanded for these tests
   },

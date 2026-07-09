@@ -8,7 +8,7 @@ import { getBookingByRef, cancelBookingByRef } from "@/api/bookings";
 import { fetchRestaurantById } from "@/api/restaurants";
 import { fetchCachedBookings } from "@/utils/bookingCache";
 import { renderWithProviders } from "@/tests/helpers/renderWithProviders";
-import { Platform, Modal } from "react-native";
+import { Platform } from "react-native";
 
 // Mock Modal to always render children
 jest.mock("@/components/layout/Footer", () => {

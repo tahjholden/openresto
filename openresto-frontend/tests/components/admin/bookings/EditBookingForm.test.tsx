@@ -18,7 +18,7 @@ jest.mock("@/hooks/use-color-scheme", () => ({
 jest.mock("@/components/common/Select", () => {
   const { View, Text, Pressable } = require("react-native");
   return function MockSelect({
-    selectedValue,
+    selectedValue: _selectedValue,
     onSelect,
     options,
   }: {

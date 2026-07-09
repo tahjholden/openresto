@@ -6,7 +6,6 @@
  * Renders the visible state + confirm/cancel pressables so tests can drive the
  * modal via text. Matches the public props of the real ConfirmModal.
  */
-const React = require("react");
 const { View, Pressable, Text } = require("react-native");
 
 function MockConfirmModal({

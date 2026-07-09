@@ -27,7 +27,6 @@ jest.mock("@/api/availability", () => ({
 }));
 
 jest.mock("expo-router", () => {
-  const React = require("react");
   return {
     Stack: {
       Screen: jest.fn(() => null),

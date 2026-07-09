@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import React from "react";
-import { render, fireEvent, screen } from "@testing-library/react-native";
+import { render, fireEvent } from "@testing-library/react-native";
 import TimePickerWeb from "@/components/common/TimePicker.web";
 
 jest.mock("@/context/BrandContext", () => ({

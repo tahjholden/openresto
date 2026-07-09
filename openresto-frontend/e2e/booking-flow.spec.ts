@@ -12,7 +12,7 @@ async function purgeTestBookings(browser: Browser) {
     `/api/admin/bookings?restaurantId=${PASTA_PLACE_ID}&email=${encodeURIComponent(TEST_EMAIL)}&status=all`
   );
   if (res.ok()) {
-    const bookings = (await res.json()) as Array<{ id: number }>;
+    const bookings = (await res.json()) as { id: number }[];
     for (const b of bookings) {
       await page.request.delete(`/api/admin/bookings/${b.id}`);
     }

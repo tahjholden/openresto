@@ -8,7 +8,6 @@ jest.mock("@expo/vector-icons", () => ({
 }));
 
 jest.mock("react-native-gesture-handler/ReanimatedSwipeable", () => {
-  const { View } = require("react-native");
   return ({ children }: { children: React.ReactNode }) => <>{children}</>;
 });
 

@@ -67,7 +67,7 @@ test.describe("Admin pause bookings", () => {
     );
     expect(res.ok()).toBeTruthy();
     const { slots } = await res.json();
-    const hasAvailable = (slots as Array<{ isAvailable: boolean }>).some((s) => s.isAvailable);
+    const hasAvailable = (slots as { isAvailable: boolean }[]).some((s) => s.isAvailable);
     expect(hasAvailable).toBeTruthy();
   });
 

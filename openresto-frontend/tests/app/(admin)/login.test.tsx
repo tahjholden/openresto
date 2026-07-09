@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react-native";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react-native";
 import AdminLoginScreen from "@/app/(admin)/login";
 import { login, getPvqStatus, verifyPvq, resetPassword } from "@/api/auth";
 import { useRouter } from "expo-router";

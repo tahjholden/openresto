@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react-native";
+import { render, waitFor } from "@testing-library/react-native";
 import AdminLayout from "@/app/(admin)/_layout";
 import { checkSession } from "@/api/auth";
 import { useRouter, usePathname } from "expo-router";

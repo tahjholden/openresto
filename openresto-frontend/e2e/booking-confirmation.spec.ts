@@ -28,7 +28,7 @@ async function purgeConfirmBookings(browser: Browser) {
     `/api/admin/bookings?restaurantId=${RESTAURANT_ID}&email=${encodeURIComponent(CONFIRM_EMAIL)}&status=all`
   );
   if (res.ok()) {
-    const bookings = (await res.json()) as Array<{ id: number }>;
+    const bookings = (await res.json()) as { id: number }[];
     for (const b of bookings) {
       await page.request.delete(`/api/admin/bookings/${b.id}`);
     }

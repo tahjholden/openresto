@@ -49,7 +49,6 @@ export default function Footer({ backgroundColor }: FooterProps) {
                   accessibilityRole="link"
                   accessibilityLabel={link.label}
                   hitSlop={10}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   style={({ hovered }: any) => [styles.socialBtn, hovered && { opacity: 0.65 }]}
                 >
                   <Ionicons

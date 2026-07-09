@@ -293,7 +293,6 @@ describe("BookingConfirmationScreen", () => {
     useLocalSearchParams.mockReturnValue({ bookingRef: "REF123", email: "test@test.com" });
 
     // Mock wide window
-    const { useWindowDimensions } = require("react-native");
     const mockUseDimensions = jest.spyOn(require("react-native"), "useWindowDimensions");
     mockUseDimensions.mockReturnValue({ width: 1024, height: 768 });
 

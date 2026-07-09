@@ -16,7 +16,7 @@ global.fetch = jest.fn(() =>
 
 jest.mock("expo-router", () => ({
   usePathname: jest.fn(() => "/some/missing/page"),
-  Link: ({ children, href, style }: any) =>
+  Link: ({ children, href: _href, style }: any) =>
     require("react").createElement("Text", { style }, children),
 }));
 

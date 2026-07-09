@@ -24,7 +24,7 @@ test.describe("Booking lookup", () => {
       `/api/admin/bookings?restaurantId=1&email=${encodeURIComponent(lookupEmail)}&status=all`
     );
     if (res.ok()) {
-      const bookings = (await res.json()) as Array<{ id: number }>;
+      const bookings = (await res.json()) as { id: number }[];
       for (const b of bookings) {
         await page.request.delete(`/api/admin/bookings/${b.id}`);
       }

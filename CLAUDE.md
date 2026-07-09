@@ -30,7 +30,7 @@ npm test             # Jest unit tests
 npm test -- --testPathPattern=BookingForm  # single test file
 npm test -- --coverage  # coverage report
 npm run test:e2e     # Playwright E2E tests
-npm run check        # prettier + eslint (what CI runs)
+npm run check        # prettier + oxlint (what CI runs)
 npm run lint:fix     # auto-fix lint issues
 ```
 
@@ -189,7 +189,7 @@ openresto-frontend/
 - Tab favicon (SVG data URI via `injectBrandFavicon`) works in standalone dev. PWA install icon requires Docker — nginx must proxy `/api/brand/pwa-icon-*.png` to the backend.
 - `app/+html.tsx` is Expo Router's HTML `<head>` template for static output mode — favicon link, manifest link, and SW registration script all live here.
 - **Cross-platform scroll-to-element**: to smoothly scroll a `ScrollView` to a specific child after it appears, use two paths: on web call `(ref.current as unknown as HTMLElement).scrollIntoView?.({ behavior: "smooth", block: "start" })`; on native call `findNodeHandle(scrollRef.current)` then `childRef.current.measureLayout(node, (_x, y) => scrollRef.current?.scrollTo({ y: Math.max(0, y - 16), animated: true }), () => {})`. Wrap in a `setTimeout` of ~150 ms so layout settles before measuring. See `app/(user)/lookup.tsx`.
-- **ESLint `no-explicit-any`**: never cast with `as any`. When you need to access a DOM method unavailable on the RN type, use `as unknown as HTMLElement` (or the appropriate DOM type) instead.
+- **Lint `no-explicit-any`** (oxlint, `.oxlintrc.json`, replaces ESLint): never cast with `as any`. When you need to access a DOM method unavailable on the RN type, use `as unknown as HTMLElement` (or the appropriate DOM type) instead. React Compiler-only `react-hooks/*` rules (e.g. `set-state-in-effect`) have no oxlint equivalent yet and are no longer enforced.
 
 ### Auth model
 
